@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum InterestType {
+  PERCENTAGE
+  FIXED
+}
+
+enum Frequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum DebtType {
+  LOAN        // I owe someone
+  RECEIVABLE  // someone owes me
+}
+
+enum DebtStatus {
+  ACTIVE
+  PAID
+  WRITTEN_OFF
+}
+
+// User-configurable brokers. Seeded with defaults; new entries can be added from Settings.
+model Broker {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  color       String?
+  icon        String?
+  investments Investment[]
+}
+
+// User-configurable investment types. Seeded with defaults; new entries can be added from Settings.
+model InvestmentType {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  color       String?
+  icon        String?
+  investments Investment[]
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+// User-configurable banks. Seeded with defaults; new entries can be added from the UI.
+model Bank {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  color    String?   // hex color used in the UI
+  icon     String?   // lucide icon name
+  accounts Account[]
+}
+
+// Records every manual balance correction for audit purposes.
+model BalanceCorrection {
+  id         Int      @id @default(autoincrement())
+  accountId  Int
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  oldBalance Decimal  @db.Decimal(12, 2)
+  newBalance Decimal  @db.Decimal(12, 2)
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
+// User-configurable account types (e.g. Checking, Savings, Wallet).
+// Seeded with defaults on first run; new types can be added from the UI.
+model AccountType {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  color    String?   // hex color used in the UI
+  icon     String?   // lucide icon name
+  accounts Account[]
+}
+
+model Account {
+  id            Int          @id @default(autoincrement())
+  name          String
+  bankId        Int
+  bank          Bank         @relation(fields: [bankId], references: [id])
+  accountNumber String?
+  typeId        Int
+  type          AccountType  @relation(fields: [typeId], references: [id])
+  balance       Decimal      @default(0) @db.Decimal(12, 2)
+  currency      String       @default("EUR")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  transactions        Transaction[]
+  savingsGoals        SavingsGoal[]
+  recurringBills      RecurringBill[]
+  recurringIncome     RecurringIncome[]
+  balanceCorrections  BalanceCorrection[]
+  debts               Debt[]
+  importHistory       ImportHistory[]
+}
+
+model ImportHistory {
+  id         Int      @id @default(autoincrement())
+  filename   String
+  format     String   // 'millennium' | 'revolut'
+  accountId  Int?
+  account    Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  imported   Int
+  skipped    Int
+  errors     Int      @default(0)
+  importedAt DateTime @default(now())
+}
+
+// Auto-categorization rules. When a transaction description contains `pattern`
+// (case-insensitive substring match), it is assigned `category`.
+model CategoryRule {
+  id         Int      @id @default(autoincrement())
+  pattern    String   // substring to match, e.g. "trading 212", "pingo doce"
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Category {
+  id           Int             @id @default(autoincrement())
+  name         String          @unique
+  type         CategoryType
+  color        String?         // hex color for UI
+  icon         String?         // icon name/emoji
+  createdAt    DateTime        @default(now())
+
+  transactions    Transaction[]
+  splits          TransactionSplit[]
+  budgets         Budget[]
+  recurringBills  RecurringBill[]
+  recurringIncome RecurringIncome[]
+  rules           CategoryRule[]
+}
+
+model Transaction {
+  id              Int              @id @default(autoincrement())
+  accountId       Int
+  account         Account          @relation(fields: [accountId], references: [id])
+  categoryId      Int?
+  category        Category?        @relation(fields: [categoryId], references: [id])
+  recurringBillId Int?
+  recurringBill   RecurringBill?   @relation(fields: [recurringBillId], references: [id])
+
+  date            DateTime         // Data lançamento
+  valueDate       DateTime?        // Data valor
+  description     String
+  amount          Decimal          @db.Decimal(12, 2) // negative = debit, positive = credit
+  type            TransactionType  // CREDIT | DEBIT
+  runningBalance  Decimal?         @db.Decimal(12, 2) // Saldo from bank statement
+  notes           String?
+  importHash      String?          @unique // SHA of raw CSV row — prevents duplicate imports
+  createdAt       DateTime         @default(now())
+
+  tags            TransactionTag[]
+  splits          TransactionSplit[]
+}
+
+model TransactionSplit {
+  id            Int          @id @default(autoincrement())
+  transactionId Int
+  transaction   Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  categoryId    Int?
+  category      Category?    @relation(fields: [categoryId], references: [id])
+  amount        Decimal      @db.Decimal(12, 2)
+  notes         String?
+}
+
+model Tag {
+  id           Int              @id @default(autoincrement())
+  name         String           @unique
+  color        String?
+  transactions TransactionTag[]
+}
+
+model TransactionTag {
+  transactionId Int
+  tagId         Int
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+}
+
+// One persistent spending limit per category — applies to every month.
+model Budget {
+  id         Int      @id @default(autoincrement())
+  categoryId Int      @unique
+  category   Category @relation(fields: [categoryId], references: [id])
+  amount     Decimal  @db.Decimal(12, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model SavingsGoal {
+  id            Int       @id @default(autoincrement())
+  accountId     Int?      @unique
+  account       Account?  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name          String
+  targetAmount  Decimal   @db.Decimal(12, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(12, 2)
+  deadline              DateTime?
+  interestType              InterestType? // PERCENTAGE or FIXED amount
+  interestValue             Decimal?      @db.Decimal(12, 2) // rate (%) or fixed EUR
+  interestFrequencyDays     Int?          // days between each interest payment
+  lastInterestApplied       DateTime?     // when interest was last applied
+  totalInterestEarned       Decimal       @default(0) @db.Decimal(12, 2) // cumulative interest earned
+  contributionAmount        Decimal?      @db.Decimal(12, 2) // amount added each contribution period
+  contributionFrequencyDays Int?          // days between each contribution
+  notes                     String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  snapshots SavingsSnapshot[]
+}
+
+// One balance snapshot per goal per event (interest, contribution, manual update).
+model SavingsSnapshot {
+  id        Int         @id @default(autoincrement())
+  goalId    Int
+  goal      SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  date      DateTime    @default(now())
+  amount    Decimal     @db.Decimal(12, 2)
+  note      String?     // e.g. "interest", "contribution", "initial"
+}
+
+model RecurringBill {
+  id          Int           @id @default(autoincrement())
+  name        String
+  amount      Decimal       @db.Decimal(12, 2)
+  frequency   Frequency
+  nextDueDate DateTime
+  categoryId  Int?
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  accountId   Int?          // account to debit when paid
+  account     Account?      @relation(fields: [accountId], references: [id])
+  notes       String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  transactions Transaction[]
+}
+
+// Cached exchange rates to EUR, refreshed when prices are fetched.
+model ExchangeRate {
+  id         Int      @id @default(autoincrement())
+  fromCurrency String // e.g. USD, GBP
+  rate       Decimal  @db.Decimal(12, 6) // 1 fromCurrency = rate EUR
+  updatedAt  DateTime @updatedAt
+
+  @@unique([fromCurrency])
+}
+
+// One row per investment per day — written every time prices are refreshed.
+model PriceHistory {
+  id           Int        @id @default(autoincrement())
+  investmentId Int
+  investment   Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  price        Decimal    @db.Decimal(12, 4) // price per share at this point
+  value        Decimal    @db.Decimal(12, 2) // price * shares = total value
+  recordedAt   DateTime   @default(now())
+
+  @@unique([investmentId, recordedAt]) // one snapshot per investment per timestamp
+}
+
+model Debt {
+  id              Int         @id @default(autoincrement())
+  name            String      // e.g. "Car loan", "Loan to João"
+  type            DebtType    // LOAN = I owe, RECEIVABLE = owed to me
+  counterparty    String      // lender name or borrower name
+  principal       Decimal     @db.Decimal(12, 2) // original amount
+  outstanding     Decimal     @db.Decimal(12, 2) // remaining balance
+  interestRate    Decimal?    @db.Decimal(8, 4)  // annual rate (%)
+  frequency       Frequency?  // payment frequency
+  nextPaymentDate DateTime?
+  startDate       DateTime
+  endDate         DateTime?   // expected payoff date
+  status          DebtStatus  @default(ACTIVE)
+  accountId       Int?        // linked account for payments
+  account         Account?    @relation(fields: [accountId], references: [id])
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  payments        DebtPayment[]
+}
+
+model DebtPayment {
+  id          Int      @id @default(autoincrement())
+  debtId      Int
+  debt        Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  date        DateTime
+  amount      Decimal  @db.Decimal(12, 2) // total paid
+  principal   Decimal  @db.Decimal(12, 2) // portion reducing outstanding
+  interest    Decimal  @db.Decimal(12, 2) // interest portion
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model RecurringIncome {
+  id               Int       @id @default(autoincrement())
+  name             String
+  amount           Decimal   @db.Decimal(12, 2)
+  frequency        Frequency
+  nextExpectedDate DateTime
+  categoryId       Int?
+  category         Category? @relation(fields: [categoryId], references: [id])
+  accountId        Int?
+  account          Account?  @relation(fields: [accountId], references: [id])
+  notes            String?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Investment {
+  id           Int            @id @default(autoincrement())
+  name         String
+  typeId       Int
+  type         InvestmentType @relation(fields: [typeId], references: [id])
+  amountIn     Decimal        @db.Decimal(12, 2) // total amount invested
+  currentValue Decimal        @db.Decimal(12, 2) // current market value
+  currency     String         @default("EUR")
+  isin         String?        // e.g. IE00B4L5Y983
+  ticker       String?        // e.g. IWDA.AS, VOO, SPY
+  shares       Decimal?       @db.Decimal(12, 6) // number of units/shares held
+  lastPriceFetched Decimal?   @db.Decimal(12, 4) // last fetched price per share
+  priceUpdatedAt   DateTime?  // when price was last fetched
+  brokerId     Int?
+  broker       Broker?        @relation(fields: [brokerId], references: [id])
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  priceHistory PriceHistory[]
+  lots         InvestmentLot[]
+}
+
+enum LotType {
+  BUY
+  SELL
+}
+
+model InvestmentLot {
+  id             Int        @id @default(autoincrement())
+  investmentId   Int
+  investment     Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  type           LotType    @default(BUY)
+  date           DateTime
+  shares         Decimal    @db.Decimal(12, 6) // always positive; type determines direction
+  pricePerShare  Decimal    @db.Decimal(12, 4) // price per share in EUR
+  totalCost      Decimal    @db.Decimal(12, 2) // BUY: cost paid; SELL: proceeds received
+  realizedGain   Decimal?   @db.Decimal(12, 2) // SELL only: proceeds − avg cost basis at time of sale
+  notes          String?
+  createdAt      DateTime   @default(now())
+}

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(docker --version)",
+      "PowerShell(docker exec finance_db psql -U finance_user -d finance_db -c \"\\\\dt\" 2>&1)",
+      "PowerShell(cd \"C:\\\\Users\\\\pratine\\\\Desktop\\\\Finance\"; $ts = Get-Date -Format \"yyyyMMddHHmmss\"; $dir = \"prisma\\\\migrations\\\\${ts}_add_recurring_income\"; New-Item -ItemType Directory $dir | Out-Null; $sql = npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script 2>&1; [System.IO.File]::WriteAllText\\(\"$PWD\\\\$dir\\\\migration.sql\", \\($sql -join \"`n\"\\), [System.Text.UTF8Encoding]::new\\($false\\)\\); npx prisma migrate resolve --applied \"${ts}_add_recurring_income\" 2>&1 | Select-Object -Last 3)"
+    ]
+  }
+}
