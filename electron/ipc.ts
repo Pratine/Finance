@@ -739,7 +739,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // Paginated version used by TransactionsPage â€” returns the page + total count.
+  // Paginated version used by TransactionsPage — returns the page + total count.
   ipcMain.handle('transactions:listPaged', async (_event, opts: {
     accountId?: number; take: number; skip: number
   }) => {

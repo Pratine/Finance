@@ -20,8 +20,8 @@ function fmt(n: number) {
 }
 
 function fmtShort(n: number) {
-  if (Math.abs(n) >= 1000) return `â‚¬${(n / 1000).toFixed(1)}k`
-  return `â‚¬${Math.round(n)}`
+  if (Math.abs(n) >= 1000) return `€${(n / 1000).toFixed(1)}k`
+  return `€${Math.round(n)}`
 }
 
 // â”€â”€â”€ Spending trends chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -235,7 +235,7 @@ export default function ReportsPage() {
               <XAxis dataKey="date" tick={{ fontSize: 10 }} axisLine={false} tickLine={false}
                 tickFormatter={d => { const p = d.split('-'); return `${p[2]}/${p[1]}` }}
                 interval="preserveStartEnd" />
-              <YAxis tickFormatter={v => `â‚¬${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={48} />
+              <YAxis tickFormatter={v => `€${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={48} />
               <Tooltip
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #334155', backgroundColor: '#1e293b', color: '#f1f5f9' }}
                 labelFormatter={d => { const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}` }}

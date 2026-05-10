@@ -202,7 +202,7 @@ function TagPill({
           {/* New tag input */}
           <div className="px-2 pb-2 border-b border-slate-100 dark:border-slate-700">
             <div className="flex gap-1.5 mb-1.5">
-              <input ref={inputRef} type="text" placeholder="New tagâ€¦" value={newName}
+              <input ref={inputRef} type="text" placeholder="New tag…" value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') createAndAdd() }}
                 className="flex-1 text-xs border border-slate-200 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400" />
@@ -222,7 +222,7 @@ function TagPill({
 
           {/* Existing tags */}
           {allTags.length === 0 && (
-            <p className="text-xs text-slate-400 dark:text-slate-500 px-3 py-2">No tags yet â€” create one above.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 px-3 py-2">No tags yet — create one above.</p>
           )}
           {allTags.map(tag => {
             const active = txTags.some(tt => tt.tag.id === tag.id)
@@ -231,7 +231,7 @@ function TagPill({
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color ?? '#64748b' }} />
                 <span className={`flex-1 text-left ${active ? 'font-medium text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}`}>{tag.name}</span>
-                {active && <span className="text-emerald-500 text-xs">âœ“</span>}
+                {active && <span className="text-emerald-500 text-xs">✓</span>}
               </button>
             )
           })}
@@ -300,7 +300,7 @@ function EditTransactionModal({
           </div>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
           <input type="text" placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} className={inputCls} />
-          <input type="number" min="0" step="0.01" placeholder="Amount (â‚¬)" value={amount} onChange={e => setAmount(e.target.value)} className={inputCls} />
+          <input type="number" min="0" step="0.01" placeholder="Amount (€)" value={amount} onChange={e => setAmount(e.target.value)} className={inputCls} />
           <textarea rows={2} placeholder="Notes (optional)" value={notes} onChange={e => setNotes(e.target.value)} className={inputCls + ' resize-none'} />
         </div>
 
@@ -310,7 +310,7 @@ function EditTransactionModal({
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : 'Save'}
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
@@ -392,7 +392,7 @@ function AddTransactionModal({
           </div>
 
           <select value={form.accountId} onChange={e => f('accountId', e.target.value === '' ? '' : Number(e.target.value))} className={inputCls}>
-            <option value="">Select accountâ€¦</option>
+            <option value="">Select account…</option>
             {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
 
@@ -400,7 +400,7 @@ function AddTransactionModal({
 
           <input type="text" placeholder="Description" value={form.description} onChange={e => f('description', e.target.value)} className={inputCls} />
 
-          <input type="number" min="0" step="0.01" placeholder="Amount (â‚¬)" value={form.amount} onChange={e => f('amount', e.target.value)} className={inputCls} />
+          <input type="number" min="0" step="0.01" placeholder="Amount (€)" value={form.amount} onChange={e => f('amount', e.target.value)} className={inputCls} />
 
           <select value={form.categoryId} onChange={e => f('categoryId', e.target.value === '' ? '' : Number(e.target.value))} className={inputCls}>
             <option value="">No category</option>
@@ -414,7 +414,7 @@ function AddTransactionModal({
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : 'Save'}
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
@@ -490,18 +490,18 @@ function TransferModal({
           <div>
             <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">From</label>
             <select value={form.fromAccountId} onChange={e => f('fromAccountId', e.target.value === '' ? '' : Number(e.target.value))} className={inputCls}>
-              <option value="">Select accountâ€¦</option>
+              <option value="">Select account…</option>
               {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
           <div>
             <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">To</label>
             <select value={form.toAccountId} onChange={e => f('toAccountId', e.target.value === '' ? '' : Number(e.target.value))} className={inputCls}>
-              <option value="">Select accountâ€¦</option>
+              <option value="">Select account…</option>
               {accounts.filter(a => a.id !== Number(form.fromAccountId)).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
-          <input type="number" min="0" step="0.01" placeholder="Amount (â‚¬)" value={form.amount} onChange={e => f('amount', e.target.value)} className={inputCls} />
+          <input type="number" min="0" step="0.01" placeholder="Amount (€)" value={form.amount} onChange={e => f('amount', e.target.value)} className={inputCls} />
           <input type="date" value={form.date} onChange={e => f('date', e.target.value)} className={inputCls} />
           <input type="text" placeholder="Description" value={form.description} onChange={e => f('description', e.target.value)} className={inputCls} />
         </div>
@@ -512,7 +512,7 @@ function TransferModal({
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : 'Transfer'}
+            {saving ? 'Saving…' : 'Transfer'}
           </button>
         </div>
       </div>
@@ -694,7 +694,7 @@ export default function TransactionsPage() {
 
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // filters â€” initialise search from ?q= param set by global search
+  // filters — initialise search from ?q= param set by global search
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
   const [accountId, setAccountId] = useState<number | ''>('')
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'CREDIT' | 'DEBIT'>('ALL')
@@ -743,7 +743,7 @@ export default function TransactionsPage() {
 
   async function handleAssign(txId: number, catId: number | null) {
     if (catId === null) {
-      // remove: update with null â€” reuse categorise or add a separate handler
+      // remove: update with null — reuse categorise or add a separate handler
       await window.api.categoriseTransaction(txId, catId as unknown as number)
     } else {
       await window.api.categoriseTransaction(txId, catId)
@@ -860,7 +860,7 @@ export default function TransactionsPage() {
           </select>
           <button onClick={applyBulkCategory} disabled={bulkApplying}
             className="px-3 py-1.5 text-sm bg-white text-slate-900 rounded-lg font-medium disabled:opacity-50 hover:bg-slate-100 transition-colors shrink-0">
-            {bulkApplying ? 'Applyingâ€¦' : 'Apply'}
+            {bulkApplying ? 'Applying…' : 'Apply'}
           </button>
           <button onClick={() => setSelected(new Set())}
             className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors shrink-0">
@@ -882,7 +882,7 @@ export default function TransactionsPage() {
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
-            placeholder="Search descriptionâ€¦"
+            placeholder="Search description…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-7 pr-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100"
@@ -950,7 +950,7 @@ export default function TransactionsPage() {
           type="number"
           min="0"
           step="0.01"
-          placeholder="Min â‚¬"
+          placeholder="Min €"
           value={minAmount}
           onChange={e => setMinAmount(e.target.value)}
           className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100"
@@ -960,7 +960,7 @@ export default function TransactionsPage() {
           type="number"
           min="0"
           step="0.01"
-          placeholder="Max â‚¬"
+          placeholder="Max €"
           value={maxAmount}
           onChange={e => setMaxAmount(e.target.value)}
           className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100"
@@ -976,7 +976,7 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* Transaction list â€” virtualised */}
+      {/* Transaction list — virtualised */}
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-slate-400">
           <p className="text-sm">No transactions found.</p>
@@ -1094,7 +1094,7 @@ export default function TransactionsPage() {
             disabled={loadingMore}
             className="px-4 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
           >
-            {loadingMore ? 'Loadingâ€¦' : `Load more (${total - transactions.length} remaining)`}
+            {loadingMore ? 'Loading…' : `Load more (${total - transactions.length} remaining)`}
           </button>
         </div>
       )}

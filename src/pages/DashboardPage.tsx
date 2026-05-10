@@ -121,7 +121,7 @@ function CashFlowForecast({ forecast, fmt }: { forecast: ForecastMonth[]; fmt: (
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid,#f1f5f9)" />
           <XAxis dataKey="label" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-          <YAxis tickFormatter={v => `â‚¬${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={48} domain={domain} />
+          <YAxis tickFormatter={v => `€${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={48} domain={domain} />
           <Tooltip contentStyle={tooltipStyle}
             formatter={(v: number, name: string) => [fmt(v), name === 'projectedBalance' ? 'Projected balance' : name]} />
           <Area type="monotone" dataKey="projectedBalance" stroke="#3b82f6" strokeWidth={2} fill="url(#fcGrad)" dot={{ r: 3 }} />

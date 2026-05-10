@@ -134,7 +134,7 @@ function DebtModal({
               <input type="text" placeholder="Name of person or institution" value={form.counterparty} onChange={e => f('counterparty', e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Principal (â‚¬)</label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Principal (€)</label>
               <input type="number" min="0" step="0.01" placeholder="0.00" value={form.principal} onChange={e => f('principal', e.target.value)} className={inputCls} />
             </div>
             <div>
@@ -180,7 +180,7 @@ function DebtModal({
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : initial ? 'Save' : 'Add debt'}
+            {saving ? 'Saving…' : initial ? 'Save' : 'Add debt'}
           </button>
         </div>
       </div>
@@ -259,16 +259,16 @@ function PaymentModal({
             <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Total amount (â‚¬)</label>
+            <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Total amount (€)</label>
             <input type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={e => handleAmountChange(e.target.value)} className={inputCls} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Principal (â‚¬)</label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Principal (€)</label>
               <input type="number" min="0" step="0.01" value={principal} onChange={e => setPrincipal(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Interest (â‚¬)</label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Interest (€)</label>
               <input type="number" min="0" step="0.01" value={interest} onChange={e => setInterest(e.target.value)} className={inputCls} />
             </div>
           </div>
@@ -284,7 +284,7 @@ function PaymentModal({
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : 'Record'}
+            {saving ? 'Saving…' : 'Record'}
           </button>
         </div>
       </div>

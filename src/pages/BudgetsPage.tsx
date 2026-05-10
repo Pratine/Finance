@@ -104,7 +104,7 @@ function AddModal({ categories, budgets, onSave, onClose }: {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Monthly limit (â‚¬) <span className="text-red-500">*</span>
+                Monthly limit (€) <span className="text-red-500">*</span>
               </label>
               <input type="number" min="0" step="0.01" placeholder="500" value={amount}
                 onChange={e => setAmount(e.target.value)} autoFocus required
@@ -113,7 +113,7 @@ function AddModal({ categories, budgets, onSave, onClose }: {
             <div className="flex gap-3">
               <button type="button" onClick={onClose} className="flex-1 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
               <button type="submit" disabled={saving} className="flex-1 bg-slate-900 text-white text-sm py-2 rounded-lg hover:bg-slate-700 disabled:opacity-50">
-                {saving ? 'Savingâ€¦' : 'Add'}
+                {saving ? 'Saving…' : 'Add'}
               </button>
             </div>
           </form>
@@ -273,7 +273,7 @@ export default function BudgetsPage() {
       {budgets.length === 0 ? (
         <div className="text-center py-20 text-slate-400">
           <p className="text-sm">No budgets set yet.</p>
-          <p className="text-xs mt-1">Add one â€” it applies to every month automatically.</p>
+          <p className="text-xs mt-1">Add one — it applies to every month automatically.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -358,7 +358,7 @@ export default function BudgetsPage() {
                 {/* Past month surplus badge */}
                 {past && surplus > 0 && !status.over && (
                   <p className="text-xs text-emerald-600 mt-1.5">
-                    âœ“ {fmt(surplus)} under budget this month
+                    ✓ {fmt(surplus)} under budget this month
                   </p>
                 )}
               </div>
@@ -420,13 +420,13 @@ export default function BudgetsPage() {
                         {isExpanded ? <ChevronUp size={13} className="text-slate-400 shrink-0" /> : <ChevronDown size={13} className="text-slate-400 shrink-0" />}
                       </button>
 
-                      {/* Mini bar chart â€” always visible */}
+                      {/* Mini bar chart — always visible */}
                       <ResponsiveContainer width="100%" height={isExpanded ? 160 : 80}>
                         <BarChart data={points} barSize={isExpanded ? 24 : 14} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                           <XAxis dataKey="label" tick={{ fontSize: 10 }} axisLine={false} tickLine={false}
                             hide={!isExpanded} />
                           <YAxis
-                            tickFormatter={v => `â‚¬${Math.round(v)}`}
+                            tickFormatter={v => `€${Math.round(v)}`}
                             tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={44}
                             hide={!isExpanded}
                           />

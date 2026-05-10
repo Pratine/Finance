@@ -127,7 +127,7 @@ export default function ImportPage() {
                 onChange={(e) => setAccountId(Number(e.target.value))}
                 className="w-full appearance-none border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 bg-white dark:bg-slate-800 dark:text-slate-100"
               >
-                <option value="">Select accountâ€¦</option>
+                <option value="">Select account…</option>
                 {accounts.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}{a.bank ? ` Â· ${a.bank.name}` : ''}
@@ -168,7 +168,7 @@ export default function ImportPage() {
           disabled={!canImport}
           className="w-full bg-slate-900 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {status === 'importing' ? 'Importingâ€¦' : 'Import transactions'}
+          {status === 'importing' ? 'Importing…' : 'Import transactions'}
         </button>
 
         {/* Result */}

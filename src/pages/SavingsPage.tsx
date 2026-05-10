@@ -27,7 +27,7 @@ function FrequencySelect({ value, onChange, disabled }: {
       disabled={disabled}
       className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 disabled:bg-slate-50 dark:disabled:bg-slate-900 disabled:text-slate-400"
     >
-      <option value="">Select periodâ€¦</option>
+      <option value="">Select period…</option>
       {FREQUENCY_OPTIONS.map(o => (
         <option key={o.days} value={o.days}>{o.label}</option>
       ))}
@@ -123,7 +123,7 @@ function GoalHistoryChart({ goalId, targetAmount }: { goalId: number; targetAmou
   if (data === null) return <p className="text-xs text-slate-400 py-4 text-center">Loading…</p>
   if (data.length < 2) return (
     <p className="text-xs text-slate-400 dark:text-slate-500 py-4 text-center">
-      Not enough history yet â€” chart will appear as balance snapshots accumulate.
+      Not enough history yet — chart will appear as balance snapshots accumulate.
     </p>
   )
 
@@ -142,7 +142,7 @@ function GoalHistoryChart({ goalId, targetAmount }: { goalId: number; targetAmou
           <XAxis dataKey="label" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
           <YAxis
             tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={44}
-            tickFormatter={v => `â‚¬${(v / 1000).toFixed(0)}k`}
+            tickFormatter={v => `€${(v / 1000).toFixed(0)}k`}
             domain={[0, Math.ceil(max * 1.05)]}
           />
           <Tooltip
@@ -353,12 +353,12 @@ export default function SavingsPage() {
                     <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{goal.name}</p>
                     {over && (
                       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium shrink-0">
-                        {pct}% â€” Over goal
+                        {pct}% — Over goal
                       </span>
                     )}
                     {reached && !over && (
                       <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium shrink-0">
-                        Reached âœ“
+                        Reached ✓
                       </span>
                     )}
                     {interestDue && (
@@ -518,7 +518,7 @@ export default function SavingsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Target (â‚¬) <span className="text-red-500">*</span>
+                  Target (€) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -574,7 +574,7 @@ export default function SavingsPage() {
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Amount (â‚¬)</label>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Amount (€)</label>
                     <input
                       type="number" min="0" step="0.01" placeholder="100"
                       value={form.contributionAmount}
@@ -608,13 +608,13 @@ export default function SavingsPage() {
                     >
                       <option value="">None</option>
                       <option value="PERCENTAGE">Percentage (%)</option>
-                      <option value="FIXED">Fixed amount (â‚¬)</option>
+                      <option value="FIXED">Fixed amount (€)</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                      {form.interestType === 'PERCENTAGE' ? 'Rate (%)' : form.interestType === 'FIXED' ? 'Amount (â‚¬)' : 'Value'}
+                      {form.interestType === 'PERCENTAGE' ? 'Rate (%)' : form.interestType === 'FIXED' ? 'Amount (€)' : 'Value'}
                     </label>
                     <input
                       type="number"
@@ -643,7 +643,7 @@ export default function SavingsPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes</label>
                 <textarea
                   rows={2}
-                  placeholder="Optional notesâ€¦"
+                  placeholder="Optional notes…"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100 resize-none"
@@ -669,7 +669,7 @@ export default function SavingsPage() {
                   disabled={saving}
                   className="flex-1 bg-slate-900 text-white text-sm py-2 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
                 >
-                  {saving ? 'Savingâ€¦' : editingId !== null ? 'Save changes' : 'Create'}
+                  {saving ? 'Saving…' : editingId !== null ? 'Save changes' : 'Create'}
                 </button>
               </div>
             </form>

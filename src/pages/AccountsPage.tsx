@@ -253,7 +253,7 @@ export default function AccountsPage() {
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{acc.currency}</p>
             </div>
 
-            {/* Action buttons â€” visible on hover */}
+            {/* Action buttons — visible on hover */}
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
               <button
                 onClick={() => openBalanceModal(acc)}
@@ -319,7 +319,7 @@ export default function AccountsPage() {
                   className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 bg-white dark:bg-slate-800 dark:text-slate-100"
                   required
                 >
-                  <option value="">Select typeâ€¦</option>
+                  <option value="">Select type…</option>
                   {accountTypes.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -334,7 +334,7 @@ export default function AccountsPage() {
                   className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 bg-white dark:bg-slate-800 dark:text-slate-100"
                   required
                 >
-                  <option value="">Select bankâ€¦</option>
+                  <option value="">Select bank…</option>
                   {banks.map((b) => (
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
@@ -354,14 +354,14 @@ export default function AccountsPage() {
                 />
               </div>
 
-              {/* Initial balance â€” only for savings / investment accounts */}
+              {/* Initial balance — only for savings / investment accounts */}
               {editingId === null && form.typeId !== '' && (() => {
                 const typeName = accountTypes.find(t => t.id === Number(form.typeId))?.name ?? ''
                 return INITIAL_BALANCE_TYPES.some(t => typeName.toLowerCase().includes(t))
               })() && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Initial balance (â‚¬)
+                  Initial balance (€)
                 </label>
                 <input
                   type="number"
@@ -394,7 +394,7 @@ export default function AccountsPage() {
                   disabled={saving}
                   className="flex-1 bg-slate-900 text-white text-sm py-2 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
                 >
-                  {saving ? 'Savingâ€¦' : editingId !== null ? 'Save changes' : 'Create'}
+                  {saving ? 'Saving…' : editingId !== null ? 'Save changes' : 'Create'}
                 </button>
               </div>
             </form>
@@ -453,7 +453,7 @@ export default function AccountsPage() {
                     {corrections.map(c => (
                       <div key={c.id} className="text-xs flex items-start justify-between gap-2 text-slate-500 dark:text-slate-400">
                         <span className="shrink-0">{new Date(c.createdAt).toLocaleDateString('pt-PT')}</span>
-                        <span className="flex-1 truncate text-slate-400 dark:text-slate-500 italic">{c.note ?? 'â€”'}</span>
+                        <span className="flex-1 truncate text-slate-400 dark:text-slate-500 italic">{c.note ?? '—'}</span>
                         <span className="shrink-0 font-mono">
                           {parseFloat(c.oldBalance).toFixed(2)} → <span className="text-slate-700 dark:text-slate-300">{parseFloat(c.newBalance).toFixed(2)}</span>
                         </span>

@@ -301,7 +301,7 @@ export default function InvestmentsPage() {
         </div>
       )}
 
-      {/* Type filter pills â€” drag to reorder when All is selected */}
+      {/* Type filter pills — drag to reorder when All is selected */}
       {(sortedTypes.length > 1 || typeFilter !== null) && (
         <div className="flex gap-1.5 mb-4 flex-wrap items-center">
           <button
@@ -350,7 +350,7 @@ export default function InvestmentsPage() {
               if (!first || !last) return 'Updated each time you refresh prices'
               const fmt = (d: string) => { const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}` }
               return first === last
-                ? `${fmt(first)} â€” refresh prices to build history`
+                ? `${fmt(first)} — refresh prices to build history`
                 : `${fmt(first)} → ${fmt(last)}`
             })()}
           </p>
@@ -364,7 +364,7 @@ export default function InvestmentsPage() {
               </defs>
               <XAxis dataKey="date" tick={{ fontSize: 10 }} axisLine={false} tickLine={false}
                 tickFormatter={d => { const p = d.split('-'); return `${p[2]}/${p[1]}` }} />
-              <YAxis tickFormatter={v => `â‚¬${(v/1000).toFixed(1)}k`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={52} />
+              <YAxis tickFormatter={v => `€${(v/1000).toFixed(1)}k`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={52} />
               <Tooltip
                 formatter={(v: number) => [v.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' }), 'Portfolio value']}
                 labelFormatter={d => { const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}` }}
@@ -438,7 +438,7 @@ export default function InvestmentsPage() {
                             const r = exchangeRates.find(e => e.fromCurrency === inv.currency)
                             return r ? (
                               <span className="text-slate-300 dark:text-slate-600">
-                                Â· 1 {r.fromCurrency} = â‚¬{parseFloat(r.rate).toFixed(4)}
+                                Â· 1 {r.fromCurrency} = €{parseFloat(r.rate).toFixed(4)}
                               </span>
                             ) : null
                           })()}
@@ -539,7 +539,7 @@ export default function InvestmentsPage() {
                   className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
                   required
                 >
-                  <option value="">Select typeâ€¦</option>
+                  <option value="">Select type…</option>
                   {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
@@ -547,7 +547,7 @@ export default function InvestmentsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Invested (â‚¬) <span className="text-red-500">*</span>
+                    Invested (€) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -562,7 +562,7 @@ export default function InvestmentsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Current value (â‚¬) <span className="text-red-500">*</span>
+                    Current value (€) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -595,7 +595,7 @@ export default function InvestmentsPage() {
                     disabled={isinLooking || !form.isin.trim()}
                     className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 shrink-0"
                   >
-                    {isinLooking ? 'Looking upâ€¦' : 'Look up'}
+                    {isinLooking ? 'Looking up…' : 'Look up'}
                   </button>
                 </div>
                 {isinError && <p className="text-xs text-red-500 mt-1">{isinError}</p>}
@@ -670,7 +670,7 @@ export default function InvestmentsPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes</label>
                 <textarea
                   rows={2}
-                  placeholder="Optional notesâ€¦"
+                  placeholder="Optional notes…"
                   value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
@@ -701,7 +701,7 @@ export default function InvestmentsPage() {
                   Cancel
                 </button>
                 <button type="submit" disabled={saving} className="flex-1 bg-slate-900 text-white text-sm py-2 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50">
-                  {saving ? 'Savingâ€¦' : editingId !== null ? 'Save changes' : 'Create'}
+                  {saving ? 'Saving…' : editingId !== null ? 'Save changes' : 'Create'}
                 </button>
               </div>
             </form>
@@ -796,7 +796,7 @@ function AddLotModal({
                 onChange={e => setShares(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Price per share (â‚¬)</label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Price per share (€)</label>
               <input type="number" min="0" step="0.0001" placeholder="0.00" value={String(price)}
                 onChange={e => setPrice(e.target.value)} className={inputCls} />
             </div>
@@ -820,7 +820,7 @@ function AddLotModal({
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="flex-1 px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : 'Add purchase'}
+            {saving ? 'Saving…' : 'Add purchase'}
           </button>
         </div>
       </div>
@@ -892,7 +892,7 @@ function SellLotModal({
                 onChange={e => setShares(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Sale price/share (â‚¬)</label>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Sale price/share (€)</label>
               <input type="number" min="0" step="0.0001" placeholder="0.00" value={String(price)}
                 onChange={e => setPrice(e.target.value)} className={inputCls} />
             </div>
@@ -932,7 +932,7 @@ function SellLotModal({
           <button onClick={onClose} className="flex-1 px-4 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg text-slate-600 dark:text-slate-300">Cancel</button>
           <button onClick={submit} disabled={saving}
             className="flex-1 px-4 py-2 text-sm bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50">
-            {saving ? 'Savingâ€¦' : 'Record sale'}
+            {saving ? 'Saving…' : 'Record sale'}
           </button>
         </div>
       </div>
@@ -1116,7 +1116,7 @@ function InvestmentSparkline({ investmentId }: { investmentId: number }) {
     window.api.getInvestmentPriceHistoryById(investmentId).then(setData)
   }, [investmentId])
 
-  if (data === null) return <p className="text-xs text-slate-400 py-3 text-center">Loadingâ€¦</p>
+  if (data === null) return <p className="text-xs text-slate-400 py-3 text-center">Loading…</p>
   if (data.length < 2) return (
     <p className="text-xs text-slate-400 dark:text-slate-500 py-3 text-center">
       Price history will appear after prices have been refreshed at least twice.
@@ -1141,7 +1141,7 @@ function InvestmentSparkline({ investmentId }: { investmentId: number }) {
             tickFormatter={d => { const p = d.split('-'); return `${p[2]}/${p[1]}` }}
             interval="preserveStartEnd" />
           <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={44}
-            tickFormatter={v => `â‚¬${(v/1000).toFixed(1)}k`}
+            tickFormatter={v => `€${(v/1000).toFixed(1)}k`}
             domain={[Math.floor(min * 0.97), Math.ceil(max * 1.03)]} />
           <Tooltip
             contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #334155', backgroundColor: '#1e293b', color: '#f1f5f9' }}
@@ -1243,7 +1243,7 @@ function PerformancePanel({ investments }: { investments: Investment[] }) {
                   <th className="text-left py-2.5 text-slate-400 dark:text-slate-500 font-normal">Name</th>
                   <th className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-normal text-right">Invested</th>
                   <th className="py-2.5 pr-4 font-normal"><SortBtn col="value" label="Value" /></th>
-                  <th className="py-2.5 pr-4 font-normal"><SortBtn col="absolute" label="Gain â‚¬" /></th>
+                  <th className="py-2.5 pr-4 font-normal"><SortBtn col="absolute" label="Gain €" /></th>
                   <th className="py-2.5 pr-4 font-normal"><SortBtn col="pct" label="Gain %" /></th>
                   <th className="py-2.5 pr-4 font-normal"><SortBtn col="cagr" label="CAGR" /></th>
                   <th className="py-2.5 pr-5 font-normal"><SortBtn col="days" label="Days held" /></th>
@@ -1322,7 +1322,7 @@ function SimulatorPanel() {
           {/* Inputs */}
           <div className="grid grid-cols-2 gap-3 mt-4 mb-5">
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Monthly investment (â‚¬)</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Monthly investment (€)</label>
               <input type="number" min="0" step="10" value={monthly}
                 onChange={e => setMonthly(e.target.value)}
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100" />
@@ -1354,7 +1354,7 @@ function SimulatorPanel() {
               {(['none', 'percentage', 'fixed'] as const).map(t => (
                 <button key={t} type="button" onClick={() => setGrowthType(t)}
                   className={`flex-1 text-xs py-1.5 rounded-lg border transition-colors ${growthType === t ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'}`}>
-                  {t === 'none' ? 'None' : t === 'percentage' ? 'Percentage' : 'Fixed (â‚¬)'}
+                  {t === 'none' ? 'None' : t === 'percentage' ? 'Percentage' : 'Fixed (€)'}
                 </button>
               ))}
             </div>
@@ -1364,7 +1364,7 @@ function SimulatorPanel() {
                   value={growthValue} onChange={e => setGrowthValue(e.target.value)}
                   className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
                 <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0">
-                  {growthType === 'percentage' ? '% per year' : 'â‚¬ per year'}
+                  {growthType === 'percentage' ? '% per year' : '€ per year'}
                 </span>
               </div>
             )}
