@@ -31,6 +31,7 @@ function advanceByFrequency(date: Date, freq: Frequency): Date {
     case 'MONTHLY':   d.setUTCMonth(d.getUTCMonth() + 1); break
     case 'QUARTERLY': d.setUTCMonth(d.getUTCMonth() + 3); break
     case 'YEARLY':    d.setUTCFullYear(d.getUTCFullYear() + 1); break
+    default: throw new Error(`Unknown frequency: ${freq}`)
   }
   return d
 }
