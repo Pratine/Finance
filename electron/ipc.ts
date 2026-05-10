@@ -910,10 +910,6 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }
   })
 
-  async function recordSavingsSnapshot(goalId: number, amount: number, note: string) {
-    await prisma.savingsSnapshot.create({ data: { goalId, amount, note } })
-  }
-
   ipcMain.handle('savings:create', async (_event, data) => {
     return serialize(await prisma.$transaction(async (tx) => {
       const goal = await tx.savingsGoal.create({ data, include: savingsInclude })
