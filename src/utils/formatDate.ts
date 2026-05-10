@@ -10,7 +10,9 @@ export function fmtDate(iso: string | Date): string {
   return `${day}/${month}/${year}`
 }
 
-// Formatted with weekday for use in grouped lists: "Mon, 15/05/2026"
+// Formatted with weekday for use in grouped lists: "seg, 15/05/2026"
+// Weekday abbreviations are intentionally in Portuguese (pt-PT) since this
+// app targets Portuguese-speaking users. The date portion is locale-neutral DD/MM/YYYY.
 export function fmtDateLong(iso: string | Date): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso
   const weekday = d.toLocaleDateString('pt-PT', { weekday: 'short', timeZone: 'UTC' })
