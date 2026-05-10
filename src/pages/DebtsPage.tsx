@@ -206,23 +206,14 @@ function PaymentModal({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Periods per year for each frequency — used to compute the per-payment interest portion.
-  const PERIODS_PER_YEAR: Record<string, number> = {
-    WEEKLY: 52, MONTHLY: 12, QUARTERLY: 4, YEARLY: 1,
-  }
-
   // Auto-split: when amount changes and there's an interest rate, suggest split.
-  // Uses the actual payment frequency to compute the per-period rate.
   function handleAmountChange(val: string) {
     setAmount(val)
     const amt = parseFloat(val)
     if (!isNaN(amt) && debt.interestRate) {
-      const periods = debt.frequency ? (PERIODS_PER_YEAR[debt.frequency] ?? 12) : 12
-      const periodRate = Number(debt.interestRate) / 100 / periods
-      const interestPortion = Math.min(outstanding * periodRate, amt)
-      const principalPortion = Math.max(0, amt - interestPortion)
-      setInterest(interestPortion.toFixed(2))
-      setPrincipal(principalPortion.toFixed(2))
+      const { principal, interest } = calcPaymentSplit(amt, outstanding, Number(debt.interestRate), debt.frequency)
+      setInterest(interest.toFixed(2))
+      setPrincipal(principal.toFixed(2))
     } else if (!isNaN(amt)) {
       setPrincipal(val)
       setInterest('0')
