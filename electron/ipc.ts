@@ -271,9 +271,13 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }
   })
 
-  ipcMain.handle('shortcuts:save', (_event, config: unknown) => {
-    fs.writeFileSync(shortcutsPath, JSON.stringify(config, null, 2), 'utf8')
-    return true
+  ipcMain.handle('shortcuts:save', async (_event, config: unknown) => {
+    try {
+      await writeFile(shortcutsPath, JSON.stringify(config, null, 2), 'utf8')
+      return true
+    } catch (e: any) {
+      throw new Error(`Failed to save shortcuts: ${e.message}`)
+    }
   })
 
   // â”€â”€ File dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
