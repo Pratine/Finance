@@ -2,10 +2,11 @@
 // without a database connection. ipc.ts calls calcInvestmentTotals and writes
 // the result; tests call it directly.
 
+// Accepts string, number, or Prisma Decimal — all coerce correctly via Number().
 interface LotLike {
   type: string
-  shares: string | number
-  totalCost: string | number
+  shares: unknown
+  totalCost: unknown
 }
 
 export interface InvestmentTotals {
