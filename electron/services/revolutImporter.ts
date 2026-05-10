@@ -5,7 +5,6 @@
 // Only COMPLETED rows are imported; PENDING and REVERTED are skipped.
 import fs from 'fs'
 import crypto from 'crypto'
-import { TransactionType } from '@prisma/client'
 import { prisma } from '../db'
 
 export interface ImportResult {
