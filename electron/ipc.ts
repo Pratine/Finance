@@ -1,14 +1,6 @@
 ﻿// All IPC handlers live here. The renderer calls window.api.* (defined in preload.ts),
 // which bridges to these handlers running in the main process where Prisma and Node.js
 // APIs (fs, dialog) are available. The renderer never touches the DB directly.
-//
-// serialize() converts Prisma responses to plain JSON before sending over IPC.
-// Electron's structured-clone algorithm cannot handle Prisma's Decimal objects,
-// so we round-trip through JSON to get plain strings/numbers.
-function serialize<T>(data: T): T {
-  return JSON.parse(JSON.stringify(data))
-}
-
 import { IpcMain, dialog, app } from 'electron'
 import path from 'path'
 import fs from 'fs'
@@ -20,6 +12,13 @@ import { refreshAllPrices, savePriceSnapshot, getLastRefresh, startScheduler, ty
 import { loadAppSettings, saveAppSettings } from './services/appSettings'
 import { lookupISIN } from './services/isinLookup'
 import { elapsedPeriods, applyPeriods } from './services/interest'
+
+// Converts Prisma responses to plain JSON before sending over IPC.
+// Electron's structured-clone algorithm cannot handle Prisma's Decimal objects,
+// so we round-trip through JSON to coerce them to strings/numbers.
+function serialize<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data))
+}
 
 export function setupIpcHandlers(ipcMain: IpcMain) {
   // â”€â”€ Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
