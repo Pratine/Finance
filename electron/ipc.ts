@@ -897,10 +897,12 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const savingsAccounts = await prisma.account.findMany({
       where: { type: { name: { equals: 'Savings' } } },
     })
-    await Promise.all(savingsAccounts.map(async (acc) => {
-      const wasCreated = await prisma.$transaction(async (tx) => {
+    // Sequential — SQLite allows only one concurrent writer. Parallel $transaction
+    // calls would queue under WAL but can throw SQLITE_BUSY under contention.
+    for (const acc of savingsAccounts) {
+      await prisma.$transaction(async (tx) => {
         const existing = await tx.savingsGoal.findUnique({ where: { accountId: acc.id } })
-        if (existing) return false
+        if (existing) return
         const currentAmount = Number(acc.balance)
         const goal = await tx.savingsGoal.create({
           data: { name: acc.name, accountId: acc.id, targetAmount: 0, currentAmount },
@@ -910,10 +912,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
             data: { goalId: goal.id, amount: currentAmount, note: 'initial' },
           })
         }
-        return true
       })
-      return wasCreated
-    }))
+    }
 
     // Apply elapsed interest periods for goals that have interest configured.
     const interestGoals = await prisma.savingsGoal.findMany({
