@@ -450,7 +450,7 @@ function ShortcutsTab() {
     setCapturing(action)
   }
 
-  function onKeyDown(e: React.KeyboardEvent, action: keyof ShortcutConfig) {
+  async function onKeyDown(e: React.KeyboardEvent, action: keyof ShortcutConfig) {
     e.preventDefault()
     e.stopPropagation()
     const key = e.key
@@ -458,7 +458,7 @@ function ShortcutsTab() {
     if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) return
     const updated = { ...local, [action]: key }
     setLocal(updated)
-    setConfig(updated)
+    await setConfig(updated)
     setCapturing(null)
   }
 
