@@ -15,18 +15,23 @@ function settingsPath() {
   return path.join(app.getPath('userData'), 'app-settings.json')
 }
 
+// In-memory cache — avoids repeated disk reads for a file that rarely changes.
+let cache: AppSettings | null = null
+
 export function loadAppSettings(): AppSettings {
+  if (cache) return cache
   try {
     const raw = fs.readFileSync(settingsPath(), 'utf8')
-    return { ...DEFAULTS, ...JSON.parse(raw) }
+    cache = { ...DEFAULTS, ...JSON.parse(raw) }
   } catch {
-    return { ...DEFAULTS }
+    cache = { ...DEFAULTS }
   }
+  return cache
 }
 
 export function saveAppSettings(settings: Partial<AppSettings>): AppSettings {
-  const current = loadAppSettings()
-  const updated = { ...current, ...settings }
+  const updated = { ...loadAppSettings(), ...settings }
   fs.writeFileSync(settingsPath(), JSON.stringify(updated, null, 2))
+  cache = updated
   return updated
 }
