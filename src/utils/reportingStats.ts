@@ -36,7 +36,7 @@ export function calcMonthlyBreakdown(
       .reduce((s, t) => s + Math.abs(parseFloat(t.amount)), 0)
 
     result.push({
-      label: d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' }),
+      label: d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
       month: m,
       year: y,
       income,
