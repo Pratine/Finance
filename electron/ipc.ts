@@ -733,7 +733,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   ipcMain.handle('transactions:listPaged', async (_event, opts: {
     accountId?: number; take: number; skip: number
   }) => {
-    const where = opts.accountId ? { accountId: opts.accountId } : undefined
+    const where = opts.accountId != null ? { accountId: opts.accountId } : undefined
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({ where, include: txInclude, orderBy: { date: 'desc' }, take: opts.take, skip: opts.skip }),
       prisma.transaction.count({ where }),
