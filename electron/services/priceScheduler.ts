@@ -26,13 +26,28 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
   const results = await Promise.allSettled(
     investments.map(async (inv) => {
       const result = await fetchPrice(inv.ticker!)
-      const rate = await fetchExchangeRate(result.currency)
-      if (result.currency !== 'EUR') {
-        await prisma.exchangeRate.upsert({
-          where: { fromCurrency: result.currency },
-          create: { fromCurrency: result.currency, rate },
-          update: { rate },
-        })
+      // fetchExchangeRate throws on failure — use a cached rate if we have one,
+      // otherwise re-throw so this investment is recorded as a failed update.
+      let rate: number
+      if (result.currency === 'EUR') {
+        rate = 1
+      } else {
+        try {
+          rate = await fetchExchangeRate(result.currency)
+          await prisma.exchangeRate.upsert({
+            where: { fromCurrency: result.currency },
+            create: { fromCurrency: result.currency, rate },
+            update: { rate },
+          })
+        } catch (rateErr) {
+          const cached = await prisma.exchangeRate.findUnique({ where: { fromCurrency: result.currency } })
+          if (cached) {
+            rate = Number(cached.rate)
+            console.warn(`Exchange rate fetch failed for ${result.currency}, using cached rate ${rate}`)
+          } else {
+            throw new Error(`No exchange rate available for ${result.currency}: ${(rateErr as Error).message}`)
+          }
+        }
       }
       const priceInEUR = result.price * rate
       const shares = Number(inv.shares ?? 1)
