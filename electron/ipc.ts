@@ -741,8 +741,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   ipcMain.handle('transactions:bulkCategorise', async (_event, ids: number[], categoryId: number | null) => {
-    await prisma.transaction.updateMany({ where: { id: { in: ids } }, data: { categoryId } })
-    return { updated: ids.length }
+    const { count } = await prisma.transaction.updateMany({ where: { id: { in: ids } }, data: { categoryId } })
+    return { updated: count }
   })
 
   ipcMain.handle('transactions:getSplits', async (_event, transactionId: number) => {
