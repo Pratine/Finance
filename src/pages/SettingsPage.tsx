@@ -264,20 +264,10 @@ function CategoryAddRow({ onAdd }: { onAdd: (data: Omit<Category, 'id'>) => Prom
           <option value="INCOME">Income</option>
         </select>
       </div>
-      <div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Colour</p>
-        <div className="flex flex-wrap gap-1.5">
-          {COLORS.map(c => <button key={c} onClick={() => setColor(c)} className="w-6 h-6 rounded-full border-2 transition-all" style={{ backgroundColor: c, borderColor: color === c ? '#0f172a' : 'transparent' }} />)}
-        </div>
-      </div>
-      <div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Icon</p>
-        <div className="flex flex-wrap gap-1.5">
-          {ICONS.map(i => <button key={i} onClick={() => setIcon(i)} className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${icon === i ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-400'}`}><AccountIcon icon={i} size={14} className="text-slate-600" /></button>)}
-        </div>
-      </div>
+      <ColourPicker value={color} onChange={setColor} />
+      <IconPicker value={icon} onChange={setIcon} />
       <div className="flex gap-2">
-        <button onClick={() => setOpen(false)} className="flex-1 border border-slate-200 text-slate-600 text-xs py-1.5 rounded-lg hover:bg-slate-50">Cancel</button>
+        <button onClick={() => setOpen(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
         <button onClick={save} disabled={saving || !name.trim()} className="flex-1 bg-slate-900 text-white text-xs py-1.5 rounded-lg hover:bg-slate-700 disabled:opacity-50 flex items-center justify-center gap-1"><Plus size={12} />Add</button>
       </div>
     </div>
