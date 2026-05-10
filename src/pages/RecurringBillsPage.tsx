@@ -154,19 +154,31 @@ export default function RecurringBillsPage() {
   }
 
   async function handleToggleActive(bill: RecurringBill) {
-    await window.api.updateBill(bill.id, { isActive: !bill.isActive })
-    await load()
+    try {
+      const updated = await window.api.updateBill(bill.id, { isActive: !bill.isActive })
+      setBills(prev => prev.map(b => b.id === updated.id ? updated : b))
+    } catch (e: any) {
+      setError(e?.message ?? ‘Failed to update bill’)
+    }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return
-    await window.api.deleteBill(deleteTarget.id)
-    setDeleteTarget(null)
-    await load()
+    try {
+      await window.api.deleteBill(deleteTarget.id)
+      setBills(prev => prev.filter(b => b.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch (e: any) {
+      setDeleteTarget(null)
+      setError(e?.message ?? ‘Failed to delete bill’)
+    }
   }
 
-  // Map categoryId â†’ budget for quick lookup on each bill card
-  const budgetByCategory = new Map(budgets.map(b => [b.categoryId, b]))
+  // Map categoryId → budget for quick lookup on each bill card
+  const budgetByCategory = useMemo(
+    () => new Map(budgets.map(b => [b.categoryId, b])),
+    [budgets]
+  )
 
   const active = bills.filter(b => b.isActive)
   const inactive = bills.filter(b => !b.isActive)
