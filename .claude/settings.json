@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -File \".claude/git-autocommit.ps1\"",
+            "shell": "powershell",
+            "statusMessage": "Committing and pushing to GitHub...",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
