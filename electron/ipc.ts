@@ -413,7 +413,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
       if (data.shares > remainingShares) {
         throw new Error(
-          `Cannot sell ${data.shares} shares — only ${remainingShares.toFixed(6)} remaining`
+          `Cannot sell ${data.shares} shares — only ${parseFloat(remainingShares.toFixed(6))} remaining`
         )
       }
 
