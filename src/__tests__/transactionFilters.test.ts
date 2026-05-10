@@ -149,18 +149,16 @@ describe('applyFilters', () => {
   })
 
   it('combines multiple filters with AND logic', () => {
-    const txns = [
-      makeTx({ type: 'CREDIT', amount: '2949.85', description: 'SALARY' }),
-      makeTx({ id: 2, type: 'CREDIT', amount: '50.00', description: 'REFUND' }),
-      makeTx({ id: 3, type: 'DEBIT', amount: '-20.00', description: 'PHARMACY' }),
-    ]
-    const result = applyFilters(txns, {
+    const salary  = makeTx({ type: 'CREDIT', amount: '2949.85', description: 'SALARY' })
+    const refund  = makeTx({ type: 'CREDIT', amount: '50.00',   description: 'REFUND' })
+    const pharma  = makeTx({ type: 'DEBIT',  amount: '-20.00',  description: 'PHARMACY' })
+    const result = applyFilters([salary, refund, pharma], {
       ...BASE_FILTER,
       typeFilter: 'CREDIT',
       minAmount: '100',
     })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe(1)
+    expect(result[0].id).toBe(salary.id)
   })
 
   it('returns empty array when nothing matches', () => {
