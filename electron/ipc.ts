@@ -131,10 +131,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     if (backup.recurringBills?.length) await prisma.recurringBill.createMany({ data: backup.recurringBills.map((r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextDueDate: new Date(r.nextDueDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })) })
     if (backup.transactions?.length)   await prisma.transaction.createMany({ data: backup.transactions.map((r: any) => ({ id: r.id, accountId: r.accountId, categoryId: r.categoryId, recurringBillId: r.recurringBillId, date: new Date(r.date), valueDate: r.valueDate ? new Date(r.valueDate) : null, description: r.description, amount: r.amount, type: r.type, runningBalance: r.runningBalance, importHash: r.importHash, notes: r.notes })) })
 
-    // Advance all sequences past the restored IDs so future inserts don't conflict
-    for (const seq of ['AccountType', 'Bank', 'Broker', 'InvestmentType', 'Category', 'CategoryRule', 'Account', 'Budget', 'SavingsGoal', 'Investment', 'RecurringBill', 'Transaction']) {
-      await prisma.$executeRawUnsafe(`SELECT setval('"${seq}_id_seq"', COALESCE((SELECT MAX(id) FROM "${seq}"), 0) + 1, false)`)
-    }
+    // SQLite manages autoincrement via sqlite_sequence — no manual sequence reset needed.
 
     return { transactions: backup.transactions?.length ?? 0 }
   })
