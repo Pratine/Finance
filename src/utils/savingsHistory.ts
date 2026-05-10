@@ -13,10 +13,20 @@ export function buildMonthlySavingsHistory(
 ): SavingsHistoryPoint[] {
   if (points.length === 0) return []
 
-  // Build a date → amount map (last value wins per date)
+  // Build a date → amount map (last value wins per date), then collapse to
+  // month → last known amount. Both keyed YYYY-MM for O(1) lookup per month.
   const byDate = new Map<string, number>()
   for (const p of points) {
     byDate.set(p.date, p.amount)
+  }
+  const byMonth = new Map<string, number>()
+  for (const [date, amount] of byDate) {
+    const monthKey = date.slice(0, 7) // YYYY-MM
+    const prev = byMonth.get(monthKey)
+    // Keep the latest date's value within each month
+    if (prev === undefined || date > (byDate.has(monthKey + '-31') ? monthKey + '-31' : monthKey + '-01')) {
+      byMonth.set(monthKey, amount)
+    }
   }
 
   // Determine the range: from first snapshot to today (all in UTC to avoid tz drift)
@@ -26,7 +36,7 @@ export function buildMonthlySavingsHistory(
   const endYear = now.getUTCFullYear()
   const endMonth = now.getUTCMonth()
 
-  // Walk month by month, carry-forward the last known value
+  // Walk month by month, carry-forward the last known value — O(months) lookup
   const result: SavingsHistoryPoint[] = []
   let year = parseInt(firstDate.slice(0, 4))
   let month = parseInt(firstDate.slice(5, 7)) - 1 // 0-based
@@ -34,15 +44,7 @@ export function buildMonthlySavingsHistory(
 
   while (year < endYear || (year === endYear && month <= endMonth)) {
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}` // YYYY-MM
-
-    // Find the last data point within this month
-    let monthValue: number | null = null
-    for (const [d, v] of byDate.entries()) {
-      if (d.startsWith(monthStr)) {
-        monthValue = v
-      }
-    }
-
+    const monthValue = byMonth.get(monthStr) ?? null
     if (monthValue !== null) lastKnown = monthValue
 
     const d = new Date(Date.UTC(year, month, 1))
