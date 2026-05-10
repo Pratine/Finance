@@ -1102,21 +1102,34 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.categoryRule.delete({ where: { id } }))
   })
 
-  // Applies all rules to every uncategorised transaction and returns count updated.
+  // Applies all rules to every uncategorised transaction.
+  // Groups matches by categoryId and uses updateMany — O(unique categories) queries
+  // instead of O(transactions).
   ipcMain.handle('rules:applyToAll', async () => {
     const rules = await prisma.categoryRule.findMany()
     if (rules.length === 0) return { updated: 0 }
-    const uncategorised = await prisma.transaction.findMany({ where: { categoryId: null } })
-    let updated = 0
+    const uncategorised = await prisma.transaction.findMany({
+      where: { categoryId: null },
+      select: { id: true, description: true },
+    })
+    const groups = new Map<number, number[]>()
     for (const tx of uncategorised) {
       const lower = tx.description.toLowerCase()
       const match = rules.find(r => lower.includes(r.pattern.toLowerCase()))
       if (match) {
-        await prisma.transaction.update({ where: { id: tx.id }, data: { categoryId: match.categoryId } })
-        updated++
+        const ids = groups.get(match.categoryId) ?? []
+        ids.push(tx.id)
+        groups.set(match.categoryId, ids)
       }
     }
-    return { updated }
+    if (groups.size === 0) return { updated: 0 }
+    const updates = [...groups.entries()]
+    await prisma.$transaction(
+      updates.map(([categoryId, ids]) =>
+        prisma.transaction.updateMany({ where: { id: { in: ids } }, data: { categoryId } })
+      )
+    )
+    return { updated: updates.reduce((s, [, ids]) => s + ids.length, 0) }
   })
 
   ipcMain.handle('categories:update', async (_event, id: number, data) => {
