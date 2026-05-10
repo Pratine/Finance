@@ -107,7 +107,7 @@ function effectiveAmount(goal: SavingsGoal): number {
   return parseFloat(goal.currentAmount)
 }
 
-// â”€â”€â”€ History chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── History chart ────────────────────────────────────────────────────────────
 
 function GoalHistoryChart({ goalId, targetAmount }: { goalId: number; targetAmount: number }) {
   const [data, setData] = useState<Array<{ label: string; amount: number }> | null>(null)

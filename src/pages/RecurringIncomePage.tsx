@@ -39,7 +39,7 @@ function DueBadge({ days }: { days: number }) {
   return <span className="text-xs text-slate-400 dark:text-slate-500">in {days}d</span>
 }
 
-// â”€â”€â”€ Receive modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Receive modal ────────────────────────────────────────────────────────────
 
 function ReceiveModal({
   item,

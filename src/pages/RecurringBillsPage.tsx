@@ -33,7 +33,7 @@ function emptyForm(): FormState {
   }
 }
 
-// â”€â”€â”€ Status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Status badge ─────────────────────────────────────────────────────────────
 
 function DueBadge({ days }: { days: number }) {
   const status = dueStatus(days)
@@ -50,7 +50,7 @@ function DueBadge({ days }: { days: number }) {
   return <span className="text-xs text-slate-400">in {days}d</span>
 }
 
-// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function RecurringBillsPage() {
   const [bills, setBills] = useState<RecurringBill[]>([])
@@ -207,7 +207,7 @@ export default function RecurringBillsPage() {
       {error && (
         <div className="mb-4 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2.5 flex justify-between items-center">
           {error}
-          <button onClick={() => setError(null)} className="ml-4 text-red-400 hover:text-red-600">âœ•</button>
+          <button onClick={() => setError(null)} className="ml-4 text-red-400 hover:text-red-600">✕</button>
         </div>
       )}
 

@@ -11,7 +11,9 @@
       "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('src/pages/SettingsPage.tsx','utf8'\\);const l=c.split\\('\\\\n'\\)[299];console.log\\(JSON.stringify\\(l\\)\\);\")",
       "Bash(npx tsc *)",
       "Bash(npx vitest *)",
-      "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('src/pages/SettingsPage.tsx','utf8'\\);const l=c.split\\('\\\\n'\\)[979];const i=l.indexOf\\('Category'\\);console.log\\([...l.substring\\(i+8,i+14\\)].map\\(x=>x.charCodeAt\\(0\\)\\)\\);\")"
+      "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('src/pages/SettingsPage.tsx','utf8'\\);const l=c.split\\('\\\\n'\\)[979];const i=l.indexOf\\('Category'\\);console.log\\([...l.substring\\(i+8,i+14\\)].map\\(x=>x.charCodeAt\\(0\\)\\)\\);\")",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

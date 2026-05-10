@@ -24,7 +24,7 @@ function isPast(month: number, year: number) {
   return year < now.getUTCFullYear() || (year === now.getUTCFullYear() && month < now.getUTCMonth() + 1)
 }
 
-// â”€â”€â”€ Inline amount editor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Inline amount editor ─────────────────────────────────────────────────────
 
 function AmountEditor({ budget, onSave, onClose }: {
   budget: Budget
@@ -61,7 +61,7 @@ function AmountEditor({ budget, onSave, onClose }: {
   )
 }
 
-// â”€â”€â”€ Add budget modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Add budget modal ─────────────────────────────────────────────────────────
 
 function AddModal({ categories, budgets, onSave, onClose }: {
   categories: Category[]
@@ -123,7 +123,7 @@ function AddModal({ categories, budgets, onSave, onClose }: {
   )
 }
 
-// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function BudgetsPage() {
   // Month is 1-indexed, UTC-based so it matches how transaction dates are stored.

@@ -11,7 +11,7 @@ import { useShortcutAction } from '../context/ShortcutContext'
 import { calcAlerts, type AppAlert } from '../utils/alerts'
 import { buildForecast } from '../utils/cashFlowForecast'
 
-// â”€â”€â”€ Alerts panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Alerts panel ─────────────────────────────────────────────────────────────
 
 const SEVERITY_STYLES: Record<AppAlert['severity'], { bg: string; border: string; icon: React.ReactNode; text: string }> = {
   error:   { bg: 'bg-red-50 dark:bg-red-900/20',     border: 'border-red-200 dark:border-red-800',     icon: <XCircle size={14} className="text-red-500 shrink-0" />,        text: 'text-red-800 dark:text-red-300' },
@@ -53,7 +53,7 @@ function AlertsPanel({ alerts }: { alerts: AppAlert[] }) {
   )
 }
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(n: number) {
   return n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
@@ -66,7 +66,7 @@ function progressPct(current: number, target: number) {
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-// â”€â”€â”€ Stat card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Stat card ────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub, positive, icon }: {
   label: string
@@ -91,7 +91,7 @@ function StatCard({ label, value, sub, positive, icon }: {
   )
 }
 
-// â”€â”€â”€ Cash flow forecast card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Cash flow forecast card ──────────────────────────────────────────────────
 
 import type { ForecastMonth } from '../utils/cashFlowForecast'
 
@@ -163,7 +163,7 @@ function CashFlowForecast({ forecast, fmt }: { forecast: ForecastMonth[]; fmt: (
   )
 }
 
-// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const navigate = useNavigate()

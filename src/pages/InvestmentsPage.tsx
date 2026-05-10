@@ -7,7 +7,7 @@ import AccountIcon from '../components/AccountIcon'
 import { calcPnL, calcCAGR, daysHeld, fmt, fmtPct, fmtCAGR, calcAvgCostBasis, calcLotGain } from '../utils/investmentCalcs'
 import { simulate } from '../utils/investmentSimulator'
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type ISINResult = { ticker: string; yahooTicker: string; exchange: string; name: string }
 
@@ -27,7 +27,7 @@ const EMPTY_FORM: FormState = {
   name: '', typeId: '', amountIn: '', currentValue: '', isin: '', ticker: '', shares: '', brokerId: '', notes: '',
 }
 
-// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function InvestmentsPage() {
   const [investments, setInvestments] = useState<Investment[]>([])
@@ -188,7 +188,7 @@ export default function InvestmentsPage() {
     }
   }
 
-  // â”€â”€ Portfolio summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Portfolio summary ────────────────────────────────────────────────────
   const totalIn = investments.reduce((s, i) => s + parseFloat(i.amountIn), 0)
   const totalCurrent = investments.reduce((s, i) => s + parseFloat(i.currentValue), 0)
   const portfolioPnL = calcPnL(totalIn, totalCurrent)
@@ -274,7 +274,7 @@ export default function InvestmentsPage() {
       {refreshMsg && (
         <div className="mb-4 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 flex justify-between">
           {refreshMsg}
-          <button onClick={() => setRefreshMsg(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 ml-4">âœ•</button>
+          <button onClick={() => setRefreshMsg(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 ml-4">✕</button>
         </div>
       )}
 
@@ -330,7 +330,7 @@ export default function InvestmentsPage() {
                 style={active ? { backgroundColor: t.color ?? '#64748b' } : undefined}
                 title={typeFilter === null ? 'Drag to reorder' : undefined}
               >
-                {typeFilter === null && <span className="text-slate-400 dark:text-slate-500 mr-0.5 text-xs">â ¿</span>}
+                {typeFilter === null && <span className="text-slate-400 dark:text-slate-500 mr-0.5 text-xs">⠿</span>}
                 <AccountIcon icon={t.icon} size={11} />
                 {t.name}
               </button>
@@ -731,7 +731,7 @@ export default function InvestmentsPage() {
   )
 }
 
-// â”€â”€â”€ Add purchase modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Add purchase modal ───────────────────────────────────────────────────────
 
 function AddLotModal({
   investment,
@@ -828,7 +828,7 @@ function AddLotModal({
   )
 }
 
-// â”€â”€â”€ Sell modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Sell modal ───────────────────────────────────────────────────────────────
 
 function SellLotModal({
   investment,
@@ -940,7 +940,7 @@ function SellLotModal({
   )
 }
 
-// â”€â”€â”€ Lot history panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Lot history panel ────────────────────────────────────────────────────────
 
 function LotPanel({
   investment,
@@ -1107,7 +1107,7 @@ function LotPanel({
   )
 }
 
-// â”€â”€â”€ Per-investment sparkline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Per-investment sparkline ─────────────────────────────────────────────────
 
 function InvestmentSparkline({ investmentId }: { investmentId: number }) {
   const [data, setData] = useState<Array<{ date: string; value: number }> | null>(null)
@@ -1157,7 +1157,7 @@ function InvestmentSparkline({ investmentId }: { investmentId: number }) {
   )
 }
 
-// â”€â”€â”€ Performance panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Performance panel ────────────────────────────────────────────────────────
 
 type SortKey = 'pct' | 'absolute' | 'cagr' | 'days' | 'value'
 
@@ -1277,7 +1277,7 @@ function PerformancePanel({ investments }: { investments: Investment[] }) {
   )
 }
 
-// â”€â”€â”€ Simulator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Simulator ────────────────────────────────────────────────────────────────
 
 function SimulatorPanel() {
   const [open, setOpen] = useState(false)

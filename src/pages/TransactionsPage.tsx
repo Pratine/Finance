@@ -9,7 +9,7 @@ import { buildVItems, type VItem } from '../utils/transactionGroups'
 
 const PAGE_SIZE = 200
 
-// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
 function fmt(amount: string) {
   return parseFloat(amount).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
@@ -19,7 +19,7 @@ function fmt(amount: string) {
 const HEADER_H = 32   // px
 const ROW_H    = 56   // px
 
-// â”€â”€â”€ Category pill with inline dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Category pill with inline dropdown ──────────────────────────────────────
 
 function CategoryPill({
   transaction,
@@ -111,7 +111,7 @@ function CategoryPill({
   )
 }
 
-// â”€â”€â”€ Tag pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tag pill ─────────────────────────────────────────────────────────────────
 
 const TAG_COLORS = ['#64748b','#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899']
 
@@ -241,7 +241,7 @@ function TagPill({
   )
 }
 
-// â”€â”€â”€ Edit transaction modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Edit transaction modal ───────────────────────────────────────────────────
 
 function EditTransactionModal({
   transaction,
@@ -318,7 +318,7 @@ function EditTransactionModal({
   )
 }
 
-// â”€â”€â”€ Add transaction modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Add transaction modal ────────────────────────────────────────────────────
 
 type AddForm = {
   accountId: number | ''
@@ -422,7 +422,7 @@ function AddTransactionModal({
   )
 }
 
-// â”€â”€â”€ Transfer modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Transfer modal ───────────────────────────────────────────────────────────
 
 type TransferForm = {
   fromAccountId: number | ''
@@ -520,7 +520,7 @@ function TransferModal({
   )
 }
 
-// â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 // ─── Split transaction modal ───────────────────────────────────────────────────
 
@@ -955,7 +955,7 @@ export default function TransactionsPage() {
           onChange={e => setMinAmount(e.target.value)}
           className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100"
         />
-        <span className="text-slate-400 dark:text-slate-500 text-sm">â€“</span>
+        <span className="text-slate-400 dark:text-slate-500 text-sm">–</span>
         <input
           type="number"
           min="0"

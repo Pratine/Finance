@@ -40,7 +40,7 @@ function advanceByFrequency(date: Date, freq: Frequency): Date {
 }
 
 export function setupIpcHandlers(ipcMain: IpcMain) {
-  // â”€â”€ Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Export ─────────────────────────────────────────────────────────────────
 
   ipcMain.handle('export:savePath', async (_event, defaultName: string, filters: Electron.FileFilter[]) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
@@ -278,14 +278,14 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return { transactions: backup.transactions?.length ?? 0 }
   })
 
-  // â”€â”€ DB health check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── DB health check ────────────────────────────────────────────────────────
   ipcMain.handle('db:ping', async () => {
     // Query a real table to verify the schema is applied, not just the connection.
     await prisma.account.count()
     return true
   })
 
-  // â”€â”€ Shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Shortcuts ──────────────────────────────────────────────────────────────
   const shortcutsPath = path.join(app.getPath('userData'), 'shortcuts.json')
 
   ipcMain.handle('shortcuts:load', async () => {
@@ -305,7 +305,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }
   })
 
-  // â”€â”€ File dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── File dialog ────────────────────────────────────────────────────────────
   ipcMain.handle('dialog:openCSV', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: 'Select bank statement',
@@ -324,7 +324,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return canceled ? null : filePaths[0]
   })
 
-  // â”€â”€ CSV import â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── CSV import ─────────────────────────────────────────────────────────────
   async function logImport(
     filePath: string,
     format: string,
@@ -374,7 +374,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.importHistory.delete({ where: { id } }))
   })
 
-  // â”€â”€ Brokers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Brokers ────────────────────────────────────────────────────────────────
   ipcMain.handle('brokers:list', async () => {
     return serialize(await prisma.broker.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -391,7 +391,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.broker.delete({ where: { id } }))
   })
 
-  // â”€â”€ Investment lots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Investment lots ────────────────────────────────────────────────────────
 
   // Recalculates amountIn and shares on the parent Investment using the average cost method.
   // Must be called inside a $transaction so it sees the committed lot state.
@@ -487,7 +487,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // â”€â”€ Investment types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Investment types ───────────────────────────────────────────────────────
   ipcMain.handle('investmentTypes:list', async () => {
     return serialize(await prisma.investmentType.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -504,7 +504,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.investmentType.delete({ where: { id } }))
   })
 
-  // â”€â”€ Investments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Investments ────────────────────────────────────────────────────────────
   const investmentInclude = { type: true, broker: true, lots: { orderBy: { date: 'asc' as const } } }
 
   ipcMain.handle('investments:list', async () => {
@@ -631,7 +631,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return ts ? ts.toISOString() : null
   })
 
-  // â”€â”€ App settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── App settings ───────────────────────────────────────────────────────────
   ipcMain.handle('appSettings:load', () => {
     return loadAppSettings()
   })
@@ -645,7 +645,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return updated
   })
 
-  // â”€â”€ Banks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Banks ──────────────────────────────────────────────────────────────────
   ipcMain.handle('banks:list', async () => {
     return serialize(await prisma.bank.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -662,7 +662,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.bank.delete({ where: { id } }))
   })
 
-  // â”€â”€ Account types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Account types ──────────────────────────────────────────────────────────
   ipcMain.handle('accountTypes:list', async () => {
     return serialize(await prisma.accountType.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -679,7 +679,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.accountType.delete({ where: { id } }))
   })
 
-  // â”€â”€ Accounts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Accounts ───────────────────────────────────────────────────────────────
   ipcMain.handle('accounts:list', async () => {
     return serialize(await prisma.account.findMany({ include: { type: true, bank: true }, orderBy: { name: 'asc' } }))
   })
@@ -726,7 +726,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.account.delete({ where: { id } }))
   })
 
-  // â”€â”€ Transactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Transactions ───────────────────────────────────────────────────────────
   const txInclude = { category: true, tags: { include: { tag: true } }, splits: { include: { category: true }, orderBy: { id: 'asc' as const } } }
 
   // Unpaginated list used by analytics/reporting pages — omits tags and splits
@@ -811,7 +811,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.transaction.update({ where: { id }, data: { categoryId }, include: txInclude }))
   })
 
-  // â”€â”€ Tags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Tags ───────────────────────────────────────────────────────────────────
   ipcMain.handle('tags:list', async () => {
     return serialize(await prisma.tag.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -926,7 +926,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize({ debit, credit })
   })
 
-  // â”€â”€ Savings goals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Savings goals ──────────────────────────────────────────────────────────
   const savingsInclude = { account: { include: { type: true, bank: true } } }
 
   // Pure read — just returns the current state of savings goals.
@@ -1102,7 +1102,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(updated)
   })
 
-  // â”€â”€ Recurring income â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Recurring income ───────────────────────────────────────────────────────
   const incomeInclude = { category: true, account: { include: { type: true, bank: true } } }
 
   ipcMain.handle('income:list', async () => {
@@ -1154,7 +1154,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // â”€â”€ Recurring bills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Recurring bills ────────────────────────────────────────────────────────
   const billInclude = { category: true, account: { include: { type: true, bank: true } } }
 
   ipcMain.handle('bills:list', async () => {
@@ -1207,7 +1207,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // â”€â”€ Budgets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Budgets ────────────────────────────────────────────────────────────────
   ipcMain.handle('budgets:list', async () => {
     return serialize(await prisma.budget.findMany({
       include: { category: true },
@@ -1228,7 +1228,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.budget.delete({ where: { id } }))
   })
 
-  // â”€â”€ Categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Categories ─────────────────────────────────────────────────────────────
   ipcMain.handle('categories:list', async () => {
     return serialize(await prisma.category.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -1237,7 +1237,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.category.create({ data }))
   })
 
-  // â”€â”€ Category rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Category rules ─────────────────────────────────────────────────────────
   ipcMain.handle('rules:list', async () => {
     return serialize(await prisma.categoryRule.findMany({
       include: { category: true },
@@ -1294,7 +1294,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.category.delete({ where: { id } }))
   })
 
-  // â”€â”€ Debts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Debts ──────────────────────────────────────────────────────────────────
   const debtInclude = { account: true, payments: { orderBy: { date: 'desc' as const } } }
 
   ipcMain.handle('debts:list', async () => {
@@ -1458,7 +1458,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.debt.findUniqueOrThrow({ where: { id: debt.id }, include: debtInclude }))
   })
 
-  // â”€â”€ Cleanup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cleanup ────────────────────────────────────────────────────────────────
   ipcMain.on('app:quit', async () => {
     await prisma.$disconnect()
   })
