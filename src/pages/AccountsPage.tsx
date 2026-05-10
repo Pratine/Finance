@@ -36,14 +36,18 @@ export default function AccountsPage() {
   const [dragOverId, setDragOverId] = useState<number | null>(null)
 
   async function load() {
-    const [accs, types, bnks] = await Promise.all([
-      window.api.listAccounts(),
-      window.api.listAccountTypes(),
-      window.api.listBanks(),
-    ])
-    setAccounts(accs)
-    setAccountTypes(types)
-    setBanks(bnks)
+    try {
+      const [accs, types, bnks] = await Promise.all([
+        window.api.listAccounts(),
+        window.api.listAccountTypes(),
+        window.api.listBanks(),
+      ])
+      setAccounts(accs)
+      setAccountTypes(types)
+      setBanks(bnks)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load accounts')
+    }
   }
 
   useEffect(() => { load() }, [])
