@@ -476,16 +476,8 @@ async function main() {
 
   console.log('  ✓ 2 debts + payments')
 
-  // Advance all sequences past the max inserted ID so future INSERTs don't collide
-  const tables = ['AccountType', 'Bank', 'Broker', 'InvestmentType', 'Category', 'CategoryRule',
-                   'Account', 'Budget', 'SavingsGoal', 'SavingsSnapshot', 'Investment', 'PriceHistory',
-                   'RecurringBill', 'Transaction', 'Debt', 'DebtPayment']
-  for (const t of tables) {
-    await prisma.$executeRawUnsafe(
-      `SELECT setval('"${t}_id_seq"', COALESCE((SELECT MAX(id) FROM "${t}"), 0) + 1, false)`
-    )
-  }
-  console.log('  ✓ Sequences advanced')
+  // SQLite uses its own autoincrement tracking — no sequence reset needed.
+  console.log('  ✓ Sequences OK (SQLite manages autoincrement automatically)')
 
   // Final summary
   const counts = await Promise.all([
