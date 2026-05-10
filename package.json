@@ -77,7 +77,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Finance"
+      "shortcutName": "Finance",
+      "include": "installer.nsh"
     },
     "mac": {
       "target": "dmg",
