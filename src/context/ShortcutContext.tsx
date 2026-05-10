@@ -29,14 +29,15 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setConfig = useCallback(async (c: ShortcutConfig) => {
+    const previous = config
     setConfigState(c)
     try {
       await window.api.saveShortcuts(c)
     } catch {
-      // Revert state so UI reflects what's actually persisted
-      setConfigState(prev => prev)
+      // Save failed — revert to whatever was persisted before this call
+      setConfigState(previous)
     }
-  }, [])
+  }, [config])
 
   const register = useCallback((action: ActionName, handler: Handler) => {
     handlers.current.set(action, handler)
