@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { calcMonthlyBreakdown, calcCumulativeBalance, calcCategoryBreakdown, calcCategoryTrends, type CategoryTrendPoint } from '../utils/reportingStats'
 import { buildNetWorthHistory } from '../utils/netWorthHistory'
+import { resolveRange } from '../utils/reportRange'
 
 const RANGE_OPTIONS = [
   { label: '3 months',  value: 3  },
