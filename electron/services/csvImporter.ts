@@ -142,13 +142,18 @@ export async function importMillenniumCSV(
 
   if (pending.length === 0) return { imported: 0, skipped: 0, errors }
 
-  // ── Deduplicate against existing imports in one query ────────────────────────
-  const existing = new Set(
-    (await prisma.transaction.findMany({
-      where: { importHash: { in: pending.map(p => p.hash) } },
+  // ── Deduplicate against existing imports ────────────────────────────────────
+  // Batch the IN-clause to stay under SQLite's SQLITE_LIMIT_VARIABLE_NUMBER (999).
+  const BATCH = 500
+  const existing = new Set<string>()
+  const hashes = pending.map(p => p.hash)
+  for (let i = 0; i < hashes.length; i += BATCH) {
+    const rows = await prisma.transaction.findMany({
+      where: { importHash: { in: hashes.slice(i, i + BATCH) } },
       select: { importHash: true },
-    })).map(t => t.importHash!)
-  )
+    })
+    rows.forEach(r => existing.add(r.importHash!))
+  }
 
   const newRows = pending.filter(p => !existing.has(p.hash))
   const skipped = pending.length - newRows.length
