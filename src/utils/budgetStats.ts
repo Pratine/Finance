@@ -27,9 +27,11 @@ export function calcBillsReservedByCategory(bills: RecurringBill[]): Map<number,
 }
 
 // Returns a map of categoryId → total amount spent (absolute) for a given month/year.
+// month is 0-indexed UTC month; year is UTC year — use UTC consistently with how
+// transaction dates are stored (ISO strings, always UTC).
 export function calcSpendingByCategory(
   transactions: Transaction[],
-  month: number, // 0-indexed
+  month: number,
   year: number,
 ): Map<number, number> {
   const map = new Map<number, number>()
@@ -37,8 +39,7 @@ export function calcSpendingByCategory(
     if (t.type !== 'DEBIT' || t.categoryId === null) continue
     const d = new Date(t.date)
     if (d.getUTCMonth() !== month || d.getUTCFullYear() !== year) continue
-    const prev = map.get(t.categoryId) ?? 0
-    map.set(t.categoryId, prev + Math.abs(parseFloat(t.amount)))
+    map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + Math.abs(parseFloat(t.amount)))
   }
   return map
 }
