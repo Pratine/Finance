@@ -1339,13 +1339,35 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   ipcMain.handle('debts:deletePayment', async (_event, paymentId: number) => {
     const payment = await prisma.debtPayment.findUniqueOrThrow({ where: { id: paymentId } })
     const debt = await prisma.debt.findUniqueOrThrow({ where: { id: payment.debtId } })
-    // Restore outstanding
     const restored = Math.min(Number(debt.principal), Number(debt.outstanding) + Number(payment.principal))
-    await prisma.debt.update({
-      where: { id: debt.id },
-      data: { outstanding: restored, status: restored > 0 ? 'ACTIVE' : 'PAID' },
-    })
-    await prisma.debtPayment.delete({ where: { id: paymentId } })
+
+    // Find the account transaction created by recordPayment (matched by description + date + amount).
+    // We delete it and reverse the balance in the same atomic operation.
+    const linkedTx = debt.accountId
+      ? await prisma.transaction.findFirst({
+          where: {
+            accountId: debt.accountId,
+            description: `Payment: ${debt.name}`,
+            date: payment.date,
+          },
+        })
+      : null
+
+    await prisma.$transaction([
+      prisma.debtPayment.delete({ where: { id: paymentId } }),
+      prisma.debt.update({
+        where: { id: debt.id },
+        data: { outstanding: restored, status: restored > 0 ? 'ACTIVE' : 'PAID' },
+      }),
+      ...(linkedTx ? [
+        prisma.transaction.delete({ where: { id: linkedTx.id } }),
+        prisma.account.update({
+          where: { id: debt.accountId! },
+          data: { balance: { decrement: Number(linkedTx.amount) } },
+        }),
+      ] : []),
+    ])
+
     return serialize(await prisma.debt.findUniqueOrThrow({ where: { id: debt.id }, include: debtInclude }))
   })
 
