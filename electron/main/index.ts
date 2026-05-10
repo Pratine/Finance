@@ -228,6 +228,11 @@ async function checkNotifications() {
   }
 }
 
+app.on('second-instance', () => {
+  const win = BrowserWindow.getAllWindows()[0]
+  if (win) { if (win.isMinimized()) win.restore(); win.focus() }
+})
+
 app.whenReady().then(() => {
   runMigrations()
   setupIpcHandlers(ipcMain)
