@@ -102,7 +102,7 @@ function CategoryPill({
             >
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color ?? '#64748b' }} />
               {c.name}
-              <span className="ml-auto text-slate-300 dark:text-slate-600">{c.type === 'INCOME' ? 'â†‘' : 'â†“'}</span>
+              <span className="ml-auto text-slate-300 dark:text-slate-600">{c.type === 'INCOME' ? '↑' : '↓'}</span>
             </button>
           ))}
         </div>
@@ -830,7 +830,7 @@ export default function TransactionsPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {filtered.length} of {total} transaction{total !== 1 ? 's' : ''} Â·{' '}
             <span className="text-emerald-600">+{fmt(String(totalIn))}</span>
-            {' '}<span className="text-red-500">âˆ’{fmt(String(totalOut))}</span>
+            {' '}<span className="text-red-500">−{fmt(String(totalOut))}</span>
             {' '}<span className="text-slate-600 dark:text-slate-400">net {fmt(String(totalIn - totalOut))}</span>
           </p>
         </div>
@@ -938,7 +938,7 @@ export default function TransactionsPage() {
           onChange={e => setFrom(e.target.value)}
           className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100"
         />
-        <span className="text-slate-400 dark:text-slate-500 text-sm">â†’</span>
+        <span className="text-slate-400 dark:text-slate-500 text-sm">→</span>
         <input
           type="date"
           value={to}
@@ -1003,7 +1003,7 @@ export default function TransactionsPage() {
                       <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{fmtDateLong(item.date)}</p>
                       <p className="text-xs text-slate-400 flex gap-2">
                         {item.creditSum > 0 && <span className="text-emerald-500">+{fmt(String(item.creditSum))}</span>}
-                        {item.debitSum  > 0 && <span className="text-red-400">âˆ’{fmt(String(item.debitSum))}</span>}
+                        {item.debitSum  > 0 && <span className="text-red-400">−{fmt(String(item.debitSum))}</span>}
                       </p>
                     </div>
                   ) : (
@@ -1051,7 +1051,7 @@ export default function TransactionsPage() {
                         </div>
 
                         <p className={`text-sm font-semibold tabular-nums shrink-0 ${item.tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-red-500'}`}>
-                          {item.tx.type === 'CREDIT' ? '+' : 'âˆ’'}{fmt(String(Math.abs(parseFloat(item.tx.amount))))}
+                          {item.tx.type === 'CREDIT' ? '+' : '−'}{fmt(String(Math.abs(parseFloat(item.tx.amount))))}
                         </p>
 
                         <button

@@ -351,7 +351,7 @@ export default function InvestmentsPage() {
               const fmt = (d: string) => { const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}` }
               return first === last
                 ? `${fmt(first)} â€” refresh prices to build history`
-                : `${fmt(first)} â†’ ${fmt(last)}`
+                : `${fmt(first)} → ${fmt(last)}`
             })()}
           </p>
           <ResponsiveContainer width="100%" height={180}>
@@ -1386,7 +1386,7 @@ function SimulatorPanel() {
                   { label: 'Capital gains', value: fmt(result.totalGains), color: 'text-emerald-600' },
                   { label: 'Total dividends', value: fmt(result.totalDividends), color: 'text-emerald-600' },
                   { label: 'Grand total', value: fmt(result.grandTotal), color: 'text-emerald-700 font-semibold' },
-                  { label: 'Multiple on invested', value: `${(result.grandTotal / result.totalInvested).toFixed(2)}Ã—`, color: 'text-slate-700 dark:text-slate-300' },
+                  { label: 'Multiple on invested', value: `${(result.grandTotal / result.totalInvested).toFixed(2)}×`, color: 'text-slate-700 dark:text-slate-300' },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="bg-slate-50 dark:bg-slate-900 rounded-xl px-4 py-3">
                     <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">{label}</p>

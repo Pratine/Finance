@@ -158,7 +158,7 @@ export default function RecurringBillsPage() {
       const updated = await window.api.updateBill(bill.id, { isActive: !bill.isActive })
       setBills(prev => prev.map(b => b.id === updated.id ? updated : b))
     } catch (e: any) {
-      setError(e?.message ?? ‘Failed to update bill’)
+      setError(e?.message ?? 'Failed to update bill')
     }
   }
 
@@ -170,7 +170,7 @@ export default function RecurringBillsPage() {
       setDeleteTarget(null)
     } catch (e: any) {
       setDeleteTarget(null)
-      setError(e?.message ?? ‘Failed to delete bill’)
+      setError(e?.message ?? 'Failed to delete bill')
     }
   }
 
@@ -251,7 +251,7 @@ export default function RecurringBillsPage() {
                           </span>
                         )}
                         {bill.account && (
-                          <span className="text-slate-300 dark:text-slate-600">â†’ {bill.account.name}</span>
+                          <span className="text-slate-300 dark:text-slate-600">→ {bill.account.name}</span>
                         )}
                       </p>
                     )

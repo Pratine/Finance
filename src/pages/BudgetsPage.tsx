@@ -263,7 +263,7 @@ export default function BudgetsPage() {
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-center">
             <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">{past ? 'Surplus' : 'Remaining'}</p>
             <p className={`text-lg font-semibold ${totalSurplus >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-              {totalSurplus >= 0 ? '' : 'âˆ’'}{fmt(Math.abs(totalSurplus))}
+              {totalSurplus >= 0 ? '' : '−'}{fmt(Math.abs(totalSurplus))}
             </p>
           </div>
         </div>
@@ -350,7 +350,7 @@ export default function BudgetsPage() {
                 {/* Recurring bills linked to this budget */}
                 {(billsByCategory.get(budget.categoryId) ?? []).map(bill => (
                   <div key={bill.id} className="flex items-center justify-between mt-1.5 text-xs text-slate-400 dark:text-slate-500">
-                    <span>â†» {bill.name} ({FREQUENCY_LABELS[bill.frequency as keyof typeof FREQUENCY_LABELS]})</span>
+                    <span>↻ {bill.name} ({FREQUENCY_LABELS[bill.frequency as keyof typeof FREQUENCY_LABELS]})</span>
                     <span>{fmt(parseFloat(bill.amount))}</span>
                   </div>
                 ))}
@@ -414,7 +414,7 @@ export default function BudgetsPage() {
                         <span className="text-xs text-slate-400 dark:text-slate-500">
                           avg {fmt(avgActual)}
                           {timesOver > 0 && (
-                            <span className="text-red-400 ml-2">{timesOver}Ã— over</span>
+                            <span className="text-red-400 ml-2">{timesOver}× over</span>
                           )}
                         </span>
                         {isExpanded ? <ChevronUp size={13} className="text-slate-400 shrink-0" /> : <ChevronDown size={13} className="text-slate-400 shrink-0" />}

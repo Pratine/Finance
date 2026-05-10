@@ -556,7 +556,7 @@ export default function DashboardPage() {
                 </span>
               )}
               <p className={`text-xs font-semibold shrink-0 ${t.type === 'CREDIT' ? 'text-emerald-600' : 'text-red-500'}`}>
-                {t.type === 'CREDIT' ? '+' : 'âˆ’'}{fmt(Math.abs(parseFloat(t.amount)))}
+                {t.type === 'CREDIT' ? '+' : '−'}{fmt(Math.abs(parseFloat(t.amount)))}
               </p>
             </div>
           ))}

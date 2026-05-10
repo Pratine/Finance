@@ -190,7 +190,7 @@ export default function ReportsPage() {
             <div className="flex items-center gap-1.5">
               <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
                 className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
-              <span className="text-slate-400 text-xs">â†’</span>
+              <span className="text-slate-400 text-xs">→</span>
               <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
                 className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>

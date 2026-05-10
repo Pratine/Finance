@@ -259,7 +259,7 @@ export default function RecurringIncomePage() {
                   </div>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-2">
                     <span>{FREQUENCY_LABELS[item.frequency]} Â· next {fmtDate(item.nextExpectedDate)}</span>
-                    {item.account && <span className="text-slate-300 dark:text-slate-600">â†’ {item.account.name}</span>}
+                    {item.account && <span className="text-slate-300 dark:text-slate-600">→ {item.account.name}</span>}
                   </p>
                 </div>
 

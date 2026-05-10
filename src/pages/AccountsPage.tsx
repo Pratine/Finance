@@ -455,7 +455,7 @@ export default function AccountsPage() {
                         <span className="shrink-0">{new Date(c.createdAt).toLocaleDateString('pt-PT')}</span>
                         <span className="flex-1 truncate text-slate-400 dark:text-slate-500 italic">{c.note ?? 'â€”'}</span>
                         <span className="shrink-0 font-mono">
-                          {parseFloat(c.oldBalance).toFixed(2)} â†’ <span className="text-slate-700 dark:text-slate-300">{parseFloat(c.newBalance).toFixed(2)}</span>
+                          {parseFloat(c.oldBalance).toFixed(2)} → <span className="text-slate-700 dark:text-slate-300">{parseFloat(c.newBalance).toFixed(2)}</span>
                         </span>
                       </div>
                     ))}

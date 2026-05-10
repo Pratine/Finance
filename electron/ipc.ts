@@ -530,7 +530,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       include: { investment: { select: { name: true, typeId: true } } },
       orderBy: { recordedAt: 'asc' },
     })
-    // Group by date â†' sum all investment values = total portfolio value
+    // Group by date → sum all investment values = total portfolio value
     const byDate = new Map<string, number>()
     for (const h of history) {
       const date = h.recordedAt.toISOString().slice(0, 10)
