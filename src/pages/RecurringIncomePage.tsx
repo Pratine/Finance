@@ -173,18 +173,34 @@ export default function RecurringIncomePage() {
   }
 
   async function handleMarkReceived(item: RecurringIncome, actualAmount: number) {
-    await window.api.markIncomeReceived(item.id, actualAmount)
-    await load()
-    setReceivingItem(null)
+    try {
+      await window.api.markIncomeReceived(item.id, actualAmount)
+      setReceivingItem(null)
+      await load()
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to mark as received')
+    }
   }
 
   async function handleToggle(item: RecurringIncome) {
-    await window.api.updateIncome(item.id, { isActive: !item.isActive }); await load()
+    try {
+      const updated = await window.api.updateIncome(item.id, { isActive: !item.isActive })
+      setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to update income')
+    }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return
-    await window.api.deleteIncome(deleteTarget.id); setDeleteTarget(null); await load()
+    try {
+      await window.api.deleteIncome(deleteTarget.id)
+      setItems(prev => prev.filter(i => i.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch (e: any) {
+      setDeleteTarget(null)
+      setError(e?.message ?? 'Failed to delete income')
+    }
   }
 
   const active   = items.filter(i => i.isActive)
