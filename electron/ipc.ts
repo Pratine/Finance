@@ -511,8 +511,11 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         }
       }
     }
+    if (inv.shares === null) {
+      throw new Error(`${inv.ticker}: shares not set — add a buy lot before refreshing the price`)
+    }
     const priceInEUR = result.price * rate
-    const shares = Number(inv.shares ?? 1)
+    const shares = Number(inv.shares)
     const newValue = priceInEUR * shares
     await savePriceSnapshot(id, priceInEUR, shares)
     return serialize(await prisma.investment.update({
