@@ -256,7 +256,7 @@ model Debt {
   endDate         DateTime?
   status          String   @default("ACTIVE") // ACTIVE | PAID | WRITTEN_OFF
   accountId       Int?
-  account         Account? @relation(fields: [accountId], references: [id])
+  account         Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
