@@ -557,10 +557,10 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   ipcMain.handle('investments:refreshPrice', async (_event, id: number) => {
     const inv = await prisma.investment.findUniqueOrThrow({ where: { id } })
     if (!inv.ticker) throw new Error('No ticker symbol set for this investment')
-    const result = await fetchPrice(inv.ticker)
     if (inv.shares === null) {
       throw new Error(`${inv.ticker}: shares not set — add a buy lot before refreshing the price`)
     }
+    const result = await fetchPrice(inv.ticker)
 
     // Resolve exchange rate before opening the transaction (network call).
     let rate: number
