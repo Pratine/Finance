@@ -173,25 +173,29 @@ export default function SavingsPage() {
   const [expandedChartId, setExpandedChartId] = useState<number | null>(null)
 
   async function load() {
-    const [g, accounts] = await Promise.all([
-      window.api.listSavings(),
-      window.api.listAccounts(),
-    ])
-    setGoals(g)
-    // Only savings-type accounts that don't already have a linked goal
-    const linkedIds = new Set(g.map(goal => goal.accountId).filter(Boolean))
-    setSavingsAccounts(
-      accounts.filter(a =>
-        a.type.name.toLowerCase() === 'savings' && !linkedIds.has(a.id)
+    try {
+      const [g, accounts] = await Promise.all([
+        window.api.listSavings(),
+        window.api.listAccounts(),
+      ])
+      setGoals(g)
+      // Only savings-type accounts that don't already have a linked goal
+      const linkedIds = new Set(g.map(goal => goal.accountId).filter(Boolean))
+      setSavingsAccounts(
+        accounts.filter(a =>
+          a.type.name.toLowerCase() === 'savings' && !linkedIds.has(a.id)
+        )
       )
-    )
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load savings data')
+    }
   }
 
   useEffect(() => {
     // sync runs once on mount: auto-creates goals for savings accounts and
     // applies any elapsed interest. Kept separate from load() so that
     // subsequent refreshes (after create/update) don't re-trigger it.
-    window.api.syncSavings().then(load)
+    window.api.syncSavings().then(load).catch(() => load())
   }, [])
 
   function openCreate() {
