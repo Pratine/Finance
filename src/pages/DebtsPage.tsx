@@ -1,17 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Plus, Trash2, X, ChevronDown, ChevronUp, CreditCard, HandCoins } from 'lucide-react'
 import { fmtDate } from '../utils/formatDate'
+import { calcPctPaid, calcPaymentSplit, calcNetDebt } from '../utils/debtCalcs'
 
 const FREQUENCIES = ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'] as const
 
 function fmt(n: number | string) {
   return Number(n).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
-}
-
-function pct(outstanding: string, principal: string) {
-  const p = Number(principal)
-  if (p === 0) return 100
-  return Math.round(((p - Number(outstanding)) / p) * 100)
 }
 
 // â”€â”€â”€ Form state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
