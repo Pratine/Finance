@@ -396,24 +396,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   // Must be called inside a $transaction so it sees the committed lot state.
   async function syncInvestmentTotals(investmentId: number, tx: Prisma.TransactionClient) {
     const lots = await tx.investmentLot.findMany({ where: { investmentId } })
-    // When all lots are gone reset to zero — no early return, or deleting the last
-    // lot leaves the investment with stale shares/amountIn.
-    if (lots.length === 0) {
-      await tx.investment.update({ where: { id: investmentId }, data: { shares: 0, amountIn: 0 } })
-      return
-    }
-    const buys  = lots.filter(l => l.type === 'BUY')
-    const sells = lots.filter(l => l.type === 'SELL')
-    const totalBuyShares  = buys.reduce((s, l) => s + Number(l.shares), 0)
-    const totalSellShares = sells.reduce((s, l) => s + Number(l.shares), 0)
-    const totalShares = Math.max(0, totalBuyShares - totalSellShares)
-    const totalBuyCost = buys.reduce((s, l) => s + Number(l.totalCost), 0)
-    const avgBuyPrice = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
-    const remainingCost = Math.round(totalShares * avgBuyPrice * 100) / 100
-    await tx.investment.update({
-      where: { id: investmentId },
-      data: { shares: totalShares, amountIn: remainingCost },
-    })
+    const { shares, amountIn } = calcInvestmentTotals(lots)
+    await tx.investment.update({ where: { id: investmentId }, data: { shares, amountIn } })
   }
 
   ipcMain.handle('lots:list', async (_event, investmentId: number) => {
