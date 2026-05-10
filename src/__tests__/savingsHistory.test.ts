@@ -51,11 +51,11 @@ describe('buildMonthlySavingsHistory', () => {
     expect(feb.amount).toBe(100)
   })
 
-  it('always ends with the current month', () => {
+  it('always ends with the current UTC month', () => {
     const result = buildMonthlySavingsHistory([pt('2025-01-01', 1000)], 2000)
     const last = result[result.length - 1]
     const now = new Date()
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
     expect(last.date.startsWith(currentMonth)).toBe(true)
   })
 })
