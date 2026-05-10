@@ -129,13 +129,13 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
           )}
 
           {results.map((t, i) => {
-            const account = accounts.find(a => a.id === t.accountId)
+            const account = accountMap.get(t.accountId)
             const isDebit = t.type === 'DEBIT'
             const isActive = i === activeIdx
             return (
               <button
                 key={t.id}
-                onClick={() => openTransaction(t)}
+                onClick={() => { navigate(`/transactions?q=${encodeURIComponent(query.trim() || t.description)}`); onClose() }}
                 onMouseEnter={() => setActiveIdx(i)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isActive ? 'bg-slate-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700'} border-b border-slate-50 dark:border-slate-800 last:border-0`}
               >
