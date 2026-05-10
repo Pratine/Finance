@@ -18,26 +18,21 @@ import { prisma } from '../db'
 import { startScheduler, stopScheduler } from '../services/priceScheduler'
 import { loadAppSettings } from '../services/appSettings'
 
-// Runs all pending Prisma migrations before the app starts.
-// Uses `prisma migrate deploy` which is safe to run repeatedly — it only applies new migrations.
-// The prisma CLI is a production dependency so it is bundled with the packaged app.
+// Runs pending Prisma migrations. Only runs in dev — in production the database
+// is already up to date (migrations are applied by the developer before releasing).
+// Using process.execPath (Electron binary) to run the CLI caused infinite spawn loops
+// because Electron re-initialises the app when called with a script argument.
 function runMigrations() {
+  if (app.isPackaged) return
   try {
-    const appPath = app.getAppPath()
-    // With asar:true, node_modules that are asarUnpacked live at app.asar.unpacked/.
-    // With asar:false (dev or asar disabled), they live directly inside appPath.
-    const unpackedBase = app.isPackaged
-      ? appPath.replace('app.asar', 'app.asar.unpacked')
-      : appPath
-    // Run the prisma CLI via the bundled Node runtime so it works inside an asar.
-    const prismaCli = path.join(unpackedBase, 'node_modules', 'prisma', 'build', 'index.js')
-    execFileSync(process.execPath, [prismaCli, 'migrate', 'deploy'], {
+    const base = app.getAppPath()
+    const prismaBin = path.join(base, 'node_modules', '.bin', process.platform === 'win32' ? 'prisma.cmd' : 'prisma')
+    execFileSync(prismaBin, ['migrate', 'deploy'], {
       env: { ...process.env },
-      cwd: app.isPackaged ? unpackedBase : appPath,
+      cwd: base,
       stdio: 'pipe',
     })
   } catch (e) {
-    // Log but don't crash — the DB might already be up to date
     console.error('Migration error:', e)
   }
 }
