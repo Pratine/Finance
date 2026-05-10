@@ -551,9 +551,11 @@ function InvestmentsTab() {
       await window.api.saveAppSettings({ priceRefreshInterval: value })
       setInterval_(value)
       setMsg('Saved.')
+    } catch (e: any) {
+      setMsg(`Error: ${e?.message ?? 'Failed to save'}`)
     } finally {
       setSaving(false)
-      setTimeout(() => setMsg(null), 2000)
+      setTimeout(() => setMsg(null), 3000)
     }
   }
 
