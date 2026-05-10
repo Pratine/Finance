@@ -159,14 +159,14 @@ export default function RecurringIncomePage() {
     setSaving(true); setError(null)
     try {
       const payload = {
-        name: form.name.trim(), amount: parseFloat(form.amount), frequency: form.frequency,
+        name: form.name.trim(), amount: String(parseFloat(form.amount)), frequency: form.frequency,
         nextExpectedDate: new Date(form.nextExpectedDate).toISOString(),
         categoryId: form.categoryId !== '' ? Number(form.categoryId) : null,
         accountId: form.accountId !== '' ? Number(form.accountId) : null,
         notes: form.notes.trim() || null, isActive: form.isActive,
       }
       if (editingId !== null) await window.api.updateIncome(editingId, payload)
-      else await window.api.createIncome(payload as any)
+      else await window.api.createIncome(payload)
       closeForm(); await load()
     } catch (e: any) { setError(e?.message ?? 'Something went wrong') }
     finally { setSaving(false) }
