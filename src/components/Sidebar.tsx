@@ -66,7 +66,7 @@ export default function Sidebar() {
           >
             <Search size={15} />
             <span className="flex-1 text-left">Search</span>
-            <kbd className="text-xs bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">⌃K</kbd>
+            <kbd className="text-xs bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">{SEARCH_KBD}</kbd>
           </button>
         </div>
 
