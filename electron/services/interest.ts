@@ -1,6 +1,5 @@
 // Pure interest calculation logic — extracted so it can be unit tested independently.
 import type { InterestType } from '../domainTypes'
-export type { InterestType }
 
 export interface InterestConfig {
   interestType: InterestType
