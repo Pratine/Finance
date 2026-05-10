@@ -443,53 +443,46 @@ export default function DashboardPage() {
       </div>
 
       {/* Budgets */}
-      {budgets.length > 0 && (() => {
-        const spending = calcSpendingByCategory(transactions, month, year)
-        const totalBudgeted = budgets.reduce((s, b) => s + parseFloat(b.amount), 0)
-        const totalSpent = budgets.reduce((s, b) => s + (spending.get(b.categoryId) ?? 0), 0)
-        const overCount = budgets.filter(b => (spending.get(b.categoryId) ?? 0) > parseFloat(b.amount)).length
-
-        return (
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Budgets</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                  {fmt(totalSpent)} of {fmt(totalBudgeted)}
-                  {overCount > 0 && <span className="text-red-500 ml-1">Â· {overCount} over budget</span>}
-                </p>
-              </div>
-              <button onClick={() => navigate('/budgets')} className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">View all</button>
+      {budgets.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Budgets</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                {fmt(totalSpent)} of {fmt(totalBudgeted)}
+                {overCount > 0 && <span className="text-red-500 ml-1">· {overCount} over budget</span>}
+              </p>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {budgets.slice(0, 6).map(budget => {
-                const spent = spending.get(budget.categoryId) ?? 0
-                const status = calcBudgetStatus(budget.amount, spent)
-                const barPct = Math.min(status.pct, 100)
-                const barColor = status.over ? 'bg-red-500' : status.pct >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
-
-                return (
-                  <div key={budget.id}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: budget.category.color ?? '#64748b' }} />
-                        <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{budget.category.name}</p>
-                      </div>
-                      <p className={`text-xs shrink-0 ml-2 ${status.over ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
-                        {fmt(spent)} / {fmt(parseFloat(budget.amount))}
-                      </p>
-                    </div>
-                    <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${barColor}`} style={{ width: `${barPct}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <button onClick={() => navigate('/budgets')} className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">View all</button>
           </div>
-        )
-      })()}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {budgets.slice(0, 6).map(budget => {
+              const spent = spendingByCategory.get(budget.categoryId) ?? 0
+              const status = calcBudgetStatus(budget.amount, spent)
+              const barPct = Math.min(status.pct, 100)
+              const barColor = status.over ? 'bg-red-500' : status.pct >= 80 ? 'bg-amber-400' : 'bg-emerald-500'
+
+              return (
+                <div key={budget.id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: budget.category.color ?? '#64748b' }} />
+                      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">{budget.category.name}</p>
+                    </div>
+                    <p className={`text-xs shrink-0 ml-2 ${status.over ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
+                      {fmt(spent)} / {fmt(parseFloat(budget.amount))}
+                    </p>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${barPct}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Spending by category pie chart */}
       {(() => {
