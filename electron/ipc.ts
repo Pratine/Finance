@@ -1220,7 +1220,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   }) => {
     const debt = await prisma.debt.findUniqueOrThrow({ where: { id: data.debtId } })
     const newOutstanding = Math.max(0, Number(debt.outstanding) - data.principal)
-    const newStatus = newOutstanding <= 0 ? 'PAID' : 'ACTIVE'
+    const newStatus: DebtStatus = newOutstanding <= 0 ? 'PAID' : 'ACTIVE'
 
     // Calculate next payment date
     let nextDate: Date | null = null
