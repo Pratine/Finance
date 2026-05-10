@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { fmtDate, fmtDateLong } from '../utils/formatDate'
 import AccountIcon from '../components/AccountIcon'
 import { applyFilters } from '../utils/transactionFilters'
+import { buildVItems, type VItem } from '../utils/transactionGroups'
 
 const PAGE_SIZE = 200
 
