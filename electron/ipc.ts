@@ -73,30 +73,48 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return { exported: txns.length }
   })
 
-  // Full database backup â€” all tables serialised to a single JSON file.
+  // Full database backup — every table serialised to a single JSON file.
   ipcMain.handle('export:backup', async (_event, filePath: string) => {
-    const [accounts, transactions, categories, budgets, savingsGoals,
-           investments, recurringBills, accountTypes, banks, investmentTypes,
-           brokers, categoryRules] = await Promise.all([
-      prisma.account.findMany({ include: { type: true, bank: true } }),
-      prisma.transaction.findMany({ include: { category: true } }),
-      prisma.category.findMany(),
-      prisma.budget.findMany({ include: { category: true } }),
-      prisma.savingsGoal.findMany(),
-      prisma.investment.findMany({ include: { type: true, broker: true } }),
-      prisma.recurringBill.findMany({ include: { category: true } }),
+    const [
+      accountTypes, banks, brokers, investmentTypes, categories, categoryRules,
+      accounts, tags, budgets, savingsGoals, savingsSnapshots,
+      investments, investmentLots, priceHistory, exchangeRates,
+      recurringBills, recurringIncome, transactions, transactionTags,
+      transactionSplits, balanceCorrections, debts, debtPayments, importHistory,
+    ] = await Promise.all([
       prisma.accountType.findMany(),
       prisma.bank.findMany(),
-      prisma.investmentType.findMany(),
       prisma.broker.findMany(),
-      prisma.categoryRule.findMany({ include: { category: true } }),
+      prisma.investmentType.findMany(),
+      prisma.category.findMany(),
+      prisma.categoryRule.findMany(),
+      prisma.account.findMany(),
+      prisma.tag.findMany(),
+      prisma.budget.findMany(),
+      prisma.savingsGoal.findMany(),
+      prisma.savingsSnapshot.findMany(),
+      prisma.investment.findMany(),
+      prisma.investmentLot.findMany(),
+      prisma.priceHistory.findMany(),
+      prisma.exchangeRate.findMany(),
+      prisma.recurringBill.findMany(),
+      prisma.recurringIncome.findMany(),
+      prisma.transaction.findMany(),
+      prisma.transactionTag.findMany(),
+      prisma.transactionSplit.findMany(),
+      prisma.balanceCorrection.findMany(),
+      prisma.debt.findMany(),
+      prisma.debtPayment.findMany(),
+      prisma.importHistory.findMany(),
     ])
     const backup = serialize({
       exportedAt: new Date().toISOString(),
-      version: 1,
-      accounts, transactions, categories, budgets, savingsGoals,
-      investments, recurringBills, accountTypes, banks, investmentTypes,
-      brokers, categoryRules,
+      version: 2,
+      accountTypes, banks, brokers, investmentTypes, categories, categoryRules,
+      accounts, tags, budgets, savingsGoals, savingsSnapshots,
+      investments, investmentLots, priceHistory, exchangeRates,
+      recurringBills, recurringIncome, transactions, transactionTags,
+      transactionSplits, balanceCorrections, debts, debtPayments, importHistory,
     })
     fs.writeFileSync(filePath, JSON.stringify(backup, null, 2), 'utf8')
     return { exported: transactions.length }
