@@ -772,9 +772,18 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   // â”€â”€ Savings goals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const savingsInclude = { account: { include: { type: true, bank: true } } }
 
+  // Pure read — just returns the current state of savings goals.
   ipcMain.handle('savings:list', async () => {
+    return serialize(await prisma.savingsGoal.findMany({
+      include: savingsInclude,
+      orderBy: { createdAt: 'asc' },
+    }))
+  })
+
+  // Separate from list: auto-creates goals for savings accounts and applies
+  // elapsed interest. Called once on page mount, not on every list refresh.
+  ipcMain.handle('savings:sync', async () => {
     // Auto-create a savings goal for every savings-type account that doesn't have one yet.
-    // upsert on accountId ensures this is idempotent even if called concurrently.
     const savingsAccounts = await prisma.account.findMany({
       where: { type: { name: { equals: 'Savings' } } },
     })
@@ -786,7 +795,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       })
     }
 
-    // Auto-apply elapsed interest periods for ALL goals with interest configured.
+    // Apply elapsed interest periods for goals that have interest configured.
     const interestGoals = await prisma.savingsGoal.findMany({
       where: { interestType: { not: null }, interestFrequencyDays: { not: null } },
     })
@@ -816,18 +825,10 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         },
       })
       if (goal.accountId) {
-        await prisma.account.update({
-          where: { id: goal.accountId },
-          data: { balance: newAmount },
-        })
+        await prisma.account.update({ where: { id: goal.accountId }, data: { balance: newAmount } })
       }
       await recordSavingsSnapshot(goal.id, newAmount, 'interest')
     }
-
-    return serialize(await prisma.savingsGoal.findMany({
-      include: savingsInclude,
-      orderBy: { createdAt: 'asc' },
-    }))
   })
 
   async function recordSavingsSnapshot(goalId: number, amount: number, note: string) {
