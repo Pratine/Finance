@@ -1249,7 +1249,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         where: { id: data.debtId },
         data: {
           outstanding: newOutstanding,
-          status: newStatus as any,
+          status: newStatus,
           nextPaymentDate: nextDate,
         },
       }),
