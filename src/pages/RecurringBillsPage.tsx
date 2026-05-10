@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useShortcutAction } from '../context/ShortcutContext'
 import { Plus, Pencil, Trash2, X, CheckCircle, PauseCircle, PlayCircle } from 'lucide-react'
 import AccountIcon from '../components/AccountIcon'
