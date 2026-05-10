@@ -1235,24 +1235,24 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
     // Create a transaction on the linked account if set
     if (debt.accountId && data.amount > 0) {
-      const account = await prisma.account.findUniqueOrThrow({ where: { id: debt.accountId } })
-      // For a LOAN (I owe), paying reduces my account balance (DEBIT)
-      // For a RECEIVABLE (someone owes me), receiving increases my balance (CREDIT)
+      // LOAN (I owe) → paying out is a DEBIT; RECEIVABLE (owed to me) → receiving is a CREDIT
       const txType = debt.type === 'LOAN' ? 'DEBIT' : 'CREDIT'
       const txAmount = txType === 'DEBIT' ? -data.amount : data.amount
-      await prisma.transaction.create({
-        data: {
-          accountId: debt.accountId,
-          date: new Date(data.date),
-          description: `Payment: ${debt.name}`,
-          amount: txAmount,
-          type: txType,
-        },
-      })
-      await prisma.account.update({
-        where: { id: debt.accountId },
-        data: { balance: Number(account.balance) + txAmount },
-      })
+      await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            accountId: debt.accountId,
+            date: new Date(data.date),
+            description: `Payment: ${debt.name}`,
+            amount: txAmount,
+            type: txType,
+          },
+        }),
+        prisma.account.update({
+          where: { id: debt.accountId },
+          data: { balance: { increment: txAmount } },
+        }),
+      ])
     }
 
     return serialize(await prisma.debt.findUniqueOrThrow({ where: { id: data.debtId }, include: debtInclude }))
