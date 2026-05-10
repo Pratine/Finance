@@ -46,8 +46,8 @@ export async function fetchPrice(ticker: string): Promise<PriceResult> {
   return {
     ticker: symbol,
     price,
-    currency: (meta.currency ?? 'EUR') as string,
-    name: (meta.longName ?? meta.shortName ?? symbol) as string,
+    currency: meta.currency ?? 'EUR',
+    name: meta.longName ?? meta.shortName ?? symbol,
   }
 }
 
