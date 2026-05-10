@@ -495,7 +495,7 @@ export default function DebtsPage() {
   const active = debts.filter(d => d.status === 'ACTIVE')
   const totalOwed = active.filter(d => d.type === 'LOAN').reduce((s, d) => s + Number(d.outstanding), 0)
   const totalOwedToMe = active.filter(d => d.type === 'RECEIVABLE').reduce((s, d) => s + Number(d.outstanding), 0)
-  const netDebt = totalOwed - totalOwedToMe
+  const netDebt = calcNetDebt(totalOwed, totalOwedToMe)
 
   const filtered = debts.filter(d => filter === 'ALL' || d.type === filter)
 
