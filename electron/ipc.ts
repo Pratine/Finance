@@ -880,13 +880,23 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const savingsAccounts = await prisma.account.findMany({
       where: { type: { name: { equals: 'Savings' } } },
     })
-    for (const acc of savingsAccounts) {
-      await prisma.savingsGoal.upsert({
-        where: { accountId: acc.id },
-        create: { name: acc.name, accountId: acc.id, targetAmount: 0, currentAmount: Number(acc.balance) },
-        update: {},
+    await Promise.all(savingsAccounts.map(async (acc) => {
+      const wasCreated = await prisma.$transaction(async (tx) => {
+        const existing = await tx.savingsGoal.findUnique({ where: { accountId: acc.id } })
+        if (existing) return false
+        const currentAmount = Number(acc.balance)
+        const goal = await tx.savingsGoal.create({
+          data: { name: acc.name, accountId: acc.id, targetAmount: 0, currentAmount },
+        })
+        if (currentAmount > 0) {
+          await tx.savingsSnapshot.create({
+            data: { goalId: goal.id, amount: currentAmount, note: 'initial' },
+          })
+        }
+        return true
       })
-    }
+      return wasCreated
+    }))
 
     // Apply elapsed interest periods for goals that have interest configured.
     const interestGoals = await prisma.savingsGoal.findMany({
