@@ -18,17 +18,16 @@ import { prisma } from '../db'
 import { startScheduler, stopScheduler } from '../services/priceScheduler'
 import { loadAppSettings } from '../services/appSettings'
 
-// Runs pending Prisma migrations. Only runs in dev — in production the database
-// is already up to date (migrations are applied by the developer before releasing).
-// Using process.execPath (Electron binary) to run the CLI caused infinite spawn loops
-// because Electron re-initialises the app when called with a script argument.
+// Runs pending Prisma migrations at startup — safe to call repeatedly.
+// Uses ELECTRON_RUN_AS_NODE=1 so the Electron binary behaves as plain Node.js
+// when spawned as a child, avoiding the infinite re-launch loop that would
+// occur if we called process.execPath without that flag.
 function runMigrations() {
-  if (app.isPackaged) return
   try {
     const base = app.getAppPath()
-    const prismaBin = path.join(base, 'node_modules', '.bin', process.platform === 'win32' ? 'prisma.cmd' : 'prisma')
-    execFileSync(prismaBin, ['migrate', 'deploy'], {
-      env: { ...process.env },
+    const prismaCli = path.join(base, 'node_modules', 'prisma', 'build', 'index.js')
+    execFileSync(process.execPath, [prismaCli, 'migrate', 'deploy'], {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
       cwd: base,
       stdio: 'pipe',
     })
