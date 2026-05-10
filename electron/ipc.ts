@@ -441,8 +441,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   ipcMain.handle('lots:delete', async (_event, id: number) => {
-    const lot = await prisma.investmentLot.findUniqueOrThrow({ where: { id } })
     return serialize(await prisma.$transaction(async (tx) => {
+      const lot = await tx.investmentLot.findUniqueOrThrow({ where: { id } })
       await tx.investmentLot.delete({ where: { id } })
       await syncInvestmentTotals(lot.investmentId, tx)
       return lot
