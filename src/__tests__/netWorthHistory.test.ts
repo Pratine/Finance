@@ -56,4 +56,23 @@ describe('buildNetWorthHistory', () => {
     const result = buildNetWorthHistory(txns, history)
     expect(result[0].total).toBeCloseTo(2800)
   })
+
+  it('preserves negative running balances (overdrafts subtract from net worth)', () => {
+    // Regression test: Math.abs was previously applied, turning -500 into +500,
+    // which added overdrafts to net worth instead of subtracting them.
+    const txns = [
+      makeTx({ accountId: 1, runningBalance: '1000', date: '2026-06-01T00:00:00.000Z' }),
+      makeTx({ id: 2, accountId: 2, runningBalance: '-500', date: '2026-06-01T00:00:00.000Z' }),
+    ]
+    const result = buildNetWorthHistory(txns, [])
+    expect(result[0].accounts).toBeCloseTo(500)  // 1000 + (-500) = 500, not 1500
+    expect(result[0].total).toBeCloseTo(500)
+  })
+
+  it('negative running balance alone produces a negative net worth', () => {
+    const txns = [makeTx({ runningBalance: '-2000', date: '2026-06-01T00:00:00.000Z' })]
+    const result = buildNetWorthHistory(txns, [])
+    expect(result[0].accounts).toBeCloseTo(-2000)
+    expect(result[0].total).toBeCloseTo(-2000)
+  })
 })
