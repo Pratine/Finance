@@ -32,8 +32,16 @@ function runMigrations() {
       cwd: base,
       stdio: 'pipe',
     })
-  } catch (e) {
+  } catch (e: any) {
     console.error('Migration error:', e)
+    // Show a visible error in production — a silent failure here means the app
+    // runs against the wrong schema, which can corrupt financial data.
+    if (app.isPackaged) {
+      dialog.showErrorBox(
+        'Database migration failed',
+        `Finance could not update its database schema.\n\n${e?.message ?? e}\n\nThe app may not function correctly. Please reinstall or contact support.`,
+      )
+    }
   }
 }
 
