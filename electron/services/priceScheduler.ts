@@ -21,10 +21,26 @@ export async function savePriceSnapshot(investmentId: number, price: number, sha
   })
 }
 
+// Processes an array of async tasks with at most `limit` running concurrently.
+async function withConcurrencyLimit<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<unknown>,
+): Promise<PromiseSettledResult<unknown>[]> {
+  const results: PromiseSettledResult<unknown>[] = []
+  for (let i = 0; i < items.length; i += limit) {
+    const batch = items.slice(i, i + limit)
+    const batchResults = await Promise.allSettled(batch.map(fn))
+    results.push(...batchResults)
+  }
+  return results
+}
+
+const PRICE_FETCH_CONCURRENCY = 4
+
 export async function refreshAllPrices(): Promise<RefreshResult> {
   const investments = await prisma.investment.findMany({ where: { ticker: { not: null } } })
-  const results = await Promise.allSettled(
-    investments.map(async (inv) => {
+  const results = await withConcurrencyLimit(investments, PRICE_FETCH_CONCURRENCY, async (inv) => {
       const result = await fetchPrice(inv.ticker!)
       // fetchExchangeRate throws on failure — use a cached rate if we have one,
       // otherwise re-throw so this investment is recorded as a failed update.
