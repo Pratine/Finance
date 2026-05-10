@@ -129,7 +129,49 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
     if (!backup.version) throw new Error('Invalid backup file: missing version field.')
 
+    // Mapper helpers — one per model, named so the createMany calls below stay readable.
     const d = (v: string | null | undefined) => v ? new Date(v) : null
+    const icon  = (r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })
+    const mapCategory    = (r: any) => ({ id: r.id, name: r.name, type: r.type, color: r.color, icon: r.icon })
+    const mapCategoryRule = (r: any) => ({ id: r.id, pattern: r.pattern, categoryId: r.categoryId })
+    const mapAccount     = (r: any) => ({ id: r.id, name: r.name, bankId: r.bankId, typeId: r.typeId, accountNumber: r.accountNumber, balance: r.balance, currency: r.currency })
+    const mapTag         = (r: any) => ({ id: r.id, name: r.name, color: r.color })
+    const mapBudget      = (r: any) => ({ id: r.id, categoryId: r.categoryId, amount: r.amount })
+    const mapExRate      = (r: any) => ({ id: r.id, fromCurrency: r.fromCurrency, rate: r.rate })
+    const mapGoal        = (r: any) => ({
+      id: r.id, accountId: r.accountId, name: r.name,
+      targetAmount: r.targetAmount, currentAmount: r.currentAmount,
+      deadline: d(r.deadline), interestType: r.interestType,
+      interestValue: r.interestValue, interestFrequencyDays: r.interestFrequencyDays,
+      lastInterestApplied: d(r.lastInterestApplied),
+      totalInterestEarned: r.totalInterestEarned ?? 0,
+      contributionAmount: r.contributionAmount,
+      contributionFrequencyDays: r.contributionFrequencyDays, notes: r.notes,
+    })
+    const mapSnapshot    = (r: any) => ({ id: r.id, goalId: r.goalId, amount: r.amount, note: r.note, date: new Date(r.date) })
+    const mapInvestment  = (r: any) => ({
+      id: r.id, name: r.name, typeId: r.typeId, brokerId: r.brokerId,
+      amountIn: r.amountIn, currentValue: r.currentValue, currency: r.currency,
+      ticker: r.ticker, isin: r.isin, shares: r.shares,
+      lastPriceFetched: r.lastPriceFetched, priceUpdatedAt: d(r.priceUpdatedAt), notes: r.notes,
+    })
+    const mapLot         = (r: any) => ({ id: r.id, investmentId: r.investmentId, type: r.type, date: new Date(r.date), shares: r.shares, pricePerShare: r.pricePerShare, totalCost: r.totalCost, realizedGain: r.realizedGain, notes: r.notes })
+    const mapPrice       = (r: any) => ({ id: r.id, investmentId: r.investmentId, price: r.price, value: r.value, recordedAt: new Date(r.recordedAt) })
+    const mapBill        = (r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextDueDate: new Date(r.nextDueDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })
+    const mapIncome      = (r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextExpectedDate: new Date(r.nextExpectedDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })
+    const mapTx          = (r: any) => ({ id: r.id, accountId: r.accountId, categoryId: r.categoryId, recurringBillId: r.recurringBillId, date: new Date(r.date), valueDate: d(r.valueDate), description: r.description, amount: r.amount, type: r.type, runningBalance: r.runningBalance, importHash: r.importHash, notes: r.notes })
+    const mapTxTag       = (r: any) => ({ transactionId: r.transactionId, tagId: r.tagId })
+    const mapSplit       = (r: any) => ({ id: r.id, transactionId: r.transactionId, categoryId: r.categoryId, amount: r.amount, notes: r.notes })
+    const mapCorrection  = (r: any) => ({ id: r.id, accountId: r.accountId, oldBalance: r.oldBalance, newBalance: r.newBalance, note: r.note, createdAt: new Date(r.createdAt) })
+    const mapDebt        = (r: any) => ({
+      id: r.id, name: r.name, type: r.type, counterparty: r.counterparty,
+      principal: r.principal, outstanding: r.outstanding, interestRate: r.interestRate,
+      frequency: r.frequency, nextPaymentDate: d(r.nextPaymentDate),
+      startDate: new Date(r.startDate), endDate: d(r.endDate),
+      status: r.status, accountId: r.accountId, notes: r.notes,
+    })
+    const mapPayment     = (r: any) => ({ id: r.id, debtId: r.debtId, date: new Date(r.date), amount: r.amount, principal: r.principal, interest: r.interest, notes: r.notes })
+    const mapImport      = (r: any) => ({ id: r.id, filename: r.filename, format: r.format, accountId: r.accountId, imported: r.imported, skipped: r.skipped, errors: r.errors })
 
     await prisma.$transaction(async (tx) => {
       // Delete every table in reverse FK order
@@ -142,31 +184,30 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       await tx.$executeRaw`DELETE FROM sqlite_sequence`
 
       // Re-insert in FK dependency order
-      const base = (r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })
-      if (backup.accountTypes?.length)    await tx.accountType.createMany({ data: backup.accountTypes.map(base) })
-      if (backup.banks?.length)           await tx.bank.createMany({ data: backup.banks.map(base) })
-      if (backup.brokers?.length)         await tx.broker.createMany({ data: backup.brokers.map(base) })
-      if (backup.investmentTypes?.length) await tx.investmentType.createMany({ data: backup.investmentTypes.map(base) })
-      if (backup.categories?.length)      await tx.category.createMany({ data: backup.categories.map((r: any) => ({ id: r.id, name: r.name, type: r.type, color: r.color, icon: r.icon })) })
-      if (backup.categoryRules?.length)   await tx.categoryRule.createMany({ data: backup.categoryRules.map((r: any) => ({ id: r.id, pattern: r.pattern, categoryId: r.categoryId })) })
-      if (backup.accounts?.length)        await tx.account.createMany({ data: backup.accounts.map((r: any) => ({ id: r.id, name: r.name, bankId: r.bankId, typeId: r.typeId, accountNumber: r.accountNumber, balance: r.balance, currency: r.currency })) })
-      if (backup.tags?.length)            await tx.tag.createMany({ data: backup.tags.map((r: any) => ({ id: r.id, name: r.name, color: r.color })) })
-      if (backup.budgets?.length)         await tx.budget.createMany({ data: backup.budgets.map((r: any) => ({ id: r.id, categoryId: r.categoryId, amount: r.amount })) })
-      if (backup.exchangeRates?.length)   await tx.exchangeRate.createMany({ data: backup.exchangeRates.map((r: any) => ({ id: r.id, fromCurrency: r.fromCurrency, rate: r.rate })) })
-      if (backup.savingsGoals?.length)    await tx.savingsGoal.createMany({ data: backup.savingsGoals.map((r: any) => ({ id: r.id, accountId: r.accountId, name: r.name, targetAmount: r.targetAmount, currentAmount: r.currentAmount, deadline: d(r.deadline), interestType: r.interestType, interestValue: r.interestValue, interestFrequencyDays: r.interestFrequencyDays, lastInterestApplied: d(r.lastInterestApplied), contributionAmount: r.contributionAmount, contributionFrequencyDays: r.contributionFrequencyDays, totalInterestEarned: r.totalInterestEarned ?? 0, notes: r.notes })) })
-      if (backup.savingsSnapshots?.length) await tx.savingsSnapshot.createMany({ data: backup.savingsSnapshots.map((r: any) => ({ id: r.id, goalId: r.goalId, amount: r.amount, note: r.note, date: new Date(r.date) })) })
-      if (backup.investments?.length)     await tx.investment.createMany({ data: backup.investments.map((r: any) => ({ id: r.id, name: r.name, typeId: r.typeId, brokerId: r.brokerId, amountIn: r.amountIn, currentValue: r.currentValue, currency: r.currency, ticker: r.ticker, isin: r.isin, shares: r.shares, lastPriceFetched: r.lastPriceFetched, priceUpdatedAt: d(r.priceUpdatedAt), notes: r.notes })) })
-      if (backup.investmentLots?.length)  await tx.investmentLot.createMany({ data: backup.investmentLots.map((r: any) => ({ id: r.id, investmentId: r.investmentId, type: r.type, date: new Date(r.date), shares: r.shares, pricePerShare: r.pricePerShare, totalCost: r.totalCost, realizedGain: r.realizedGain, notes: r.notes })) })
-      if (backup.priceHistory?.length)    await tx.priceHistory.createMany({ data: backup.priceHistory.map((r: any) => ({ id: r.id, investmentId: r.investmentId, price: r.price, value: r.value, recordedAt: new Date(r.recordedAt) })) })
-      if (backup.recurringBills?.length)  await tx.recurringBill.createMany({ data: backup.recurringBills.map((r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextDueDate: new Date(r.nextDueDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })) })
-      if (backup.recurringIncome?.length) await tx.recurringIncome.createMany({ data: backup.recurringIncome.map((r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextExpectedDate: new Date(r.nextExpectedDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })) })
-      if (backup.transactions?.length)    await tx.transaction.createMany({ data: backup.transactions.map((r: any) => ({ id: r.id, accountId: r.accountId, categoryId: r.categoryId, recurringBillId: r.recurringBillId, date: new Date(r.date), valueDate: d(r.valueDate), description: r.description, amount: r.amount, type: r.type, runningBalance: r.runningBalance, importHash: r.importHash, notes: r.notes })) })
-      if (backup.transactionTags?.length)    await tx.transactionTag.createMany({ data: backup.transactionTags.map((r: any) => ({ transactionId: r.transactionId, tagId: r.tagId })) })
-      if (backup.transactionSplits?.length)  await tx.transactionSplit.createMany({ data: backup.transactionSplits.map((r: any) => ({ id: r.id, transactionId: r.transactionId, categoryId: r.categoryId, amount: r.amount, notes: r.notes })) })
-      if (backup.balanceCorrections?.length) await tx.balanceCorrection.createMany({ data: backup.balanceCorrections.map((r: any) => ({ id: r.id, accountId: r.accountId, oldBalance: r.oldBalance, newBalance: r.newBalance, note: r.note, createdAt: new Date(r.createdAt) })) })
-      if (backup.debts?.length)           await tx.debt.createMany({ data: backup.debts.map((r: any) => ({ id: r.id, name: r.name, type: r.type, counterparty: r.counterparty, principal: r.principal, outstanding: r.outstanding, interestRate: r.interestRate, frequency: r.frequency, nextPaymentDate: d(r.nextPaymentDate), startDate: new Date(r.startDate), endDate: d(r.endDate), status: r.status, accountId: r.accountId, notes: r.notes })) })
-      if (backup.debtPayments?.length)    await tx.debtPayment.createMany({ data: backup.debtPayments.map((r: any) => ({ id: r.id, debtId: r.debtId, date: new Date(r.date), amount: r.amount, principal: r.principal, interest: r.interest, notes: r.notes })) })
-      if (backup.importHistory?.length)   await tx.importHistory.createMany({ data: backup.importHistory.map((r: any) => ({ id: r.id, filename: r.filename, format: r.format, accountId: r.accountId, imported: r.imported, skipped: r.skipped, errors: r.errors })) })
+      if (backup.accountTypes?.length)     await tx.accountType.createMany({ data: backup.accountTypes.map(icon) })
+      if (backup.banks?.length)            await tx.bank.createMany({ data: backup.banks.map(icon) })
+      if (backup.brokers?.length)          await tx.broker.createMany({ data: backup.brokers.map(icon) })
+      if (backup.investmentTypes?.length)  await tx.investmentType.createMany({ data: backup.investmentTypes.map(icon) })
+      if (backup.categories?.length)       await tx.category.createMany({ data: backup.categories.map(mapCategory) })
+      if (backup.categoryRules?.length)    await tx.categoryRule.createMany({ data: backup.categoryRules.map(mapCategoryRule) })
+      if (backup.accounts?.length)         await tx.account.createMany({ data: backup.accounts.map(mapAccount) })
+      if (backup.tags?.length)             await tx.tag.createMany({ data: backup.tags.map(mapTag) })
+      if (backup.budgets?.length)          await tx.budget.createMany({ data: backup.budgets.map(mapBudget) })
+      if (backup.exchangeRates?.length)    await tx.exchangeRate.createMany({ data: backup.exchangeRates.map(mapExRate) })
+      if (backup.savingsGoals?.length)     await tx.savingsGoal.createMany({ data: backup.savingsGoals.map(mapGoal) })
+      if (backup.savingsSnapshots?.length) await tx.savingsSnapshot.createMany({ data: backup.savingsSnapshots.map(mapSnapshot) })
+      if (backup.investments?.length)      await tx.investment.createMany({ data: backup.investments.map(mapInvestment) })
+      if (backup.investmentLots?.length)   await tx.investmentLot.createMany({ data: backup.investmentLots.map(mapLot) })
+      if (backup.priceHistory?.length)     await tx.priceHistory.createMany({ data: backup.priceHistory.map(mapPrice) })
+      if (backup.recurringBills?.length)   await tx.recurringBill.createMany({ data: backup.recurringBills.map(mapBill) })
+      if (backup.recurringIncome?.length)  await tx.recurringIncome.createMany({ data: backup.recurringIncome.map(mapIncome) })
+      if (backup.transactions?.length)     await tx.transaction.createMany({ data: backup.transactions.map(mapTx) })
+      if (backup.transactionTags?.length)  await tx.transactionTag.createMany({ data: backup.transactionTags.map(mapTxTag) })
+      if (backup.transactionSplits?.length) await tx.transactionSplit.createMany({ data: backup.transactionSplits.map(mapSplit) })
+      if (backup.balanceCorrections?.length) await tx.balanceCorrection.createMany({ data: backup.balanceCorrections.map(mapCorrection) })
+      if (backup.debts?.length)            await tx.debt.createMany({ data: backup.debts.map(mapDebt) })
+      if (backup.debtPayments?.length)     await tx.debtPayment.createMany({ data: backup.debtPayments.map(mapPayment) })
+      if (backup.importHistory?.length)    await tx.importHistory.createMany({ data: backup.importHistory.map(mapImport) })
     }, { timeout: 60_000 })
 
     return { transactions: backup.transactions?.length ?? 0 }
