@@ -316,7 +316,7 @@ function ExportTab() {
       )
       if (!filePath) return
       const { exported } = await window.api.exportBackup(filePath)
-      setMsg(`âœ“ Full backup saved (${exported} transactions)`)
+      setMsg(`✓ Full backup saved (${exported} records)`)
     } catch (e: any) {
       setMsg(`Error: ${e?.message ?? 'Backup failed'}`)
     } finally {
