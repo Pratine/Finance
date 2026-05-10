@@ -636,7 +636,7 @@ function AppTab() {
   const unsubRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
-    window.api.getUpdateStatus().then(setStatus)
+    window.api.getUpdateStatus().then(setStatus).catch(() => {})
     unsubRef.current = window.api.onUpdateStatus(setStatus)
     return () => { unsubRef.current?.() }
   }, [])
