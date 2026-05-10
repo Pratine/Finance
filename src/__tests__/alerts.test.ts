@@ -7,7 +7,7 @@ const YEAR  = NOW.getUTCFullYear()
 
 function daysFromNow(n: number): string {
   const d = new Date(NOW)
-  d.setDate(d.getDate() + n)
+  d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString()
 }
 
