@@ -990,23 +990,22 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const base = goal.lastInterestApplied ?? goal.createdAt
     const newLastApplied = new Date(base.getTime() + effectivePeriods * goal.interestFrequencyDays * 86_400_000)
     const earned = newAmount - Number(goal.currentAmount)
-    const updated = await prisma.savingsGoal.update({
-      where: { id },
-      data: {
-        currentAmount: newAmount,
-        lastInterestApplied: newLastApplied,
-        totalInterestEarned: Number(goal.totalInterestEarned) + earned,
-      },
-      include: savingsInclude,
-    })
-    // Keep linked account balance in sync.
-    if (goal.accountId) {
-      await prisma.account.update({
-        where: { id: goal.accountId },
-        data: { balance: newAmount },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.savingsGoal.update({
+        where: { id },
+        data: {
+          currentAmount: newAmount,
+          lastInterestApplied: newLastApplied,
+          totalInterestEarned: Number(goal.totalInterestEarned) + earned,
+        },
+        include: savingsInclude,
       })
-    }
-    await recordSavingsSnapshot(id, newAmount, 'interest')
+      if (goal.accountId) {
+        await tx.account.update({ where: { id: goal.accountId }, data: { balance: newAmount } })
+      }
+      await tx.savingsSnapshot.create({ data: { goalId: id, amount: newAmount, note: 'interest' } })
+      return result
+    })
     return serialize(updated)
   })
 
