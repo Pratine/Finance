@@ -168,7 +168,7 @@ export default function InvestmentsPage() {
         await window.api.createInvestment(payload)
       }
       closeForm()
-      await load()
+      await reloadInvestments()
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong')
     } finally {
@@ -181,9 +181,10 @@ export default function InvestmentsPage() {
     try {
       await window.api.deleteInvestment(deleteTarget.id)
       setDeleteTarget(null)
-      await load()
-    } catch {
+      await reloadInvestments()
+    } catch (e: any) {
       setDeleteTarget(null)
+      setError(e?.message ?? 'Failed to delete investment')
     }
   }
 
