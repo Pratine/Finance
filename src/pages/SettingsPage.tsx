@@ -643,7 +643,13 @@ function AppTab() {
 
   async function check() {
     setChecking(true)
-    try { await window.api.checkForUpdates() } finally { setChecking(false) }
+    try {
+      await window.api.checkForUpdates()
+    } catch {
+      // checkForUpdates errors surface via onUpdateStatus → status:'error'
+    } finally {
+      setChecking(false)
+    }
   }
 
   const statusText: Record<string, string> = {
