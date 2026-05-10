@@ -156,8 +156,9 @@ async function main() {
   let txId = 1
 
   function tx(accountId, description, amount, type, txDate, categoryId = null, runningBal = null) {
+    const id = txId++
     txns.push({
-      id: txId++,
+      id,
       accountId,
       description,
       amount: type === 'DEBIT' ? -Math.abs(amount) : Math.abs(amount),
@@ -167,7 +168,7 @@ async function main() {
       categoryId,
       runningBalance: runningBal,
       notes: null,
-      importHash: `seed-${txId}-${txDate.getTime()}`,
+      importHash: `seed-${id}-${txDate.getTime()}`,
     })
   }
 
