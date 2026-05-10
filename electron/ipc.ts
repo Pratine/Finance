@@ -1150,11 +1150,11 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('debts:create', async (_event, data: {
     name: string
-    type: 'LOAN' | 'RECEIVABLE'
+    type: DebtType
     counterparty: string
     principal: number
     interestRate?: number | null
-    frequency?: string | null
+    frequency?: Frequency | null
     nextPaymentDate?: string | null
     startDate: string
     endDate?: string | null
@@ -1169,7 +1169,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         principal: data.principal,
         outstanding: data.principal,
         interestRate: data.interestRate ?? null,
-        frequency: (data.frequency as any) ?? null,
+        frequency: data.frequency ?? null,
         nextPaymentDate: data.nextPaymentDate ? new Date(data.nextPaymentDate) : null,
         startDate: new Date(data.startDate),
         endDate: data.endDate ? new Date(data.endDate) : null,
@@ -1184,17 +1184,26 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     name?: string
     counterparty?: string
     interestRate?: number | null
-    frequency?: string | null
+    frequency?: Frequency | null
     nextPaymentDate?: string | null
     endDate?: string | null
-    status?: 'ACTIVE' | 'PAID' | 'WRITTEN_OFF'
+    status?: DebtStatus
     accountId?: number | null
     notes?: string | null
   }) => {
-    const mapped: Record<string, unknown> = { ...data }
-    if (data.nextPaymentDate !== undefined) mapped.nextPaymentDate = data.nextPaymentDate ? new Date(data.nextPaymentDate) : null
-    if (data.endDate !== undefined) mapped.endDate = data.endDate ? new Date(data.endDate) : null
-    return serialize(await prisma.debt.update({ where: { id }, data: mapped as any, include: debtInclude }))
+    return serialize(await prisma.debt.update({
+      where: { id },
+      data: {
+        ...data,
+        nextPaymentDate: data.nextPaymentDate !== undefined
+          ? (data.nextPaymentDate ? new Date(data.nextPaymentDate) : null)
+          : undefined,
+        endDate: data.endDate !== undefined
+          ? (data.endDate ? new Date(data.endDate) : null)
+          : undefined,
+      },
+      include: debtInclude,
+    }))
   })
 
   ipcMain.handle('debts:delete', async (_event, id: number) => {
