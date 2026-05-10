@@ -491,14 +491,25 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const inv = await prisma.investment.findUniqueOrThrow({ where: { id } })
     if (!inv.ticker) throw new Error('No ticker symbol set for this investment')
     const result = await fetchPrice(inv.ticker)
-    const rate = await fetchExchangeRate(result.currency)
-    // Cache rate
-    if (result.currency !== 'EUR') {
-      await prisma.exchangeRate.upsert({
-        where: { fromCurrency: result.currency },
-        create: { fromCurrency: result.currency, rate },
-        update: { rate },
-      })
+    let rate: number
+    if (result.currency === 'EUR') {
+      rate = 1
+    } else {
+      try {
+        rate = await fetchExchangeRate(result.currency)
+        await prisma.exchangeRate.upsert({
+          where: { fromCurrency: result.currency },
+          create: { fromCurrency: result.currency, rate },
+          update: { rate },
+        })
+      } catch (rateErr) {
+        const cached = await prisma.exchangeRate.findUnique({ where: { fromCurrency: result.currency } })
+        if (cached) {
+          rate = Number(cached.rate)
+        } else {
+          throw new Error(`Cannot convert ${result.currency} to EUR: ${(rateErr as Error).message}`)
+        }
+      }
     }
     const priceInEUR = result.price * rate
     const shares = Number(inv.shares ?? 1)
