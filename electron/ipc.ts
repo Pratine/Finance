@@ -74,6 +74,10 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   // Full database backup — every table serialised to a single JSON file.
+  // All tables are read into memory at once. For a personal finance app the
+  // dataset is small enough that this is never a practical problem, but if the
+  // transactions or priceHistory tables ever grow very large (100 k+ rows) this
+  // handler should be converted to a streaming/chunked approach.
   ipcMain.handle('export:backup', async (_event, filePath: string) => {
     const [
       accountTypes, banks, brokers, investmentTypes, categories, categoryRules,
