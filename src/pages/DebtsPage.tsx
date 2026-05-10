@@ -515,7 +515,7 @@ export default function DebtsPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      {showAdd && <DebtModal accounts={accounts} onClose={() => setShowAdd(false)} onSave={d => { setDebts(prev => [...prev, d]); setShowAdd(false) }} />}
+      {showAdd && <DebtModal accounts={accounts} onClose={() => setShowAdd(false)} onSave={d => setDebts(prev => [...prev, d])} />}
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Debts</h1>
