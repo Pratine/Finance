@@ -49,22 +49,17 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  const accountMap = useMemo(
+    () => new Map(accounts.map(a => [a.id, a])),
+    [accounts]
+  )
+
   const results = query.trim().length < 1 ? [] : transactions
     .filter(t => matchesSearch(t, query))
     .slice(0, 12)
 
   // Reset active index when results change
   useEffect(() => { setActiveIdx(0) }, [query])
-
-  function openTransaction(t: Transaction) {
-    navigate(`/transactions?q=${encodeURIComponent(query.trim() || t.description)}`)
-    onClose()
-  }
-
-  function showAll() {
-    navigate(`/transactions?q=${encodeURIComponent(query.trim())}`)
-    onClose()
-  }
 
   const handleKey = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -75,10 +70,16 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
       setActiveIdx(i => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (results[activeIdx]) openTransaction(results[activeIdx])
-      else if (query.trim()) showAll()
+      const target = results[activeIdx]
+      if (target) {
+        navigate(`/transactions?q=${encodeURIComponent(query.trim() || target.description)}`)
+        onClose()
+      } else if (query.trim()) {
+        navigate(`/transactions?q=${encodeURIComponent(query.trim())}`)
+        onClose()
+      }
     }
-  }, [results, activeIdx, query])
+  }, [results, activeIdx, query, navigate, onClose])
 
   // Scroll active item into view
   useEffect(() => {
