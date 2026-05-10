@@ -335,13 +335,21 @@ function DebtCard({
   const daysUntil = nextDue ? Math.round((nextDue.getTime() - today.getTime()) / 86_400_000) : null
 
   async function handleDeletePayment(paymentId: number) {
-    const updated = await window.api.deleteDebtPayment(paymentId)
-    onUpdate(updated)
+    try {
+      const updated = await window.api.deleteDebtPayment(paymentId)
+      onUpdate(updated)
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to delete payment')
+    }
   }
 
   async function markWrittenOff() {
-    const updated = await window.api.updateDebt(debt.id, { status: 'WRITTEN_OFF' })
-    onUpdate(updated)
+    try {
+      const updated = await window.api.updateDebt(debt.id, { status: 'WRITTEN_OFF' })
+      onUpdate(updated)
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to update debt')
+    }
   }
 
   return (
