@@ -111,14 +111,16 @@ function effectiveAmount(goal: SavingsGoal): number {
 
 function GoalHistoryChart({ goalId, targetAmount }: { goalId: number; targetAmount: number }) {
   const [data, setData] = useState<Array<{ label: string; amount: number }> | null>(null)
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
     window.api.getSavingsHistory(goalId).then(raw => {
       setData(buildMonthlySavingsHistory(raw, targetAmount))
-    })
+    }).catch(() => setFetchError(true))
   }, [goalId, targetAmount])
 
-  if (data === null) return <p className="text-xs text-slate-400 py-4 text-center">Loadingâ€¦</p>
+  if (fetchError) return <p className="text-xs text-red-400 py-4 text-center">Failed to load history.</p>
+  if (data === null) return <p className="text-xs text-slate-400 py-4 text-center">Loading…</p>
   if (data.length < 2) return (
     <p className="text-xs text-slate-400 dark:text-slate-500 py-4 text-center">
       Not enough history yet â€” chart will appear as balance snapshots accumulate.
