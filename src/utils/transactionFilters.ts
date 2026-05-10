@@ -21,7 +21,7 @@ export function matchesSearch(t: Transaction, query: string): boolean {
   // Amount match: strip € / minus / spaces and compare
   const absAmt = Math.abs(parseFloat(t.amount))
   const amtStr = absAmt.toFixed(2)         // "49.99"
-  const amtClean = q.replace(/[€\s,]/g, '').replace(',', '.')
+  const amtClean = q.replace(/[€\s,]/g, '')
   if (amtStr.startsWith(amtClean) && amtClean.length > 0) return true
   return false
 }
