@@ -76,13 +76,20 @@ function ItemRow({
   const [color, setColor] = useState(item.color ?? '#64748b')
   const [icon, setIcon] = useState(item.icon ?? '')
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   async function save() {
     if (!name.trim()) return
     setSaving(true)
-    await onSave(item.id, { name: name.trim(), color, icon: icon || null })
-    setSaving(false)
-    setEditing(false)
+    setSaveError(null)
+    try {
+      await onSave(item.id, { name: name.trim(), color, icon: icon || null })
+      setEditing(false)
+    } catch (e: any) {
+      setSaveError(e?.message ?? 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function cancel() {
@@ -90,6 +97,7 @@ function ItemRow({
     setColor(item.color ?? '#64748b')
     setIcon(item.icon ?? '')
     setEditing(false)
+    setSaveError(null)
   }
 
   if (!editing) {
