@@ -962,7 +962,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       for (const t of txns) {
         const date = t.date.toISOString().slice(0, 10)
         if (!points.has(date)) {
-          points.set(date, Math.abs(Number(t.runningBalance)))
+          points.set(date, Number(t.runningBalance))
         }
       }
     }
