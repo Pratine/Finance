@@ -145,7 +145,7 @@ export async function importRevolutCSV(
   }
 
   if (pending.length === 0) {
-    return { imported: 0, skipped: 0, errors: parseErrors }
+    return { imported: 0, skipped: intentionallySkipped, errors: parseErrors }
   }
 
   // ── Deduplicate against existing imports in one query ────────────────────────
@@ -157,7 +157,7 @@ export async function importRevolutCSV(
   )
 
   const newRows = pending.filter(p => !existing.has(p.hash))
-  const skipped = pending.length - newRows.length
+  const skipped = intentionallySkipped + (pending.length - newRows.length)
 
   if (newRows.length === 0) {
     return { imported: 0, skipped, errors: parseErrors }
