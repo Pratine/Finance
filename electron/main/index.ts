@@ -215,7 +215,7 @@ async function checkNotifications() {
     const incomeItems = await prisma.recurringIncome.findMany({ where: { isActive: true } })
     const lateIncome: string[] = []
     for (const inc of incomeItems) {
-      const due = new Date(inc.nextExpectedDate); due.setHours(0, 0, 0, 0)
+      const due = new Date(inc.nextExpectedDate); due.setUTCHours(0, 0, 0, 0)
       const days = Math.round((due.getTime() - today.getTime()) / 86_400_000)
       if (days < 0) lateIncome.push(`${inc.name} (${Math.abs(days)}d late)`)
     }
