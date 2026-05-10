@@ -21,6 +21,43 @@ const COLORS = [
   '#e30613', '#191c1f', '#64748b', '#94a3b8',
 ]
 
+// â”€â”€â”€ Shared picker sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function ColourPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+  return (
+    <div>
+      <p className=”text-xs text-slate-500 dark:text-slate-400 mb-1.5”>Colour</p>
+      <div className=”flex flex-wrap gap-1.5”>
+        {COLORS.map(c => (
+          <button key={c} onClick={() => onChange(c)}
+            className=”w-6 h-6 rounded-full border-2 transition-all”
+            style={{ backgroundColor: c, borderColor: value === c ? '#0f172a' : 'transparent' }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function IconPicker({ value, onChange }: { value: string; onChange: (i: string) => void }) {
+  return (
+    <div>
+      <p className=”text-xs text-slate-500 dark:text-slate-400 mb-1.5”>Icon</p>
+      <div className=”flex flex-wrap gap-1.5”>
+        {ICONS.map(i => (
+          <button key={i} onClick={() => onChange(i)}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
+              value === i ? 'border-slate-900 bg-slate-100 dark:border-slate-100 dark:bg-slate-700' : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
+            }`}
+          >
+            <AccountIcon icon={i} size={14} className=”text-slate-600 dark:text-slate-400” />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // â”€â”€â”€ Shared row editor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type BaseItem = { id: number; name: string; color: string | null; icon: string | null }
