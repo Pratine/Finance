@@ -97,13 +97,11 @@ describe('applyFilters', () => {
   })
 
   it('filters by date range — to', () => {
-    const txns = [
-      makeTx({ date: '2026-03-01T00:00:00.000Z' }),
-      makeTx({ id: 2, date: '2026-04-24T00:00:00.000Z' }),
-    ]
-    const result = applyFilters(txns, { ...BASE_FILTER, to: '2026-03-31' })
+    const t1 = makeTx({ date: '2026-03-01T00:00:00.000Z' })
+    const t2 = makeTx({ date: '2026-04-24T00:00:00.000Z' })
+    const result = applyFilters([t1, t2], { ...BASE_FILTER, to: '2026-03-31' })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe(1)
+    expect(result[0].id).toBe(t1.id)
   })
 
   it('filters by description search', () => {
