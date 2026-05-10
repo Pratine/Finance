@@ -143,6 +143,9 @@ export default function ReportsPage() {
     ]).then(([txns, hist]) => {
       setTransactions(txns)
       setPriceHistory(hist)
+    }).catch(() => {
+      // transactions and priceHistory stay empty — charts render with no data
+      // rather than hanging or crashing
     })
   }, [])
 
