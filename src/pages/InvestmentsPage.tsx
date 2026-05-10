@@ -1159,8 +1159,9 @@ function PerformancePanel({ investments }: { investments: Investment[] }) {
   const rows = useMemo(() => {
     return investments.map(inv => {
       const pnl = calcPnL(inv.amountIn, inv.currentValue)
-      const cagr = calcCAGR(inv.amountIn, inv.currentValue, inv.createdAt)
-      const days = daysHeld(inv.createdAt)
+      const firstLotDate = inv.lots?.[0]?.date ?? inv.createdAt
+      const cagr = calcCAGR(inv.amountIn, inv.currentValue, firstLotDate)
+      const days = daysHeld(firstLotDate)
       return { inv, pnl, cagr, days }
     }).sort((a, b) => {
       let va = 0, vb = 0
