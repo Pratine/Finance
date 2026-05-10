@@ -538,23 +538,22 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   ipcMain.handle('accounts:update', async (_event, id: number, data) => {
-    // If balance is being corrected, log it before applying the change.
-    if (data.balance !== undefined) {
+    // Destructure the internal-only _note field so it is never passed to Prisma.
+    const { _note, ...prismaData } = data
+    if (prismaData.balance !== undefined) {
       const current = await prisma.account.findUniqueOrThrow({ where: { id } })
-      if (Number(current.balance) !== Number(data.balance)) {
+      if (Number(current.balance) !== Number(prismaData.balance)) {
         await prisma.balanceCorrection.create({
           data: {
             accountId: id,
             oldBalance: Number(current.balance),
-            newBalance: Number(data.balance),
-            note: data._note ?? null,
+            newBalance: Number(prismaData.balance),
+            note: _note ?? null,
           },
         })
       }
-      // Remove internal-only field before passing to Prisma
-      delete data._note
     }
-    const updated = await prisma.account.update({ where: { id }, data, include: { type: true, bank: true } })
+    const updated = await prisma.account.update({ where: { id }, data: prismaData, include: { type: true, bank: true } })
     if (data.name) {
       await prisma.savingsGoal.updateMany({ where: { accountId: id }, data: { name: data.name } })
     }
