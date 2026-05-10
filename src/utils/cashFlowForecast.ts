@@ -59,7 +59,9 @@ function billDatesInMonth(nextDueDate: string, freq: Frequency, year: number, mo
   const start = new Date(Date.UTC(year, month, 1))
   const end   = new Date(Date.UTC(year, month + 1, 1))
   const dates: Date[] = []
-  let cur = new Date(nextDueDate)
+  // Normalize to UTC midnight so timezone differences in the stored ISO string
+  // don't shift the date into an adjacent day when compared to UTC boundaries.
+  let cur = new Date(nextDueDate); cur.setUTCHours(0, 0, 0, 0)
   while (cur >= end) cur = previousOccurrence(cur, freq)
   while (cur < start) cur = advanceByFrequency(cur, freq)
   while (cur < end) {
