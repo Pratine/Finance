@@ -21,7 +21,11 @@ export async function savePriceSnapshot(investmentId: number, price: number, sha
   })
 }
 
-// Processes an array of async tasks with at most `limit` running concurrently.
+// Processes tasks in sequential fixed-size batches, with at most `limit` running
+// in parallel within each batch. This is NOT a true sliding-window pool — the next
+// batch starts only after every item in the current batch completes. For 4-20
+// investments this is fast enough; if it becomes a bottleneck, replace with a
+// proper worker pool (e.g. p-limit).
 async function withConcurrencyLimit<T>(
   items: T[],
   limit: number,
