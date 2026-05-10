@@ -719,10 +719,12 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   // â”€â”€ Transactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const txInclude = { category: true, tags: { include: { tag: true } }, splits: { include: { category: true }, orderBy: { id: 'asc' as const } } }
 
+  // Unpaginated list used by analytics/reporting pages — omits tags and splits
+  // (not needed for aggregations) to avoid loading large nested objects into memory.
   ipcMain.handle('transactions:list', async (_event, accountId?: number) => {
     return serialize(await prisma.transaction.findMany({
-      where: accountId ? { accountId } : undefined,
-      include: txInclude,
+      where: accountId != null ? { accountId } : undefined,
+      include: { category: true },
       orderBy: { date: 'desc' },
     }))
   })
