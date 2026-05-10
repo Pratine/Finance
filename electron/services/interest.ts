@@ -12,12 +12,14 @@ export interface InterestConfig {
 }
 
 // Returns how many full periods have elapsed since the last application (or creation).
-export function elapsedPeriods(config: Pick<InterestConfig, 'lastInterestApplied' | 'interestFrequencyDays' | 'createdAt'>): number {
+export function elapsedPeriods(
+  config: Pick<InterestConfig, 'lastInterestApplied' | 'interestFrequencyDays' | 'createdAt'>,
+  now = Date.now(),
+): number {
   const { lastInterestApplied, interestFrequencyDays, createdAt } = config
   if (!interestFrequencyDays) return 0
   const base = lastInterestApplied ?? createdAt
-  const elapsed = Date.now() - base.getTime()
-  return Math.floor(elapsed / (interestFrequencyDays * 86_400_000))
+  return Math.floor((now - base.getTime()) / (interestFrequencyDays * 86_400_000))
 }
 
 // Applies interest for N periods and returns the new balance.
