@@ -90,7 +90,10 @@ export async function importMillenniumCSV(
     throw new Error('Could not find data header row — is this a Millennium BCP statement?')
   }
 
-  const result: ImportResult = { imported: 0, skipped: 0, errors: [] }
+  // ── Parse all valid rows upfront ────────────────────────────────────────────
+  type PendingRow = { hash: string; data: Parameters<typeof prisma.transaction.create>[0]['data'] }
+  const pending: PendingRow[] = []
+  const errors: string[] = []
 
   for (const line of lines.slice(headerIdx + 1)) {
     const cols = line.split(';')
@@ -98,62 +101,69 @@ export async function importMillenniumCSV(
 
     const row: RawRow = {
       dataLancamento: cols[0],
-      dataValor: cols[1],
-      descricao: cols[2],
-      montante: cols[3],
-      tipo: cols[4],
-      saldo: cols[5],
+      dataValor:      cols[1],
+      descricao:      cols[2],
+      montante:       cols[3],
+      tipo:           cols[4],
+      saldo:          cols[5],
     }
 
-    const hash = rowHash(row)
     // Millennium BCP exports amounts already signed: credits are positive, debits
     // are negative. We store the value as-is — do NOT take Math.abs() here.
-    // The `tipo` field ('CR'/'DB') is used only to set the transaction type enum;
-    // the sign on `montante` is the source of truth for the stored amount.
     const amount = parseDecimal(row.montante)
-    const type = normalise(row.tipo).toLowerCase().includes('cr') ? 'CREDIT' : 'DEBIT'
+    const type   = normalise(row.tipo).toLowerCase().includes('cr') ? 'CREDIT' : 'DEBIT'
+    const description = normalise(row.descricao)
 
-    try {
-      const description = normalise(row.descricao)
-      const lower = description.toLowerCase()
-      const matchedRule = rules.find(r => lower.includes(r.pattern.toLowerCase()))
-      await prisma.transaction.create({
-        data: {
-          accountId,
-          date: parseDate(row.dataLancamento),
-          valueDate: row.dataValor ? parseDate(row.dataValor) : null,
-          description,
-          amount,
-          type,
-          runningBalance: parseDecimal(row.saldo),
-          importHash: hash,
-          categoryId: matchedRule?.categoryId ?? null,
-        },
-      })
-      result.imported++
-    } catch (e: any) {
-      // P2002 = unique constraint violation → duplicate row, safe to skip
-      if (e?.code === 'P2002') {
-        result.skipped++
-      } else {
-        result.errors.push(`Row "${normalise(row.descricao)}": ${e?.message ?? e}`)
-      }
+    if (isNaN(amount)) {
+      errors.push(`Row "${description}": could not parse amount "${normalise(row.montante)}"`)
+      continue
     }
+
+    const lower = description.toLowerCase()
+    const matchedRule = rules.find(r => lower.includes(r.pattern.toLowerCase()))
+
+    pending.push({
+      hash: rowHash(row),
+      data: {
+        accountId,
+        date:           parseDate(row.dataLancamento),
+        valueDate:      row.dataValor ? parseDate(row.dataValor) : null,
+        description,
+        amount,
+        type,
+        runningBalance: parseDecimal(row.saldo),
+        importHash:     rowHash(row),
+        categoryId:     matchedRule?.categoryId ?? null,
+      },
+    })
   }
 
-  // Update account balance to the runningBalance of the most recent transaction.
-  if (result.imported > 0) {
-    const latest = await prisma.transaction.findFirst({
+  if (pending.length === 0) return { imported: 0, skipped: 0, errors }
+
+  // ── Deduplicate against existing imports in one query ────────────────────────
+  const existing = new Set(
+    (await prisma.transaction.findMany({
+      where: { importHash: { in: pending.map(p => p.hash) } },
+      select: { importHash: true },
+    })).map(t => t.importHash!)
+  )
+
+  const newRows = pending.filter(p => !existing.has(p.hash))
+  const skipped = pending.length - newRows.length
+
+  if (newRows.length === 0) return { imported: 0, skipped, errors }
+
+  // ── Atomic: insert all new rows + update balance in one transaction ──────────
+  await prisma.$transaction(async (tx) => {
+    await tx.transaction.createMany({ data: newRows.map(p => p.data) })
+    const latest = await tx.transaction.findFirst({
       where: { accountId, runningBalance: { not: null } },
       orderBy: { date: 'desc' },
     })
-    if (latest?.runningBalance !== null && latest?.runningBalance !== undefined) {
-      await prisma.account.update({
-        where: { id: accountId },
-        data: { balance: latest.runningBalance },
-      })
+    if (latest?.runningBalance != null) {
+      await tx.account.update({ where: { id: accountId }, data: { balance: latest.runningBalance } })
     }
-  }
+  })
 
-  return result
+  return { imported: newRows.length, skipped, errors }
 }
