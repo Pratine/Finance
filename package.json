@@ -64,6 +64,7 @@
       "dist/**/*",
       "dist-electron/**/*",
       "node_modules/**/*",
+      "node_modules/.prisma/**/*",
       "prisma/migrations/**/*",
       "prisma/schema.prisma",
       "prisma/**/*",
