@@ -278,7 +278,7 @@ async function main() {
   }
 
   // Insert all transactions
-  await prisma.transaction.createMany({ data: txns, skipDuplicates: true })
+  await prisma.transaction.createMany({ data: txns })
   console.log(`  ✓ ${txns.length} transactions`)
 
   // ── Update account balances to realistic values ───────────────────────────
