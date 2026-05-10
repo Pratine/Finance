@@ -123,8 +123,9 @@ export async function importMillenniumCSV(
     const lower = description.toLowerCase()
     const matchedRule = rules.find(r => lower.includes(r.pattern.toLowerCase()))
 
+    const hash = rowHash(row)
     pending.push({
-      hash: rowHash(row),
+      hash,
       data: {
         accountId,
         date:           parseDate(row.dataLancamento),
@@ -133,7 +134,7 @@ export async function importMillenniumCSV(
         amount,
         type,
         runningBalance: parseDecimal(row.saldo),
-        importHash:     rowHash(row),
+        importHash:     hash,
         categoryId:     matchedRule?.categoryId ?? null,
       },
     })
