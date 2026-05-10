@@ -32,8 +32,18 @@ function pick(arr) {
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // ── Clear existing data (dev only — truncates all tables and resets sequences) ─
-  await prisma.$executeRaw`TRUNCATE "TransactionTag", "Tag", "ImportHistory", "DebtPayment", "Debt", "SavingsSnapshot", "PriceHistory", "ExchangeRate", "BalanceCorrection", "Transaction", "SavingsGoal", "Budget", "RecurringBill", "CategoryRule", "Investment", "Account", "Category", "AccountType", "Bank", "Broker", "InvestmentType" RESTART IDENTITY CASCADE`
+  // ── Clear existing data (SQLite uses DELETE FROM, no TRUNCATE) ──────────────
+  const tables = [
+    'TransactionTag','TransactionSplit','Tag','ImportHistory','DebtPayment','Debt',
+    'SavingsSnapshot','PriceHistory','ExchangeRate','BalanceCorrection','InvestmentLot',
+    'Transaction','SavingsGoal','Budget','RecurringBill','RecurringIncome',
+    'CategoryRule','Investment','Account','Category','AccountType','Bank','Broker','InvestmentType',
+  ]
+  for (const t of tables) {
+    await prisma.$executeRawUnsafe(`DELETE FROM "${t}"`)
+  }
+  // Reset autoincrement counters
+  await prisma.$executeRaw`DELETE FROM sqlite_sequence`
 
   // ── Banks ───────────────────────────────────────────────────────────────────
   const [bcp, revolut, cgd] = await Promise.all([
