@@ -108,15 +108,21 @@ export default function AccountsPage() {
 
   async function handleBalanceCorrection() {
     if (!balanceTarget || newBalance === '') return
-    await window.api.updateAccount(balanceTarget.id, {
-      balance: String(parseFloat(newBalance)),
-      _note: correctionNote.trim() || undefined,
-    })
-    setBalanceTarget(null)
-    setNewBalance('')
-    setCorrectionNote('')
-    setShowHistory(false)
-    await load()
+    const parsed = parseFloat(newBalance)
+    if (isNaN(parsed)) { setError('Please enter a valid number for the balance.'); return }
+    try {
+      await window.api.updateAccount(balanceTarget.id, {
+        balance: String(parsed),
+        _note: correctionNote.trim() || undefined,
+      })
+      setBalanceTarget(null)
+      setNewBalance('')
+      setCorrectionNote('')
+      setShowHistory(false)
+      await load()
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to update balance')
+    }
   }
 
   async function openBalanceModal(acc: Account) {
@@ -124,8 +130,12 @@ export default function AccountsPage() {
     setNewBalance(acc.balance)
     setCorrectionNote('')
     setShowHistory(false)
-    const history = await window.api.listCorrections(acc.id)
-    setCorrections(history)
+    try {
+      const history = await window.api.listCorrections(acc.id)
+      setCorrections(history)
+    } catch {
+      setCorrections([])
+    }
   }
 
   async function handleDelete() {
