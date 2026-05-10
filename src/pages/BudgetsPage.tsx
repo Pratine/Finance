@@ -16,12 +16,12 @@ function fmt(n: number) {
 
 function isFutureOrCurrent(month: number, year: number) {
   const now = new Date()
-  return year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1)
+  return year > now.getUTCFullYear() || (year === now.getUTCFullYear() && month >= now.getUTCMonth() + 1)
 }
 
 function isPast(month: number, year: number) {
   const now = new Date()
-  return year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)
+  return year < now.getUTCFullYear() || (year === now.getUTCFullYear() && month < now.getUTCMonth() + 1)
 }
 
 // â”€â”€â”€ Inline amount editor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
