@@ -506,7 +506,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // Returns daily portfolio value snapshots grouped by date, limited to the last 2 years.
   ipcMain.handle('investments:priceHistory', async () => {
-    const since = new Date(); since.setFullYear(since.getUTCFullYear() - 2)
+    const since = new Date(); since.setUTCFullYear(since.getUTCFullYear() - 2)
     const history = await prisma.priceHistory.findMany({
       where: { recordedAt: { gte: since } },
       include: { investment: { select: { name: true, typeId: true } } },
