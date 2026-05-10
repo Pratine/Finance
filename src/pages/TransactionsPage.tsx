@@ -15,28 +15,6 @@ function fmt(amount: string) {
   return parseFloat(amount).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
 }
 
-// Flat virtual list item types
-type VItem =
-  | { kind: 'header'; date: string; creditSum: number; debitSum: number }
-  | { kind: 'row'; tx: Transaction; isFirst: boolean; isLast: boolean }
-
-function buildVItems(txns: Transaction[]): VItem[] {
-  const items: VItem[] = []
-  const map = new Map<string, Transaction[]>()
-  for (const t of txns) {
-    const key = t.date.slice(0, 10)
-    if (!map.has(key)) map.set(key, [])
-    map.get(key)!.push(t)
-  }
-  for (const [date, group] of map.entries()) {
-    const creditSum = group.filter(t => t.type === 'CREDIT').reduce((s, t) => s + parseFloat(t.amount), 0)
-    const debitSum  = group.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Math.abs(parseFloat(t.amount)), 0)
-    items.push({ kind: 'header', date, creditSum, debitSum })
-    group.forEach((tx, i) => items.push({ kind: 'row', tx, isFirst: i === 0, isLast: i === group.length - 1 }))
-  }
-  return items
-}
-
 // Row heights used by the virtualizer
 const HEADER_H = 32   // px
 const ROW_H    = 56   // px
