@@ -1034,18 +1034,12 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('income:markReceived', async (_event, id: number, actualAmount?: number) => {
     const income = await prisma.recurringIncome.findUniqueOrThrow({ where: { id } })
-    const next = new Date(income.nextExpectedDate)
-    switch (income.frequency) {
-      case 'WEEKLY':    next.setDate(next.getDate() + 7); break
-      case 'MONTHLY':   next.setMonth(next.getMonth() + 1); break
-      case 'QUARTERLY': next.setMonth(next.getMonth() + 3); break
-      case 'YEARLY':    next.setFullYear(next.getFullYear() + 1); break
-    }
-    // Use the actual amount received; fall back to the configured amount
+    const next = advanceByFrequency(new Date(income.nextExpectedDate), income.frequency as Frequency)
     const creditAmount = Math.abs(actualAmount ?? Number(income.amount))
-    if (income.accountId) {
-      await prisma.$transaction([
-        prisma.transaction.create({
+
+    return serialize(await prisma.$transaction(async (tx) => {
+      if (income.accountId) {
+        await tx.transaction.create({
           data: {
             accountId: income.accountId,
             categoryId: income.categoryId,
@@ -1054,17 +1048,17 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
             amount: creditAmount,
             type: 'CREDIT',
           },
-        }),
-        prisma.account.update({
+        })
+        await tx.account.update({
           where: { id: income.accountId },
           data: { balance: { increment: creditAmount } },
-        }),
-      ])
-    }
-    return serialize(await prisma.recurringIncome.update({
-      where: { id },
-      data: { nextExpectedDate: next },
-      include: incomeInclude,
+        })
+      }
+      return tx.recurringIncome.update({
+        where: { id },
+        data: { nextExpectedDate: next },
+        include: incomeInclude,
+      })
     }))
   })
 
