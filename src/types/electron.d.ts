@@ -150,8 +150,9 @@ declare global {
       installUpdate: () => Promise<void>
       onUpdateStatus: (cb: (payload: UpdaterStatus) => void) => () => void
 
+      // Categories
       listCategories: () => Promise<Category[]>
-      createCategory: (data: Partial<Category>) => Promise<Category>
+      createCategory: (data: Omit<Category, 'id'>) => Promise<Category>
       updateCategory: (id: number, data: Partial<Omit<Category, 'id'>>) => Promise<Category>
       deleteCategory: (id: number) => Promise<Category>
 
