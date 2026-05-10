@@ -536,8 +536,6 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return lookupISIN(isin)
   })
 
-  // savePriceSnapshot is imported from priceScheduler service
-
   // Fetches the latest price for one investment and atomically updates price
   // history, exchange rate cache, and investment currentValue in one transaction.
   ipcMain.handle('investments:refreshPrice', async (_event, id: number) => {
