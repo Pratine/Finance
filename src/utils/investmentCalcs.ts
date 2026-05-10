@@ -38,11 +38,13 @@ export function daysHeld(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000)
 }
 
-// Average cost basis across all lots: totalCost / totalShares
+// Average cost basis across BUY lots only: totalBuyCost / totalBuyShares.
+// SELL lots are excluded — their totalCost is sale proceeds, not a cost.
 export function calcAvgCostBasis(lots: InvestmentLot[]): number | null {
-  if (lots.length === 0) return null
-  const totalShares = lots.reduce((s, l) => s + parseFloat(l.shares), 0)
-  const totalCost   = lots.reduce((s, l) => s + parseFloat(l.totalCost), 0)
+  const buys = lots.filter(l => l.type === 'BUY')
+  if (buys.length === 0) return null
+  const totalShares = buys.reduce((s, l) => s + parseFloat(l.shares), 0)
+  const totalCost   = buys.reduce((s, l) => s + parseFloat(l.totalCost), 0)
   return totalShares > 0 ? totalCost / totalShares : null
 }
 
