@@ -73,7 +73,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     })
 
     if (opts.format === 'json') {
-      fs.writeFileSync(opts.filePath, JSON.stringify(serialize(txns), null, 2), 'utf8')
+      await writeFile(opts.filePath, JSON.stringify(serialize(txns), null, 2), 'utf8')
     } else {
       const q = (s: string) => `"${s.replace(/"/g, '""')}"`
       const header = 'Date,Account,Description,Amount,Type,Category,Balance\n'
@@ -86,7 +86,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         q(t.category?.name ?? ''),
         t.runningBalance ?? '',
       ].join(','))
-      fs.writeFileSync(opts.filePath, header + rows.join('\n'), 'utf8')
+      await writeFile(opts.filePath, header + rows.join('\n'), 'utf8')
     }
     return { exported: txns.length }
   })
