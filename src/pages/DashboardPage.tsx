@@ -485,65 +485,52 @@ export default function DashboardPage() {
       )}
 
       {/* Spending by category pie chart */}
-      {(() => {
-        const spending = calcSpendingByCategory(transactions, month, year)
-        const chartData = categories
-          .filter(c => c.type === 'EXPENSE')
-          .map(c => ({ name: c.name, value: spending.get(c.id) ?? 0, color: c.color ?? '#64748b' }))
-          .filter(d => d.value > 0)
-          .sort((a, b) => b.value - a.value)
-
-        if (chartData.length === 0) return null
-
-        const total = chartData.reduce((s, d) => s + d.value, 0)
-
-        return (
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Spending by category</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">{MONTHS[month]} {year}</p>
+      {pieChartData.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Spending by category</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{MONTHS[month]} {year}</p>
+          </div>
+          <div className="flex gap-6 items-center">
+            <div className="shrink-0" style={{ width: 200, height: 200 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {pieChartData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => [fmt(value), '']}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-            <div className="flex gap-6 items-center">
-              <div className="shrink-0" style={{ width: 200, height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: number) => [fmt(value), '']}
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
 
-              <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                {chartData.map((d, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                    <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{d.name}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">{fmt(d.value)}</span>
-                    <span className="text-xs text-slate-300 dark:text-slate-600 shrink-0 w-10 text-right">
-                      {Math.round((d.value / total) * 100)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              {pieChartData.map((d, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                  <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">{d.name}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">{fmt(d.value)}</span>
+                  <span className="text-xs text-slate-300 dark:text-slate-600 shrink-0 w-10 text-right">
+                    {Math.round((d.value / pieTotal) * 100)}%
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-        )
-      })()}
+        </div>
+      )}
 
       {/* Cash flow forecast */}
       {forecast.length > 0 && <CashFlowForecast forecast={forecast} fmt={fmt} />}
