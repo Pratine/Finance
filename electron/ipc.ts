@@ -968,21 +968,22 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     // Use the actual amount received; fall back to the configured amount
     const creditAmount = Math.abs(actualAmount ?? Number(income.amount))
     if (income.accountId) {
-      await prisma.transaction.create({
-        data: {
-          accountId: income.accountId,
-          categoryId: income.categoryId,
-          date: new Date(),
-          description: income.name,
-          amount: creditAmount,
-          type: 'CREDIT',
-        },
-      })
-      const account = await prisma.account.findUniqueOrThrow({ where: { id: income.accountId } })
-      await prisma.account.update({
-        where: { id: income.accountId },
-        data: { balance: Number(account.balance) + creditAmount },
-      })
+      await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            accountId: income.accountId,
+            categoryId: income.categoryId,
+            date: new Date(),
+            description: income.name,
+            amount: creditAmount,
+            type: 'CREDIT',
+          },
+        }),
+        prisma.account.update({
+          where: { id: income.accountId },
+          data: { balance: { increment: creditAmount } },
+        }),
+      ])
     }
     return serialize(await prisma.recurringIncome.update({
       where: { id },
