@@ -1295,8 +1295,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       }
     }
 
-    const [payment] = await prisma.$transaction([
-      prisma.debtPayment.create({
+    await prisma.$transaction(async (tx) => {
+      await tx.debtPayment.create({
         data: {
           debtId: data.debtId,
           date: new Date(data.date),
@@ -1305,24 +1305,16 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
           interest: data.interest,
           notes: data.notes ?? null,
         },
-      }),
-      prisma.debt.update({
+      })
+      await tx.debt.update({
         where: { id: data.debtId },
-        data: {
-          outstanding: newOutstanding,
-          status: newStatus,
-          nextPaymentDate: nextDate,
-        },
-      }),
-    ])
-
-    // Create a transaction on the linked account if set
-    if (debt.accountId && data.amount > 0) {
+        data: { outstanding: newOutstanding, status: newStatus, nextPaymentDate: nextDate },
+      })
       // LOAN (I owe) → paying out is a DEBIT; RECEIVABLE (owed to me) → receiving is a CREDIT
-      const txType = debt.type === 'LOAN' ? 'DEBIT' : 'CREDIT'
-      const txAmount = txType === 'DEBIT' ? -data.amount : data.amount
-      await prisma.$transaction([
-        prisma.transaction.create({
+      if (debt.accountId && data.amount > 0) {
+        const txType = debt.type === 'LOAN' ? 'DEBIT' : 'CREDIT'
+        const txAmount = txType === 'DEBIT' ? -data.amount : data.amount
+        await tx.transaction.create({
           data: {
             accountId: debt.accountId,
             date: new Date(data.date),
@@ -1330,13 +1322,10 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
             amount: txAmount,
             type: txType,
           },
-        }),
-        prisma.account.update({
-          where: { id: debt.accountId },
-          data: { balance: { increment: txAmount } },
-        }),
-      ])
-    }
+        })
+        await tx.account.update({ where: { id: debt.accountId }, data: { balance: { increment: txAmount } } })
+      }
+    })
 
     return serialize(await prisma.debt.findUniqueOrThrow({ where: { id: data.debtId }, include: debtInclude }))
   })
