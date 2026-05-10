@@ -176,6 +176,7 @@ export default function DashboardPage() {
   const [bills, setBills] = useState<RecurringBill[]>([])
   const [recurringIncome, setRecurringIncome] = useState<RecurringIncome[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -197,12 +198,16 @@ export default function DashboardPage() {
       setBills(bls)
       setRecurringIncome(inc)
       setLoading(false)
+    }).catch(() => {
+      setLoadError(true)
+      setLoading(false)
     })
   }, [])
 
-  const now = new Date()
-  const [month, setMonth] = useState(now.getMonth())   // 0-indexed
-  const [year, setYear] = useState(now.getFullYear())
+  // Use UTC month/year so the selected period matches how transaction dates are stored (ISO UTC).
+  const nowUTC = new Date()
+  const [month, setMonth] = useState(nowUTC.getUTCMonth())
+  const [year, setYear] = useState(nowUTC.getUTCFullYear())
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1) }
@@ -212,7 +217,8 @@ export default function DashboardPage() {
     if (month === 11) { setMonth(0); setYear(y => y + 1) }
     else setMonth(m => m + 1)
   }
-  const isCurrentMonth = month === now.getMonth() && year === now.getFullYear()
+  const now = new Date()
+  const isCurrentMonth = month === now.getUTCMonth() && year === now.getUTCFullYear()
 
   useShortcutAction('prevMonth', prevMonth)
   useShortcutAction('nextMonth', () => { if (!isCurrentMonth) nextMonth() })
@@ -220,10 +226,10 @@ export default function DashboardPage() {
   const monthlyStats = calcMonthlyStats(transactions, month, year)
   const netWorth = calcNetWorth(accounts, investments)
   const savingsTotals = calcSavingsTotal(savings)
-  const portfolioPnL = calcPnL(
-    investments.reduce((s, i) => s + parseFloat(i.amountIn), 0),
-    investments.reduce((s, i) => s + parseFloat(i.currentValue), 0),
-  )
+
+  const portfolioAmountIn  = investments.reduce((s, i) => s + parseFloat(i.amountIn), 0)
+  const portfolioValue     = investments.reduce((s, i) => s + parseFloat(i.currentValue), 0)
+  const portfolioPnL = calcPnL(portfolioAmountIn, portfolioValue)
 
   const recentTxns = transactions.slice(0, 8)
 
@@ -238,8 +244,33 @@ export default function DashboardPage() {
     [bills, budgets, transactions, savings, month, year]
   )
 
+  // Computed once and shared between the budgets section and the pie chart.
+  const spendingByCategory = useMemo(
+    () => calcSpendingByCategory(transactions, month, year),
+    [transactions, month, year]
+  )
+
+  // Budgets section — computed outside JSX to avoid IIFEs.
+  const totalBudgeted = budgets.reduce((s, b) => s + parseFloat(b.amount), 0)
+  const totalSpent    = budgets.reduce((s, b) => s + (spendingByCategory.get(b.categoryId) ?? 0), 0)
+  const overCount     = budgets.filter(b => (spendingByCategory.get(b.categoryId) ?? 0) > parseFloat(b.amount)).length
+
+  // Pie chart section — computed outside JSX.
+  const pieChartData = useMemo(() => {
+    return categories
+      .filter(c => c.type === 'EXPENSE')
+      .map(c => ({ name: c.name, value: spendingByCategory.get(c.id) ?? 0, color: c.color ?? '#64748b' }))
+      .filter(d => d.value > 0)
+      .sort((a, b) => b.value - a.value)
+  }, [categories, spendingByCategory])
+  const pieTotal = pieChartData.reduce((s, d) => s + d.value, 0)
+
   if (loading) {
-    return <div className="text-sm text-slate-400 pt-10 text-center">Loadingâ€¦</div>
+    return <div className="text-sm text-slate-400 pt-10 text-center">Loading…</div>
+  }
+
+  if (loadError) {
+    return <div className="text-sm text-red-500 pt-10 text-center">Failed to load dashboard data. Please restart the app.</div>
   }
 
   return (
