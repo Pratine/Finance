@@ -27,6 +27,7 @@ function occurrencesInMonth(freq: Frequency): number {
     case 'MONTHLY':   return 1
     case 'QUARTERLY': return 1 / 3
     case 'YEARLY':    return 1 / 12
+    default: throw new Error(`Unknown frequency: ${freq}`)
   }
 }
 
