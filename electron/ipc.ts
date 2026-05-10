@@ -21,6 +21,20 @@ function serialize<T>(data: T): T {
   return JSON.parse(JSON.stringify(data))
 }
 
+// Advances a date by one period of the given frequency using UTC methods.
+// Shared by income, bills, and debt handlers so the same logic isn't
+// duplicated and mis-fixed in three places.
+function advanceByFrequency(date: Date, freq: Frequency): Date {
+  const d = new Date(date)
+  switch (freq) {
+    case 'WEEKLY':    d.setUTCDate(d.getUTCDate() + 7); break
+    case 'MONTHLY':   d.setUTCMonth(d.getUTCMonth() + 1); break
+    case 'QUARTERLY': d.setUTCMonth(d.getUTCMonth() + 3); break
+    case 'YEARLY':    d.setUTCFullYear(d.getUTCFullYear() + 1); break
+  }
+  return d
+}
+
 export function setupIpcHandlers(ipcMain: IpcMain) {
   // â”€â”€ Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
