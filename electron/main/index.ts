@@ -175,14 +175,14 @@ function notify(title: string, body: string) {
 async function checkNotifications() {
   try {
     const now = new Date()
-    const today = new Date(now); today.setHours(0, 0, 0, 0)
+    const today = new Date(now); today.setUTCHours(0, 0, 0, 0)
 
     // ── Bills ──────────────────────────────────────────────────────────────────
     const bills = await prisma.recurringBill.findMany({ where: { isActive: true } })
     const overdue: string[] = []
     const dueSoon: string[] = []
     for (const bill of bills) {
-      const due = new Date(bill.nextDueDate); due.setHours(0, 0, 0, 0)
+      const due = new Date(bill.nextDueDate); due.setUTCHours(0, 0, 0, 0)
       const days = Math.round((due.getTime() - today.getTime()) / 86_400_000)
       if (days < 0) overdue.push(bill.name)
       else if (days <= 3) dueSoon.push(`${bill.name} (${days === 0 ? 'today' : `in ${days}d`})`)
