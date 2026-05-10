@@ -72,14 +72,15 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     if (opts.format === 'json') {
       fs.writeFileSync(opts.filePath, JSON.stringify(serialize(txns), null, 2), 'utf8')
     } else {
+      const q = (s: string) => `"${s.replace(/"/g, '""')}"`
       const header = 'Date,Account,Description,Amount,Type,Category,Balance\n'
       const rows = txns.map(t => [
         new Date(t.date).toISOString().slice(0, 10),
-        t.account?.name ?? '',
-        `"${t.description.replace(/"/g, '""')}"`,
+        q(t.account?.name ?? ''),
+        q(t.description),
         t.amount,
         t.type,
-        t.category?.name ?? '',
+        q(t.category?.name ?? ''),
         t.runningBalance ?? '',
       ].join(','))
       fs.writeFileSync(opts.filePath, header + rows.join('\n'), 'utf8')
