@@ -14,6 +14,7 @@ const RANGE_OPTIONS = [
 ]
 
 // Returns { from, to, months } from a preset value or custom dates.
+// All boundaries are UTC so they align with how transaction dates are stored.
 function resolveRange(
   mode: 'preset' | 'custom',
   preset: number,
@@ -23,14 +24,14 @@ function resolveRange(
   if (mode === 'custom' && customFrom && customTo) {
     const from = new Date(customFrom)
     const to   = new Date(customTo)
-    to.setHours(23, 59, 59, 999)
+    to.setUTCHours(23, 59, 59, 999)
     const months = Math.max(1, Math.ceil(
       (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
     ))
     return { from, to, months }
   }
   const to   = new Date()
-  const from = new Date(to.getFullYear(), to.getMonth() - preset + 1, 1)
+  const from = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth() - preset + 1, 1))
   return { from, to, months: preset }
 }
 
