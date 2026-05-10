@@ -163,7 +163,9 @@ const api: Window['api'] = {
 
   // Categories
   listCategories: () => ipcRenderer.invoke('categories:list'),
-  createCategory: (data: unknown) => ipcRenderer.invoke('categories:create', data),
-  updateCategory: (id: number, data: unknown) => ipcRenderer.invoke('categories:update', id, data),
+  createCategory: (data: Omit<Category, 'id'>) => ipcRenderer.invoke('categories:create', data),
+  updateCategory: (id: number, data: Partial<Omit<Category, 'id'>>) => ipcRenderer.invoke('categories:update', id, data),
   deleteCategory: (id: number) => ipcRenderer.invoke('categories:delete', id),
-})
+}
+
+contextBridge.exposeInMainWorld('api', api)
