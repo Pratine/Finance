@@ -171,7 +171,7 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
                 ? `${results.length} result${results.length !== 1 ? 's' : ''}`
                 : `Showing first 12 · there may be more`}
             </p>
-            <button onClick={showAll}
+            <button onClick={() => { navigate(`/transactions?q=${encodeURIComponent(query.trim())}`); onClose() }}
               className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors font-medium">
               See all in Transactions <ArrowRight size={11} />
             </button>
