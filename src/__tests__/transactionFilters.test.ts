@@ -3,9 +3,12 @@ import { applyFilters, matchesSearch, type TransactionFilter } from '../utils/tr
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
+let _id = 1
+function nextId() { return _id++ }
+
 function makeTx(overrides: Partial<Transaction> = {}): Transaction {
   return {
-    id: 1,
+    id: nextId(),
     accountId: 1,
     categoryId: null,
     date: '2026-04-24T00:00:00.000Z',
