@@ -187,7 +187,12 @@ export default function SavingsPage() {
     )
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // sync runs once on mount: auto-creates goals for savings accounts and
+    // applies any elapsed interest. Kept separate from load() so that
+    // subsequent refreshes (after create/update) don't re-trigger it.
+    window.api.syncSavings().then(load)
+  }, [])
 
   function openCreate() {
     setEditingId(null)
