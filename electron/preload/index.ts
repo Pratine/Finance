@@ -150,7 +150,8 @@ contextBridge.exposeInMainWorld('api', {
   getUpdateStatus: () => ipcRenderer.invoke('updater:getStatus'),
   installUpdate: () => ipcRenderer.invoke('updater:install'),
   onUpdateStatus: (cb: (payload: { status: string; version?: string; percent?: number; error?: string }) => void) => {
-    const listener = (_e: Electron.IpcRendererEvent, payload: typeof cb extends (p: infer P) => void ? P : never) => cb(payload)
+    type Payload = { status: string; version?: string; percent?: number; error?: string }
+    const listener = (_e: Electron.IpcRendererEvent, payload: Payload) => cb(payload)
     ipcRenderer.on('updater:status', listener)
     return () => ipcRenderer.removeListener('updater:status', listener)
   },
