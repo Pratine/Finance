@@ -792,7 +792,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
     // Recompute amount + atomically adjust account balance when either field changes
     if (data.amount !== undefined || data.type !== undefined) {
-      const newType = data.type ?? current.type
+      const newType = (data.type ?? current.type) as 'CREDIT' | 'DEBIT'
       const newAbs  = Math.abs(data.amount ?? Math.abs(Number(current.amount)))
       const balanceDelta = computeBalanceDelta(Number(current.amount), newType, newAbs)
       updateData.amount = toStoredAmount(newAbs, newType)
