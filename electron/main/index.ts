@@ -3,8 +3,13 @@ import path from 'path'
 import fs from 'fs'
 import { execFileSync } from 'child_process'
 import { autoUpdater } from 'electron-updater'
+import { setupIpcHandlers } from '../ipc'
+import { prisma } from '../db'
+import { startScheduler, stopScheduler } from '../services/priceScheduler'
+import { loadAppSettings } from '../services/appSettings'
 
 // Enforce a single running instance — quit immediately if another is already open.
+// Must be called before app.whenReady().
 if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
@@ -13,10 +18,6 @@ if (!app.requestSingleInstanceLock()) {
 // Force Chromium to use Portuguese locale so <input type="date"> renders DD/MM/YYYY.
 // Must be set before app.whenReady().
 app.commandLine.appendSwitch('lang', 'pt-PT')
-import { setupIpcHandlers } from '../ipc'
-import { prisma } from '../db'
-import { startScheduler, stopScheduler } from '../services/priceScheduler'
-import { loadAppSettings } from '../services/appSettings'
 
 // Runs pending Prisma migrations at startup — safe to call repeatedly.
 // Uses ELECTRON_RUN_AS_NODE=1 so the Electron binary behaves as plain Node.js
