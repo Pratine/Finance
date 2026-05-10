@@ -23,7 +23,7 @@ export interface ProjectionResult {
 
 const MAX_DAYS = 365 * 50
 
-export function projectGoalDate(params: ProjectionParams): ProjectionResult | null {
+export function projectGoalDate(params: ProjectionParams, now = Date.now()): ProjectionResult | null {
   const {
     currentAmount,
     targetAmount,
