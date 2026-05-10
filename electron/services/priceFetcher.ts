@@ -1,7 +1,9 @@
 // Fetches the current market price for a ticker symbol from Yahoo Finance.
 // Uses the unofficial chart API — no API key required.
-// Throws if the ticker is not found or the network request fails.
+// Throws if the ticker is not found, the network request fails, or times out.
 import https from 'https'
+
+const TIMEOUT_MS = 10_000
 
 export interface PriceResult {
   ticker: string
@@ -12,12 +14,16 @@ export interface PriceResult {
 
 function get(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
       let data = ''
       res.on('data', (chunk) => { data += chunk })
       res.on('end', () => resolve(data))
       res.on('error', reject)
-    }).on('error', reject)
+    })
+    req.setTimeout(TIMEOUT_MS, () => {
+      req.destroy(new Error(`Request timed out after ${TIMEOUT_MS}ms: ${url}`))
+    })
+    req.on('error', reject)
   })
 }
 
@@ -46,13 +52,11 @@ export async function fetchPrice(ticker: string): Promise<PriceResult> {
 }
 
 // Fetches X→EUR exchange rate using Yahoo Finance (e.g. USDEUR=X).
-// Returns 1 if the currency is already EUR or if the fetch fails.
+// Throws on failure — callers must handle and decide whether to use a cached
+// rate or surface the error. Silently returning 1 would show wrong portfolio
+// values with no indication that conversion failed.
 export async function fetchExchangeRate(fromCurrency: string): Promise<number> {
   if (fromCurrency.toUpperCase() === 'EUR') return 1
-  try {
-    const result = await fetchPrice(`${fromCurrency.toUpperCase()}EUR=X`)
-    return result.price
-  } catch {
-    return 1 // fallback: no conversion
-  }
+  const result = await fetchPrice(`${fromCurrency.toUpperCase()}EUR=X`)
+  return result.price
 }
