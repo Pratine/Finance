@@ -513,6 +513,10 @@ export default function DebtsPage() {
 
   const filtered = debts.filter(d => filter === 'ALL' || d.type === filter)
 
+  if (loadError) {
+    return <div className="text-sm text-red-500 pt-10 text-center">Failed to load debts. Please restart the app.</div>
+  }
+
   return (
     <div className="mx-auto max-w-4xl">
       {showAdd && <DebtModal accounts={accounts} onClose={() => setShowAdd(false)} onSave={d => setDebts(prev => [...prev, d])} />}
