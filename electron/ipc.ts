@@ -1286,10 +1286,10 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     if (newStatus === 'ACTIVE' && debt.frequency && debt.nextPaymentDate) {
       nextDate = new Date(debt.nextPaymentDate)
       switch (debt.frequency) {
-        case 'WEEKLY':    nextDate.setDate(nextDate.getDate() + 7); break
-        case 'MONTHLY':   nextDate.setMonth(nextDate.getMonth() + 1); break
-        case 'QUARTERLY': nextDate.setMonth(nextDate.getMonth() + 3); break
-        case 'YEARLY':    nextDate.setFullYear(nextDate.getFullYear() + 1); break
+        case 'WEEKLY':    nextDate.setUTCDate(nextDate.getUTCDate() + 7); break
+        case 'MONTHLY':   nextDate.setUTCMonth(nextDate.getUTCMonth() + 1); break
+        case 'QUARTERLY': nextDate.setUTCMonth(nextDate.getUTCMonth() + 3); break
+        case 'YEARLY':    nextDate.setUTCFullYear(nextDate.getUTCFullYear() + 1); break
       }
     }
 
