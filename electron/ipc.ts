@@ -1364,7 +1364,10 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
           where: { id: debt.accountId! },
           data: { balance: { decrement: Number(linkedTx.amount) } },
         }),
-      ] : []),
+      ] : (() => {
+        if (debt.accountId) console.warn(`debts:deletePayment: could not find linked account transaction for payment ${paymentId} — account balance not restored`)
+        return []
+      })()),
     ])
 
     return serialize(await prisma.debt.findUniqueOrThrow({ where: { id: debt.id }, include: debtInclude }))
