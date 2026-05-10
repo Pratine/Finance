@@ -721,13 +721,15 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('transactions:delete', async (_event, id: number) => {
     const tx = await prisma.transaction.findUniqueOrThrow({ where: { id } })
-    const account = await prisma.account.findUniqueOrThrow({ where: { id: tx.accountId } })
-    // Reverse the effect on the balance
-    await prisma.account.update({
-      where: { id: tx.accountId },
-      data: { balance: Number(account.balance) - Number(tx.amount) },
-    })
-    return serialize(await prisma.transaction.delete({ where: { id } }))
+    // amount is signed (+credit, -debit) so decrementing by it exactly reverses the balance effect
+    const [deleted] = await prisma.$transaction([
+      prisma.transaction.delete({ where: { id } }),
+      prisma.account.update({
+        where: { id: tx.accountId },
+        data: { balance: { decrement: Number(tx.amount) } },
+      }),
+    ])
+    return serialize(deleted)
   })
 
   ipcMain.handle('transactions:transfer', async (_event, data: {
