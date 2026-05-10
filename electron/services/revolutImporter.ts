@@ -87,7 +87,7 @@ export async function importRevolutCSV(
     const amount = parseFloat(row.amount)
     if (isNaN(amount)) continue
 
-    const type = amount >= 0 ? TransactionType.CREDIT : TransactionType.DEBIT
+    const type = amount >= 0 ? 'CREDIT' : 'DEBIT'
     const hash = rowHash(row)
     const description = row.description || row.type
 
