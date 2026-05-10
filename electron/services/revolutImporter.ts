@@ -6,6 +6,7 @@
 import fs from 'fs'
 import crypto from 'crypto'
 import { prisma } from '../db'
+import type { Prisma } from '@prisma/client'
 
 export interface ImportResult {
   imported: number
