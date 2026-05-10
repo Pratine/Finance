@@ -650,8 +650,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return loadAppSettings()
   })
 
-  ipcMain.handle('appSettings:save', (_event, patch: Partial<{ priceRefreshInterval: RefreshInterval }>) => {
-    const updated = saveAppSettings(patch)
+  ipcMain.handle('appSettings:save', async (_event, patch: Partial<{ priceRefreshInterval: RefreshInterval }>) => {
+    const updated = await saveAppSettings(patch)
     // Re-apply scheduler immediately when interval changes
     if (patch.priceRefreshInterval !== undefined) {
       startScheduler(patch.priceRefreshInterval)
