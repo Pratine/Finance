@@ -46,42 +46,40 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
   const investments = await prisma.investment.findMany({ where: { ticker: { not: null } } })
   const results = await withConcurrencyLimit(investments, PRICE_FETCH_CONCURRENCY, async (inv) => {
     const result = await fetchPrice(inv.ticker!)
-      // fetchExchangeRate throws on failure — use a cached rate if we have one,
-      // otherwise re-throw so this investment is recorded as a failed update.
-      let rate: number
-      if (result.currency === 'EUR') {
-        rate = 1
-      } else {
-        try {
-          rate = await fetchExchangeRate(result.currency)
-          await prisma.exchangeRate.upsert({
-            where: { fromCurrency: result.currency },
-            create: { fromCurrency: result.currency, rate },
-            update: { rate },
-          })
-        } catch (rateErr) {
-          const cached = await prisma.exchangeRate.findUnique({ where: { fromCurrency: result.currency } })
-          if (cached) {
-            rate = Number(cached.rate)
-            console.warn(`Exchange rate fetch failed for ${result.currency}, using cached rate ${rate}`)
-          } else {
-            throw new Error(`No exchange rate available for ${result.currency}: ${(rateErr as Error).message}`)
-          }
+    // fetchExchangeRate throws on failure — use a cached rate if we have one,
+    // otherwise re-throw so this investment is recorded as a failed update.
+    let rate: number
+    if (result.currency === 'EUR') {
+      rate = 1
+    } else {
+      try {
+        rate = await fetchExchangeRate(result.currency)
+        await prisma.exchangeRate.upsert({
+          where: { fromCurrency: result.currency },
+          create: { fromCurrency: result.currency, rate },
+          update: { rate },
+        })
+      } catch (rateErr) {
+        const cached = await prisma.exchangeRate.findUnique({ where: { fromCurrency: result.currency } })
+        if (cached) {
+          rate = Number(cached.rate)
+          console.warn(`Exchange rate fetch failed for ${result.currency}, using cached rate ${rate}`)
+        } else {
+          throw new Error(`No exchange rate available for ${result.currency}: ${(rateErr as Error).message}`)
         }
       }
-      const priceInEUR = result.price * rate
-      if (inv.shares === null) {
-        // No share count recorded — skip value update to avoid showing
-        // a meaningless per-unit price as the portfolio value.
-        throw new Error(`${inv.ticker}: shares not set — add a buy lot to track position size`)
-      }
-      const shares = Number(inv.shares)
-      await prisma.investment.update({
-        where: { id: inv.id },
-        data: { currentValue: priceInEUR * shares, lastPriceFetched: priceInEUR, priceUpdatedAt: new Date() },
-      })
-      await savePriceSnapshot(inv.id, priceInEUR, shares)
-      return { id: inv.id, ticker: inv.ticker, price: priceInEUR }
+    }
+    const priceInEUR = result.price * rate
+    if (inv.shares === null) {
+      throw new Error(`${inv.ticker}: shares not set — add a buy lot to track position size`)
+    }
+    const shares = Number(inv.shares)
+    await prisma.investment.update({
+      where: { id: inv.id },
+      data: { currentValue: priceInEUR * shares, lastPriceFetched: priceInEUR, priceUpdatedAt: new Date() },
+    })
+    await savePriceSnapshot(inv.id, priceInEUR, shares)
+    return { id: inv.id, ticker: inv.ticker, price: priceInEUR }
   })
   return {
     updated: results.filter(r => r.status === 'fulfilled').length,
