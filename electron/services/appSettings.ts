@@ -20,13 +20,15 @@ let cache: AppSettings | null = null
 
 export function loadAppSettings(): AppSettings {
   if (cache) return cache
+  let settings: AppSettings
   try {
     const raw = fs.readFileSync(settingsPath(), 'utf8')
-    cache = { ...DEFAULTS, ...JSON.parse(raw) }
+    settings = { ...DEFAULTS, ...JSON.parse(raw) }
   } catch {
-    cache = { ...DEFAULTS }
+    settings = { ...DEFAULTS }
   }
-  return cache
+  cache = settings
+  return settings
 }
 
 export function saveAppSettings(settings: Partial<AppSettings>): AppSettings {
