@@ -12,6 +12,7 @@ import { refreshAllPrices, savePriceSnapshot, getLastRefresh, startScheduler, ty
 import { loadAppSettings, saveAppSettings } from './services/appSettings'
 import { lookupISIN } from './services/isinLookup'
 import { elapsedPeriods, applyPeriods } from './services/interest'
+import type { Frequency, InterestType, DebtType, DebtStatus }
 
 // Converts Prisma responses to plain JSON before sending over IPC.
 // Electron's structured-clone algorithm cannot handle Prisma's Decimal objects,
