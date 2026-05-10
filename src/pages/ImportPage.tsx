@@ -30,13 +30,19 @@ export default function ImportPage() {
   const [history, setHistory] = useState<ImportHistory[]>([])
 
   async function loadHistory() {
-    setHistory(await window.api.listImportHistory())
+    try {
+      setHistory(await window.api.listImportHistory())
+    } catch {
+      // Non-fatal — history just won't show
+    }
   }
 
   useEffect(() => {
     window.api.listAccounts().then((data) => {
       setAccounts(data)
       if (data.length === 1) setAccountId(data[0].id)
+    }).catch(() => {
+      // accounts stays empty — the "No accounts found" UI handles this
     })
     loadHistory()
   }, [])
