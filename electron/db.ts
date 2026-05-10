@@ -14,5 +14,6 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
+  // 'query' is intentionally omitted: it logs full SQL including financial amounts.
+  log: ['warn', 'error'],
 })
