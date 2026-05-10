@@ -7,48 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
-// SQLite has no native enum type — Prisma stores these as strings.
-
-enum TransactionType {
-  CREDIT
-  DEBIT
-}
-
-enum CategoryType {
-  INCOME
-  EXPENSE
-}
-
-enum InterestType {
-  PERCENTAGE
-  FIXED
-}
-
-enum Frequency {
-  WEEKLY
-  MONTHLY
-  QUARTERLY
-  YEARLY
-}
-
-enum DebtType {
-  LOAN
-  RECEIVABLE
-}
-
-enum DebtStatus {
-  ACTIVE
-  PAID
-  WRITTEN_OFF
-}
-
-enum LotType {
-  BUY
-  SELL
-}
-
 // ─── Models ───────────────────────────────────────────────────────────────────
+// SQLite has no native enum type so all enum-like fields are stored as String.
+// Valid values are enforced at the application layer.
+// TransactionType: CREDIT | DEBIT
+// CategoryType:    INCOME | EXPENSE
+// InterestType:    PERCENTAGE | FIXED
+// Frequency:       WEEKLY | MONTHLY | QUARTERLY | YEARLY
+// DebtType:        LOAN | RECEIVABLE
+// DebtStatus:      ACTIVE | PAID | WRITTEN_OFF
+// LotType:         BUY | SELL
 
 model Broker {
   id          Int          @id @default(autoincrement())
@@ -93,25 +61,25 @@ model AccountType {
 }
 
 model Account {
-  id            Int          @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   name          String
   bankId        Int
-  bank          Bank         @relation(fields: [bankId], references: [id])
+  bank          Bank    @relation(fields: [bankId], references: [id])
   accountNumber String?
   typeId        Int
-  type          AccountType  @relation(fields: [typeId], references: [id])
-  balance       Decimal      @default(0)
-  currency      String       @default("EUR")
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  type          AccountType @relation(fields: [typeId], references: [id])
+  balance       Decimal @default(0)
+  currency      String  @default("EUR")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  transactions        Transaction[]
-  savingsGoals        SavingsGoal[]
-  recurringBills      RecurringBill[]
-  recurringIncome     RecurringIncome[]
-  balanceCorrections  BalanceCorrection[]
-  debts               Debt[]
-  importHistory       ImportHistory[]
+  transactions       Transaction[]
+  savingsGoals       SavingsGoal[]
+  recurringBills     RecurringBill[]
+  recurringIncome    RecurringIncome[]
+  balanceCorrections BalanceCorrection[]
+  debts              Debt[]
+  importHistory      ImportHistory[]
 }
 
 model ImportHistory {
@@ -135,12 +103,12 @@ model CategoryRule {
 }
 
 model Category {
-  id        Int          @id @default(autoincrement())
-  name      String       @unique
-  type      CategoryType
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  type      String   // INCOME | EXPENSE
   color     String?
   icon      String?
-  createdAt DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   transactions    Transaction[]
   splits          TransactionSplit[]
@@ -151,33 +119,33 @@ model Category {
 }
 
 model Transaction {
-  id              Int             @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   accountId       Int
-  account         Account         @relation(fields: [accountId], references: [id])
+  account         Account  @relation(fields: [accountId], references: [id])
   categoryId      Int?
-  category        Category?       @relation(fields: [categoryId], references: [id])
+  category        Category? @relation(fields: [categoryId], references: [id])
   recurringBillId Int?
-  recurringBill   RecurringBill?  @relation(fields: [recurringBillId], references: [id])
+  recurringBill   RecurringBill? @relation(fields: [recurringBillId], references: [id])
   date            DateTime
   valueDate       DateTime?
   description     String
   amount          Decimal
-  type            TransactionType
+  type            String   // CREDIT | DEBIT
   runningBalance  Decimal?
   notes           String?
-  importHash      String?         @unique
-  createdAt       DateTime        @default(now())
+  importHash      String?  @unique
+  createdAt       DateTime @default(now())
 
   tags   TransactionTag[]
   splits TransactionSplit[]
 }
 
 model TransactionSplit {
-  id            Int          @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   transactionId Int
-  transaction   Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   categoryId    Int?
-  category      Category?    @relation(fields: [categoryId], references: [id])
+  category      Category? @relation(fields: [categoryId], references: [id])
   amount        Decimal
   notes         String?
 }
@@ -208,23 +176,23 @@ model Budget {
 }
 
 model SavingsGoal {
-  id                        Int          @id @default(autoincrement())
-  accountId                 Int?         @unique
-  account                   Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id                        Int      @id @default(autoincrement())
+  accountId                 Int?     @unique
+  account                   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   name                      String
   targetAmount              Decimal
-  currentAmount             Decimal      @default(0)
+  currentAmount             Decimal  @default(0)
   deadline                  DateTime?
-  interestType              InterestType?
+  interestType              String?  // PERCENTAGE | FIXED
   interestValue             Decimal?
   interestFrequencyDays     Int?
   lastInterestApplied       DateTime?
-  totalInterestEarned       Decimal      @default(0)
+  totalInterestEarned       Decimal  @default(0)
   contributionAmount        Decimal?
   contributionFrequencyDays Int?
   notes                     String?
-  createdAt                 DateTime     @default(now())
-  updatedAt                 DateTime     @updatedAt
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   snapshots SavingsSnapshot[]
 }
@@ -239,19 +207,19 @@ model SavingsSnapshot {
 }
 
 model RecurringBill {
-  id          Int           @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   amount      Decimal
-  frequency   Frequency
+  frequency   String   // WEEKLY | MONTHLY | QUARTERLY | YEARLY
   nextDueDate DateTime
   categoryId  Int?
-  category    Category?     @relation(fields: [categoryId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
   accountId   Int?
-  account     Account?      @relation(fields: [accountId], references: [id])
+  account     Account?  @relation(fields: [accountId], references: [id])
   notes       String?
-  isActive    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   transactions Transaction[]
 }
@@ -275,23 +243,23 @@ model PriceHistory {
 }
 
 model Debt {
-  id              Int        @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   name            String
-  type            DebtType
+  type            String   // LOAN | RECEIVABLE
   counterparty    String
   principal       Decimal
   outstanding     Decimal
   interestRate    Decimal?
-  frequency       Frequency?
+  frequency       String?  // WEEKLY | MONTHLY | QUARTERLY | YEARLY
   nextPaymentDate DateTime?
   startDate       DateTime
   endDate         DateTime?
-  status          DebtStatus @default(ACTIVE)
+  status          String   @default("ACTIVE") // ACTIVE | PAID | WRITTEN_OFF
   accountId       Int?
-  account         Account?   @relation(fields: [accountId], references: [id])
+  account         Account? @relation(fields: [accountId], references: [id])
   notes           String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   payments DebtPayment[]
 }
@@ -309,19 +277,19 @@ model DebtPayment {
 }
 
 model RecurringIncome {
-  id               Int       @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   name             String
   amount           Decimal
-  frequency        Frequency
+  frequency        String   // WEEKLY | MONTHLY | QUARTERLY | YEARLY
   nextExpectedDate DateTime
   categoryId       Int?
   category         Category? @relation(fields: [categoryId], references: [id])
   accountId        Int?
   account          Account?  @relation(fields: [accountId], references: [id])
   notes            String?
-  isActive         Boolean   @default(true)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Investment {
@@ -331,17 +299,17 @@ model Investment {
   type             InvestmentType @relation(fields: [typeId], references: [id])
   amountIn         Decimal
   currentValue     Decimal
-  currency         String         @default("EUR")
+  currency         String  @default("EUR")
   isin             String?
   ticker           String?
   shares           Decimal?
   lastPriceFetched Decimal?
   priceUpdatedAt   DateTime?
   brokerId         Int?
-  broker           Broker?        @relation(fields: [brokerId], references: [id])
+  broker           Broker?  @relation(fields: [brokerId], references: [id])
   notes            String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   priceHistory PriceHistory[]
   lots         InvestmentLot[]
@@ -351,7 +319,7 @@ model InvestmentLot {
   id            Int        @id @default(autoincrement())
   investmentId  Int
   investment    Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
-  type          LotType    @default(BUY)
+  type          String     @default("BUY") // BUY | SELL
   date          DateTime
   shares        Decimal
   pricePerShare Decimal
