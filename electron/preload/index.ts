@@ -1,9 +1,14 @@
 // Runs in an isolated context between the main process and the renderer.
 // contextBridge.exposeInMainWorld makes window.api available in React while
 // keeping Node.js and Electron internals fully sandboxed from the renderer.
+//
+// The api object is typed as Window['api'] (declared in src/types/electron.d.ts)
+// so the renderer tsconfig enforces that every method name and signature here
+// matches the declared contract. A channel-name typo or signature mismatch
+// becomes a compile error rather than a silent runtime failure.
 import { contextBridge, ipcRenderer } from 'electron'
 
-contextBridge.exposeInMainWorld('api', {
+const api: Window['api'] = {
   // Export
   exportSavePath: (defaultName: string, filters: Array<{ name: string; extensions: string[] }>) =>
     ipcRenderer.invoke('export:savePath', defaultName, filters),
