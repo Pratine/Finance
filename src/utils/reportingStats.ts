@@ -18,9 +18,9 @@ export function calcMonthlyBreakdown(
   const now = new Date()
 
   for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const m = d.getMonth()
-    const y = d.getFullYear()
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1))
+    const m = d.getUTCMonth()
+    const y = d.getUTCFullYear()
 
     const inMonth = transactions.filter(t => {
       const td = new Date(t.date)
