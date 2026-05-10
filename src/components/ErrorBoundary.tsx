@@ -18,6 +18,10 @@ export class ErrorBoundary extends Component<Props, State> {
     return { error }
   }
 
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[ErrorBoundary]', error, info.componentStack)
+  }
+
   reset = () => this.setState({ error: null })
 
   render() {
