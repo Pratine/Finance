@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { calcBudgetStatus, calcSpendingByCategory, calcBillsReservedByCategory } from '../utils/budgetStats'
 
+let _id = 1
+function nextId() { return _id++ }
+
 function makeTx(overrides: Partial<Transaction> = {}): Transaction {
   return {
-    id: 1, accountId: 1, categoryId: 1, category: null,
+    id: nextId(), accountId: 1, categoryId: 1, category: null,
     date: '2026-04-15T00:00:00.000Z', valueDate: null,
     description: 'Test', amount: '-50', type: 'DEBIT',
     runningBalance: null, notes: null,
