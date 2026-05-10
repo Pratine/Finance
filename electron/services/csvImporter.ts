@@ -4,6 +4,7 @@
 import fs from 'fs'
 import crypto from 'crypto'
 import { prisma } from '../db'
+import type { Prisma } from '@prisma/client'
 
 interface Rule { id: number; pattern: string; categoryId: number }
 
