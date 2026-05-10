@@ -315,7 +315,7 @@ function DebtCard({
   const [showEdit, setShowEdit] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
 
-  const paid = pct(debt.outstanding, debt.principal)
+  const paid = calcPctPaid(Number(debt.outstanding), Number(debt.principal))
   const isLoan = debt.type === 'LOAN'
   const statusColor = debt.status === 'PAID'
     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
