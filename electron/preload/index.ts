@@ -98,6 +98,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // Savings goals
   listSavings: () => ipcRenderer.invoke('savings:list'),
+  syncSavings: () => ipcRenderer.invoke('savings:sync'),
   createSavings: (data: unknown) => ipcRenderer.invoke('savings:create', data),
   updateSavings: (id: number, data: unknown) => ipcRenderer.invoke('savings:update', id, data),
   deleteSavings: (id: number) => ipcRenderer.invoke('savings:delete', id),
