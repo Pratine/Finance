@@ -26,17 +26,10 @@ export default function DBGate({ children }: { children: React.ReactNode }) {
             Database not reachable
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            The app couldn't connect to PostgreSQL. Make sure Docker Desktop is running and the
-            Finance database container is up.
+            Finance couldn't open its local database. This can happen if the database file is
+            locked by another process, the app data folder is not writable, or a migration
+            failed on startup. Try restarting the app.
           </p>
-
-          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-left mb-6">
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">To start the database:</p>
-            <code className="text-xs text-slate-600 dark:text-slate-400 font-mono">
-              docker compose up -d
-            </code>
-          </div>
-
           <button
             onClick={retry}
             className="flex items-center gap-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-slate-700 dark:hover:bg-white transition-colors mx-auto"
