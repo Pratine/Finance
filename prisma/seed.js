@@ -176,8 +176,9 @@ async function main() {
   const MONTHS = 18
 
   for (let mo = MONTHS - 1; mo >= 0; mo--) {
-    const y = new Date(now.getFullYear(), now.getMonth() - mo, 1).getFullYear()
-    const m = new Date(now.getFullYear(), now.getMonth() - mo, 1).getMonth() + 1
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - mo, 1))
+    const y = d.getUTCFullYear()
+    const m = d.getUTCMonth() + 1
 
     // ── Salary on 25th ──────────────────────────────────────────────────────
     const salary = rnd(2700, 2900)
