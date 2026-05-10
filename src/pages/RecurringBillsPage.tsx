@@ -82,7 +82,7 @@ export default function RecurringBillsPage() {
 
   function openCreate() {
     setEditingId(null)
-    setForm(EMPTY_FORM)
+    setForm(emptyForm())
     setError(null)
     setShowForm(true)
   }
