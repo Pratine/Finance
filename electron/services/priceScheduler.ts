@@ -45,7 +45,7 @@ const PRICE_FETCH_CONCURRENCY = 4
 export async function refreshAllPrices(): Promise<RefreshResult> {
   const investments = await prisma.investment.findMany({ where: { ticker: { not: null } } })
   const results = await withConcurrencyLimit(investments, PRICE_FETCH_CONCURRENCY, async (inv) => {
-      const result = await fetchPrice(inv.ticker!)
+    const result = await fetchPrice(inv.ticker!)
       // fetchExchangeRate throws on failure — use a cached rate if we have one,
       // otherwise re-throw so this investment is recorded as a failed update.
       let rate: number
