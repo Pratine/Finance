@@ -288,8 +288,9 @@ export default function SavingsPage() {
       await window.api.deleteSavings(deleteTarget.id)
       setDeleteTarget(null)
       await load()
-    } catch {
+    } catch (e: any) {
       setDeleteTarget(null)
+      setError(e?.message ?? 'Failed to delete savings goal')
     }
   }
 
