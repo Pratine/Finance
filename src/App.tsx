@@ -18,6 +18,7 @@ import ReportsPage from './pages/ReportsPage'
 import DebtsPage from './pages/DebtsPage'
 import RecurringIncomePage from './pages/RecurringIncomePage'
 
+
 // HashRouter is required in Electron because the app is served from a local file (file://).
 // BrowserHistory pushes real URL paths that the OS file system cannot resolve.
 export default function App() {
