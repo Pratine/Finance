@@ -202,6 +202,8 @@ async function checkNotifications() {
     const monthTxns  = await prisma.transaction.findMany({
       where: { type: 'DEBIT', date: { gte: monthStart, lt: monthEnd } },
     })
+    const exceededBudgets: string[] = []
+    const warningBudgets: string[] = []
     for (const budget of budgets) {
       const limit = Number(budget.amount)
       if (!limit) continue
@@ -209,12 +211,11 @@ async function checkNotifications() {
         .filter(t => t.categoryId === budget.categoryId)
         .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
       const pct = (spent / limit) * 100
-      if (pct >= 100) {
-        notify(`${budget.category.name} budget exceeded`, `Spent ${spent.toFixed(2)} € of ${limit.toFixed(2)} € (${Math.round(pct)}%)`)
-      } else if (pct >= 80) {
-        notify(`${budget.category.name} budget at ${Math.round(pct)}%`, `${spent.toFixed(2)} € of ${limit.toFixed(2)} € spent`)
-      }
+      if (pct >= 100) exceededBudgets.push(`${budget.category.name} (${Math.round(pct)}%)`)
+      else if (pct >= 80) warningBudgets.push(`${budget.category.name} (${Math.round(pct)}%)`)
     }
+    if (exceededBudgets.length > 0) notify(`${exceededBudgets.length} budget${exceededBudgets.length > 1 ? 's' : ''} exceeded`, exceededBudgets.join(', '))
+    if (warningBudgets.length > 0) notify(`${warningBudgets.length} budget${warningBudgets.length > 1 ? 's' : ''} near limit`, warningBudgets.join(', '))
 
     // ── Recurring income (late) ────────────────────────────────────────────────
     const incomeItems = await prisma.recurringIncome.findMany({ where: { isActive: true } })
@@ -228,14 +229,14 @@ async function checkNotifications() {
 
     // ── Savings goals ──────────────────────────────────────────────────────────
     const goals = await prisma.savingsGoal.findMany()
+    const reachedGoals: string[] = []
     for (const goal of goals) {
       const pct = Number(goal.targetAmount) > 0
         ? (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100
         : 0
-      if (pct >= 100) {
-        notify(`🎉 ${goal.name} goal reached!`, `You saved ${Number(goal.currentAmount).toFixed(2)} €`)
-      }
+      if (pct >= 100) reachedGoals.push(goal.name)
     }
+    if (reachedGoals.length > 0) notify(`🎉 ${reachedGoals.length} savings goal${reachedGoals.length > 1 ? 's' : ''} reached!`, reachedGoals.join(', '))
   } catch {
     // DB not ready — ignore
   }
