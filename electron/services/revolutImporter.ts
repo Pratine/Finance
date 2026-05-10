@@ -102,13 +102,14 @@ export async function importRevolutCSV(
   type PendingRow = { hash: string; data: Prisma.TransactionCreateManyInput }
   const pending: PendingRow[] = []
   const parseErrors: string[] = []
+  let intentionallySkipped = 0
 
   for (const line of lines.slice(1)) {
     const cols = parseCSVLine(line, sep)
     if (cols.length < headers.length) continue
 
     const row = parseRow(cols, headers)
-    if (!row) continue // PENDING / REVERTED — intentionally skipped, not an error
+    if (!row) { intentionallySkipped++; continue } // PENDING / REVERTED
 
     const amount = parseFloat(row.amount)
     if (isNaN(amount)) continue
