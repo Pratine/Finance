@@ -415,7 +415,7 @@ export default function DashboardPage() {
             <>
               <div className="mb-3">
                 <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  {fmt(investments.reduce((s, i) => s + parseFloat(i.currentValue), 0))}
+                  {fmt(portfolioValue)}
                 </p>
                 <p className={`text-xs mt-0.5 font-medium ${portfolioPnL.absolute >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                   {portfolioPnL.absolute >= 0 ? '+' : ''}{fmt(portfolioPnL.absolute)} ({fmtPct(portfolioPnL.percentage)})
