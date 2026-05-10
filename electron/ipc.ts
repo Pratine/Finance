@@ -295,7 +295,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     try {
       return JSON.parse(await readFile(shortcutsPath, ‘utf8’))
     } catch {
-      return null // returns null → renderer uses defaults
+      return null // null means renderer uses defaults
     }
   })
 
