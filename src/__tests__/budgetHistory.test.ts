@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { calcBudgetHistory } from '../utils/budgetHistory'
 
+let _id = 1
+function nextId() { return _id++ }
+
 function makeBudget(categoryId: number, amount: number): Budget {
   return {
     id: categoryId,
@@ -17,14 +20,14 @@ function makeTx(categoryId: number, amount: string, monthsAgo = 0): Transaction 
   d.setUTCDate(15)
   d.setUTCMonth(d.getUTCMonth() - monthsAgo)
   return {
-    id: Math.random(),
+    id: nextId(),
     accountId: 1, valueDate: null, runningBalance: null,
     notes: null, description: 'test', type: 'DEBIT',
-    importHash: null, category: null, tags: [],
+    category: null,
     categoryId,
     date: d.toISOString(),
     amount,
-  } as any
+  }
 }
 
 describe('calcBudgetHistory', () => {
