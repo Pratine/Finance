@@ -62,7 +62,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       if (opts.from) (where.date as Record<string, unknown>).gte = new Date(opts.from)
       if (opts.to)   (where.date as Record<string, unknown>).lte = new Date(opts.to)
     }
-    if (opts.accountId) where.accountId = opts.accountId
+    if (opts.accountId != null) where.accountId = opts.accountId
 
     const txns = await prisma.transaction.findMany({
       where,
