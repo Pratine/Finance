@@ -107,7 +107,7 @@ function setupAutoUpdater(win: BrowserWindow) {
 
   // Check silently on startup (only in production)
   if (app.isPackaged) {
-    setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000)
+    setTimeout(() => autoUpdater.checkForUpdates().catch((e) => console.error('Update check failed:', e)), 5000)
   }
 }
 
