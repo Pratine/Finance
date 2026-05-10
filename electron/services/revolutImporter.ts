@@ -99,7 +99,7 @@ export async function importRevolutCSV(
   }
 
   // ── Parse all rows upfront ───────────────────────────────────────────────────
-  type PendingRow = { hash: string; data: Parameters<typeof prisma.transaction.create>[0]['data'] }
+  type PendingRow = { hash: string; data: Prisma.TransactionCreateManyInput }
   const pending: PendingRow[] = []
   const parseErrors: string[] = []
 
