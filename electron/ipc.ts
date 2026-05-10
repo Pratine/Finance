@@ -338,21 +338,20 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // â”€â”€ Investment lots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // Recalculates amountIn and shares on the parent Investment from its lots.
-  // Uses average cost method: remaining cost = remaining shares Ã— avg buy price.
-  async function syncInvestmentTotals(investmentId: number) {
-    const lots = await prisma.investmentLot.findMany({ where: { investmentId } })
-    if (lots.length === 0) return  // no lots â€” keep manual values
+  // Recalculates amountIn and shares on the parent Investment using the average cost method.
+  // Must be called inside a $transaction so it sees the committed lot state.
+  async function syncInvestmentTotals(investmentId: number, tx: typeof prisma) {
+    const lots = await tx.investmentLot.findMany({ where: { investmentId } })
+    if (lots.length === 0) return
     const buys  = lots.filter(l => l.type === 'BUY')
     const sells = lots.filter(l => l.type === 'SELL')
     const totalBuyShares  = buys.reduce((s, l) => s + Number(l.shares), 0)
     const totalSellShares = sells.reduce((s, l) => s + Number(l.shares), 0)
     const totalShares = Math.max(0, totalBuyShares - totalSellShares)
     const totalBuyCost = buys.reduce((s, l) => s + Number(l.totalCost), 0)
-    // Average cost method: amountIn = remaining shares Ã— avg buy price
     const avgBuyPrice = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
     const remainingCost = Math.round(totalShares * avgBuyPrice * 100) / 100
-    await prisma.investment.update({
+    await tx.investment.update({
       where: { id: investmentId },
       data: { shares: totalShares, amountIn: remainingCost },
     })
@@ -373,19 +372,21 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     notes?: string | null
   }) => {
     const totalCost = Math.round(data.shares * data.pricePerShare * 100) / 100
-    const lot = await prisma.investmentLot.create({
-      data: {
-        investmentId: data.investmentId,
-        type: 'BUY',
-        date: new Date(data.date),
-        shares: data.shares,
-        pricePerShare: data.pricePerShare,
-        totalCost,
-        notes: data.notes ?? null,
-      },
-    })
-    await syncInvestmentTotals(data.investmentId)
-    return serialize(lot)
+    return serialize(await prisma.$transaction(async (tx) => {
+      const lot = await tx.investmentLot.create({
+        data: {
+          investmentId: data.investmentId,
+          type: 'BUY',
+          date: new Date(data.date),
+          shares: data.shares,
+          pricePerShare: data.pricePerShare,
+          totalCost,
+          notes: data.notes ?? null,
+        },
+      })
+      await syncInvestmentTotals(data.investmentId, tx)
+      return lot
+    }))
   })
 
   ipcMain.handle('lots:createSell', async (_event, data: {
@@ -395,38 +396,51 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     pricePerShare: number
     notes?: string | null
   }) => {
-    // Compute avg cost basis at time of sale to record realized gain
-    const existing = await prisma.investmentLot.findMany({ where: { investmentId: data.investmentId } })
-    const buys = existing.filter(l => l.type === 'BUY')
-    const totalBuyShares = buys.reduce((s, l) => s + Number(l.shares), 0)
-    const totalBuyCost   = buys.reduce((s, l) => s + Number(l.totalCost), 0)
-    const avgCostPerShare = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
+    return serialize(await prisma.$transaction(async (tx) => {
+      // Read existing lots inside the transaction for consistency
+      const existing = await tx.investmentLot.findMany({ where: { investmentId: data.investmentId } })
+      const buys  = existing.filter(l => l.type === 'BUY')
+      const sells = existing.filter(l => l.type === 'SELL')
+      const totalBuyShares  = buys.reduce((s, l) => s + Number(l.shares), 0)
+      const totalSellShares = sells.reduce((s, l) => s + Number(l.shares), 0)
+      const remainingShares = totalBuyShares - totalSellShares
 
-    const proceeds     = Math.round(data.shares * data.pricePerShare * 100) / 100
-    const costBasis    = Math.round(data.shares * avgCostPerShare * 100) / 100
-    const realizedGain = Math.round((proceeds - costBasis) * 100) / 100
+      if (data.shares > remainingShares) {
+        throw new Error(
+          `Cannot sell ${data.shares} shares — only ${remainingShares.toFixed(6)} remaining`
+        )
+      }
 
-    const lot = await prisma.investmentLot.create({
-      data: {
-        investmentId: data.investmentId,
-        type: 'SELL',
-        date: new Date(data.date),
-        shares: data.shares,
-        pricePerShare: data.pricePerShare,
-        totalCost: proceeds,
-        realizedGain,
-        notes: data.notes ?? null,
-      },
-    })
-    await syncInvestmentTotals(data.investmentId)
-    return serialize(lot)
+      const totalBuyCost    = buys.reduce((s, l) => s + Number(l.totalCost), 0)
+      const avgCostPerShare = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
+      const proceeds        = Math.round(data.shares * data.pricePerShare * 100) / 100
+      const costBasis       = Math.round(data.shares * avgCostPerShare * 100) / 100
+      const realizedGain    = Math.round((proceeds - costBasis) * 100) / 100
+
+      const lot = await tx.investmentLot.create({
+        data: {
+          investmentId: data.investmentId,
+          type: 'SELL',
+          date: new Date(data.date),
+          shares: data.shares,
+          pricePerShare: data.pricePerShare,
+          totalCost: proceeds,
+          realizedGain,
+          notes: data.notes ?? null,
+        },
+      })
+      await syncInvestmentTotals(data.investmentId, tx)
+      return lot
+    }))
   })
 
   ipcMain.handle('lots:delete', async (_event, id: number) => {
     const lot = await prisma.investmentLot.findUniqueOrThrow({ where: { id } })
-    await prisma.investmentLot.delete({ where: { id } })
-    await syncInvestmentTotals(lot.investmentId)
-    return serialize(lot)
+    return serialize(await prisma.$transaction(async (tx) => {
+      await tx.investmentLot.delete({ where: { id } })
+      await syncInvestmentTotals(lot.investmentId, tx)
+      return lot
+    }))
   })
 
   // â”€â”€ Investment types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
