@@ -1,4 +1,4 @@
-// All IPC handlers live here. The renderer calls window.api.* (defined in preload.ts),
+﻿// All IPC handlers live here. The renderer calls window.api.* (defined in preload.ts),
 // which bridges to these handlers running in the main process where Prisma and Node.js
 // APIs (fs, dialog) are available. The renderer never touches the DB directly.
 //
@@ -22,7 +22,7 @@ import { lookupISIN } from './services/isinLookup'
 import { elapsedPeriods, applyPeriods } from './services/interest'
 
 export function setupIpcHandlers(ipcMain: IpcMain) {
-  // ── Export ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   ipcMain.handle('export:savePath', async (_event, defaultName: string, filters: Electron.FileFilter[]) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
@@ -73,7 +73,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return { exported: txns.length }
   })
 
-  // Full database backup — all tables serialised to a single JSON file.
+  // Full database backup â€” all tables serialised to a single JSON file.
   ipcMain.handle('export:backup', async (_event, filePath: string) => {
     const [accounts, transactions, categories, budgets, savingsGoals,
            investments, recurringBills, accountTypes, banks, investmentTypes,
@@ -103,27 +103,33 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   // Restores all data from a full backup JSON file.
-  // Truncates every table first — this is a destructive full restore.
+  // Truncates every table first â€” this is a destructive full restore.
   ipcMain.handle('import:backup', async (_event, filePath: string) => {
     const raw = fs.readFileSync(filePath, 'utf8')
     const backup = JSON.parse(raw)
 
-    // Delete in reverse FK order, then reset sequences
-    await prisma.$executeRaw`TRUNCATE "Transaction", "SavingsGoal", "Budget", "RecurringBill", "Investment", "CategoryRule", "Account", "Category", "AccountType", "Bank", "Broker", "InvestmentType" RESTART IDENTITY CASCADE`
+    // Delete in reverse FK order (SQLite uses DELETE FROM, no TRUNCATE)
+    for (const t of [
+      'TransactionTag','TransactionSplit','Tag','ImportHistory','DebtPayment','Debt',
+      'SavingsSnapshot','PriceHistory','ExchangeRate','BalanceCorrection','InvestmentLot',
+      'Transaction','SavingsGoal','Budget','RecurringBill','RecurringIncome',
+      'CategoryRule','Investment','Account','Category','AccountType','Bank','Broker','InvestmentType',
+    ]) { await prisma.$executeRawUnsafe(`DELETE FROM "${t}"`) }
+    await prisma.$executeRaw`DELETE FROM sqlite_sequence`
 
     // Re-insert in FK dependency order
-    if (backup.accountTypes?.length)   await prisma.accountType.createMany({ data: backup.accountTypes.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), skipDuplicates: true })
-    if (backup.banks?.length)          await prisma.bank.createMany({ data: backup.banks.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), skipDuplicates: true })
-    if (backup.brokers?.length)        await prisma.broker.createMany({ data: backup.brokers.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), skipDuplicates: true })
-    if (backup.investmentTypes?.length) await prisma.investmentType.createMany({ data: backup.investmentTypes.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), skipDuplicates: true })
-    if (backup.categories?.length)     await prisma.category.createMany({ data: backup.categories.map((r: any) => ({ id: r.id, name: r.name, type: r.type, color: r.color, icon: r.icon })), skipDuplicates: true })
-    if (backup.categoryRules?.length)  await prisma.categoryRule.createMany({ data: backup.categoryRules.map((r: any) => ({ id: r.id, pattern: r.pattern, categoryId: r.categoryId })), skipDuplicates: true })
-    if (backup.accounts?.length)       await prisma.account.createMany({ data: backup.accounts.map((r: any) => ({ id: r.id, name: r.name, bankId: r.bankId, typeId: r.typeId, accountNumber: r.accountNumber, balance: r.balance, currency: r.currency })), skipDuplicates: true })
-    if (backup.budgets?.length)        await prisma.budget.createMany({ data: backup.budgets.map((r: any) => ({ id: r.id, categoryId: r.categoryId, amount: r.amount })), skipDuplicates: true })
-    if (backup.savingsGoals?.length)   await prisma.savingsGoal.createMany({ data: backup.savingsGoals.map((r: any) => ({ id: r.id, accountId: r.accountId, name: r.name, targetAmount: r.targetAmount, currentAmount: r.currentAmount, deadline: r.deadline ? new Date(r.deadline) : null, interestType: r.interestType, interestValue: r.interestValue, interestFrequencyDays: r.interestFrequencyDays, lastInterestApplied: r.lastInterestApplied ? new Date(r.lastInterestApplied) : null, contributionAmount: r.contributionAmount, contributionFrequencyDays: r.contributionFrequencyDays, totalInterestEarned: r.totalInterestEarned ?? 0, notes: r.notes })), skipDuplicates: true })
-    if (backup.investments?.length)    await prisma.investment.createMany({ data: backup.investments.map((r: any) => ({ id: r.id, name: r.name, typeId: r.typeId, brokerId: r.brokerId, amountIn: r.amountIn, currentValue: r.currentValue, currency: r.currency, ticker: r.ticker, isin: r.isin, shares: r.shares, lastPriceFetched: r.lastPriceFetched, priceUpdatedAt: r.priceUpdatedAt ? new Date(r.priceUpdatedAt) : null, notes: r.notes })), skipDuplicates: true })
-    if (backup.recurringBills?.length) await prisma.recurringBill.createMany({ data: backup.recurringBills.map((r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextDueDate: new Date(r.nextDueDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })), skipDuplicates: true })
-    if (backup.transactions?.length)   await prisma.transaction.createMany({ data: backup.transactions.map((r: any) => ({ id: r.id, accountId: r.accountId, categoryId: r.categoryId, recurringBillId: r.recurringBillId, date: new Date(r.date), valueDate: r.valueDate ? new Date(r.valueDate) : null, description: r.description, amount: r.amount, type: r.type, runningBalance: r.runningBalance, importHash: r.importHash, notes: r.notes })), skipDuplicates: true })
+    if (backup.accountTypes?.length)   await prisma.accountType.createMany({ data: backup.accountTypes.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })) })
+    if (backup.banks?.length)          await prisma.bank.createMany({ data: backup.banks.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })) })
+    if (backup.brokers?.length)        await prisma.broker.createMany({ data: backup.brokers.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })) })
+    if (backup.investmentTypes?.length) await prisma.investmentType.createMany({ data: backup.investmentTypes.map((r: any) => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })) })
+    if (backup.categories?.length)     await prisma.category.createMany({ data: backup.categories.map((r: any) => ({ id: r.id, name: r.name, type: r.type, color: r.color, icon: r.icon })) })
+    if (backup.categoryRules?.length)  await prisma.categoryRule.createMany({ data: backup.categoryRules.map((r: any) => ({ id: r.id, pattern: r.pattern, categoryId: r.categoryId })) })
+    if (backup.accounts?.length)       await prisma.account.createMany({ data: backup.accounts.map((r: any) => ({ id: r.id, name: r.name, bankId: r.bankId, typeId: r.typeId, accountNumber: r.accountNumber, balance: r.balance, currency: r.currency })) })
+    if (backup.budgets?.length)        await prisma.budget.createMany({ data: backup.budgets.map((r: any) => ({ id: r.id, categoryId: r.categoryId, amount: r.amount })) })
+    if (backup.savingsGoals?.length)   await prisma.savingsGoal.createMany({ data: backup.savingsGoals.map((r: any) => ({ id: r.id, accountId: r.accountId, name: r.name, targetAmount: r.targetAmount, currentAmount: r.currentAmount, deadline: r.deadline ? new Date(r.deadline) : null, interestType: r.interestType, interestValue: r.interestValue, interestFrequencyDays: r.interestFrequencyDays, lastInterestApplied: r.lastInterestApplied ? new Date(r.lastInterestApplied) : null, contributionAmount: r.contributionAmount, contributionFrequencyDays: r.contributionFrequencyDays, totalInterestEarned: r.totalInterestEarned ?? 0, notes: r.notes })) })
+    if (backup.investments?.length)    await prisma.investment.createMany({ data: backup.investments.map((r: any) => ({ id: r.id, name: r.name, typeId: r.typeId, brokerId: r.brokerId, amountIn: r.amountIn, currentValue: r.currentValue, currency: r.currency, ticker: r.ticker, isin: r.isin, shares: r.shares, lastPriceFetched: r.lastPriceFetched, priceUpdatedAt: r.priceUpdatedAt ? new Date(r.priceUpdatedAt) : null, notes: r.notes })) })
+    if (backup.recurringBills?.length) await prisma.recurringBill.createMany({ data: backup.recurringBills.map((r: any) => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextDueDate: new Date(r.nextDueDate), categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: r.isActive })) })
+    if (backup.transactions?.length)   await prisma.transaction.createMany({ data: backup.transactions.map((r: any) => ({ id: r.id, accountId: r.accountId, categoryId: r.categoryId, recurringBillId: r.recurringBillId, date: new Date(r.date), valueDate: r.valueDate ? new Date(r.valueDate) : null, description: r.description, amount: r.amount, type: r.type, runningBalance: r.runningBalance, importHash: r.importHash, notes: r.notes })) })
 
     // Advance all sequences past the restored IDs so future inserts don't conflict
     for (const seq of ['AccountType', 'Bank', 'Broker', 'InvestmentType', 'Category', 'CategoryRule', 'Account', 'Budget', 'SavingsGoal', 'Investment', 'RecurringBill', 'Transaction']) {
@@ -133,20 +139,20 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return { transactions: backup.transactions?.length ?? 0 }
   })
 
-  // ── DB health check ────────────────────────────────────────────────────────
+  // â”€â”€ DB health check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('db:ping', async () => {
     await prisma.$queryRaw`SELECT 1`
     return true
   })
 
-  // ── Shortcuts ──────────────────────────────────────────────────────────────
+  // â”€â”€ Shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const shortcutsPath = path.join(app.getPath('userData'), 'shortcuts.json')
 
   ipcMain.handle('shortcuts:load', () => {
     try {
       return JSON.parse(fs.readFileSync(shortcutsPath, 'utf8'))
     } catch {
-      return null // returns null → renderer uses defaults
+      return null // returns null â†’ renderer uses defaults
     }
   })
 
@@ -155,7 +161,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return true
   })
 
-  // ── File dialog ────────────────────────────────────────────────────────────
+  // â”€â”€ File dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('dialog:openCSV', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: 'Select bank statement',
@@ -174,7 +180,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return canceled ? null : filePaths[0]
   })
 
-  // ── CSV import ─────────────────────────────────────────────────────────────
+  // â”€â”€ CSV import â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function logImport(
     filePath: string,
     format: string,
@@ -219,7 +225,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.importHistory.delete({ where: { id } }))
   })
 
-  // ── Brokers ────────────────────────────────────────────────────────────────
+  // â”€â”€ Brokers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('brokers:list', async () => {
     return serialize(await prisma.broker.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -236,20 +242,20 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.broker.delete({ where: { id } }))
   })
 
-  // ── Investment lots ────────────────────────────────────────────────────────
+  // â”€â”€ Investment lots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Recalculates amountIn and shares on the parent Investment from its lots.
-  // Uses average cost method: remaining cost = remaining shares × avg buy price.
+  // Uses average cost method: remaining cost = remaining shares Ã— avg buy price.
   async function syncInvestmentTotals(investmentId: number) {
     const lots = await prisma.investmentLot.findMany({ where: { investmentId } })
-    if (lots.length === 0) return  // no lots — keep manual values
+    if (lots.length === 0) return  // no lots â€” keep manual values
     const buys  = lots.filter(l => l.type === 'BUY')
     const sells = lots.filter(l => l.type === 'SELL')
     const totalBuyShares  = buys.reduce((s, l) => s + Number(l.shares), 0)
     const totalSellShares = sells.reduce((s, l) => s + Number(l.shares), 0)
     const totalShares = Math.max(0, totalBuyShares - totalSellShares)
     const totalBuyCost = buys.reduce((s, l) => s + Number(l.totalCost), 0)
-    // Average cost method: amountIn = remaining shares × avg buy price
+    // Average cost method: amountIn = remaining shares Ã— avg buy price
     const avgBuyPrice = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
     const remainingCost = Math.round(totalShares * avgBuyPrice * 100) / 100
     await prisma.investment.update({
@@ -329,7 +335,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(lot)
   })
 
-  // ── Investment types ───────────────────────────────────────────────────────
+  // â”€â”€ Investment types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('investmentTypes:list', async () => {
     return serialize(await prisma.investmentType.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -346,7 +352,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.investmentType.delete({ where: { id } }))
   })
 
-  // ── Investments ────────────────────────────────────────────────────────────
+  // â”€â”€ Investments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const investmentInclude = { type: true, broker: true, lots: { orderBy: { date: 'asc' as const } } }
 
   ipcMain.handle('investments:list', async () => {
@@ -370,7 +376,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       include: { investment: { select: { name: true, typeId: true } } },
       orderBy: { recordedAt: 'asc' },
     })
-    // Group by date → sum all investment values = total portfolio value
+    // Group by date â†’ sum all investment values = total portfolio value
     const byDate = new Map<string, number>()
     for (const h of history) {
       const date = h.recordedAt.toISOString().slice(0, 10)
@@ -402,7 +408,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // savePriceSnapshot is imported from priceScheduler service
 
-  // Fetches the latest price for one investment and updates currentValue = price × shares.
+  // Fetches the latest price for one investment and updates currentValue = price Ã— shares.
   ipcMain.handle('investments:refreshPrice', async (_event, id: number) => {
     const inv = await prisma.investment.findUniqueOrThrow({ where: { id } })
     if (!inv.ticker) throw new Error('No ticker symbol set for this investment')
@@ -442,7 +448,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return ts ? ts.toISOString() : null
   })
 
-  // ── App settings ───────────────────────────────────────────────────────────
+  // â”€â”€ App settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('appSettings:load', () => {
     return loadAppSettings()
   })
@@ -456,7 +462,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return updated
   })
 
-  // ── Banks ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Banks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('banks:list', async () => {
     return serialize(await prisma.bank.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -473,7 +479,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.bank.delete({ where: { id } }))
   })
 
-  // ── Account types ──────────────────────────────────────────────────────────
+  // â”€â”€ Account types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('accountTypes:list', async () => {
     return serialize(await prisma.accountType.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -490,7 +496,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.accountType.delete({ where: { id } }))
   })
 
-  // ── Accounts ───────────────────────────────────────────────────────────────
+  // â”€â”€ Accounts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('accounts:list', async () => {
     return serialize(await prisma.account.findMany({ include: { type: true, bank: true }, orderBy: { name: 'asc' } }))
   })
@@ -535,7 +541,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.account.delete({ where: { id } }))
   })
 
-  // ── Transactions ───────────────────────────────────────────────────────────
+  // â”€â”€ Transactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const txInclude = { category: true, tags: { include: { tag: true } }, splits: { include: { category: true }, orderBy: { id: 'asc' as const } } }
 
   ipcMain.handle('transactions:list', async (_event, accountId?: number) => {
@@ -546,7 +552,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // Paginated version used by TransactionsPage — returns the page + total count.
+  // Paginated version used by TransactionsPage â€” returns the page + total count.
   ipcMain.handle('transactions:listPaged', async (_event, opts: {
     accountId?: number; take: number; skip: number
   }) => {
@@ -617,7 +623,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.transaction.update({ where: { id }, data: { categoryId }, include: txInclude }))
   })
 
-  // ── Tags ───────────────────────────────────────────────────────────────────
+  // â”€â”€ Tags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('tags:list', async () => {
     return serialize(await prisma.tag.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -735,7 +741,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize({ debit, credit })
   })
 
-  // ── Savings goals ──────────────────────────────────────────────────────────
+  // â”€â”€ Savings goals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const savingsInclude = { account: { include: { type: true, bank: true } } }
 
   ipcMain.handle('savings:list', async () => {
@@ -898,7 +904,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(updated)
   })
 
-  // ── Recurring income ───────────────────────────────────────────────────────
+  // â”€â”€ Recurring income â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const incomeInclude = { category: true, account: { include: { type: true, bank: true } } }
 
   ipcMain.handle('income:list', async () => {
@@ -955,7 +961,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // ── Recurring bills ────────────────────────────────────────────────────────
+  // â”€â”€ Recurring bills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const billInclude = { category: true, account: { include: { type: true, bank: true } } }
 
   ipcMain.handle('bills:list', async () => {
@@ -1017,7 +1023,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }))
   })
 
-  // ── Budgets ────────────────────────────────────────────────────────────────
+  // â”€â”€ Budgets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('budgets:list', async () => {
     return serialize(await prisma.budget.findMany({
       include: { category: true },
@@ -1038,7 +1044,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.budget.delete({ where: { id } }))
   })
 
-  // ── Categories ─────────────────────────────────────────────────────────────
+  // â”€â”€ Categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('categories:list', async () => {
     return serialize(await prisma.category.findMany({ orderBy: { name: 'asc' } }))
   })
@@ -1047,7 +1053,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.category.create({ data }))
   })
 
-  // ── Category rules ─────────────────────────────────────────────────────────
+  // â”€â”€ Category rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('rules:list', async () => {
     return serialize(await prisma.categoryRule.findMany({
       include: { category: true },
@@ -1091,7 +1097,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.category.delete({ where: { id } }))
   })
 
-  // ── Debts ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Debts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const debtInclude = { account: true, payments: { orderBy: { date: 'desc' as const } } }
 
   ipcMain.handle('debts:list', async () => {
@@ -1234,7 +1240,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     return serialize(await prisma.debt.findUniqueOrThrow({ where: { id: debt.id }, include: debtInclude }))
   })
 
-  // ── Cleanup ────────────────────────────────────────────────────────────────
+  // â”€â”€ Cleanup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.on('app:quit', async () => {
     await prisma.$disconnect()
   })
