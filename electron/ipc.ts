@@ -538,22 +538,23 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // savePriceSnapshot is imported from priceScheduler service
 
-  // Fetches the latest price for one investment and updates currentValue = price Ã— shares.
+  // Fetches the latest price for one investment and atomically updates price
+  // history, exchange rate cache, and investment currentValue in one transaction.
   ipcMain.handle('investments:refreshPrice', async (_event, id: number) => {
     const inv = await prisma.investment.findUniqueOrThrow({ where: { id } })
     if (!inv.ticker) throw new Error('No ticker symbol set for this investment')
     const result = await fetchPrice(inv.ticker)
+    if (inv.shares === null) {
+      throw new Error(`${inv.ticker}: shares not set — add a buy lot before refreshing the price`)
+    }
+
+    // Resolve exchange rate before opening the transaction (network call).
     let rate: number
     if (result.currency === 'EUR') {
       rate = 1
     } else {
       try {
         rate = await fetchExchangeRate(result.currency)
-        await prisma.exchangeRate.upsert({
-          where: { fromCurrency: result.currency },
-          create: { fromCurrency: result.currency, rate },
-          update: { rate },
-        })
       } catch (rateErr) {
         const cached = await prisma.exchangeRate.findUnique({ where: { fromCurrency: result.currency } })
         if (cached) {
@@ -563,16 +564,22 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         }
       }
     }
-    if (inv.shares === null) {
-      throw new Error(`${inv.ticker}: shares not set — add a buy lot before refreshing the price`)
-    }
+
     const priceInEUR = result.price * rate
     const shares = Number(inv.shares)
     const newValue = priceInEUR * shares
-    // Snapshot and investment update in one transaction — a failed update should
-    // not leave a dangling price history entry.
+    const today = new Date(); today.setUTCHours(0, 0, 0, 0)
+
     return serialize(await prisma.$transaction(async (tx) => {
-      const today = new Date(); today.setUTCHours(0, 0, 0, 0)
+      // Cache the exchange rate inside the transaction so it's consistent with
+      // the price snapshot and investment update written below.
+      if (result.currency !== 'EUR') {
+        await tx.exchangeRate.upsert({
+          where: { fromCurrency: result.currency },
+          create: { fromCurrency: result.currency, rate },
+          update: { rate },
+        })
+      }
       await tx.priceHistory.upsert({
         where: { investmentId_recordedAt: { investmentId: id, recordedAt: today } },
         create: { investmentId: id, price: priceInEUR, value: newValue, recordedAt: today },
