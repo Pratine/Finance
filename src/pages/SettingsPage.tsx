@@ -1012,7 +1012,10 @@ export default function SettingsPage() {
                     {rule.category.name}
                   </span>
                   <button
-                    onClick={async () => { await window.api.deleteRule(rule.id); await load() }}
+                    onClick={async () => {
+                      try { await window.api.deleteRule(rule.id); await load() }
+                      catch (e: any) { setError(e?.message ?? 'Failed to delete rule') }
+                    }}
                     className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
                   >
                     <X size={13} />
