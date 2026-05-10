@@ -1,12 +1,14 @@
-// Single shared PrismaClient instance for the main process.
-// Query logging is enabled in development to make SQL visible in the terminal.
+import { app } from 'electron'
+import path from 'path'
 import { PrismaClient } from '@prisma/client'
 
-// In packaged builds the .env file is not present, so Prisma's built-in dotenv
-// loader finds nothing. Set a fallback so the app can connect to the local
-// Docker Postgres without any manual configuration by the user.
+// In production, store the SQLite database in the user's app data folder so it
+// persists between updates. In dev, use a local file next to the schema.
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgresql://finance_user:finance_pass@localhost:5432/finance_db'
+  const dbPath = app.isPackaged
+    ? path.join(app.getPath('userData'), 'finance.db')
+    : path.join(process.cwd(), 'prisma', 'dev.db')
+  process.env.DATABASE_URL = `file:${dbPath}`
 }
 
 export const prisma = new PrismaClient({
