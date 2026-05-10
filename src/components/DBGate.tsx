@@ -1,7 +1,6 @@
 import { useDB } from '../context/DBContext'
 import { Database, RefreshCw, AlertTriangle } from 'lucide-react'
 
-
 export default function DBGate({ children }: { children: React.ReactNode }) {
   const { status, retry } = useDB()
 
