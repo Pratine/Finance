@@ -3,7 +3,6 @@
 // by hashing each row and storing the hash in the `importHash` column.
 import fs from 'fs'
 import crypto from 'crypto'
-import { TransactionType } from '@prisma/client'
 import { prisma } from '../db'
 
 interface Rule { id: number; pattern: string; categoryId: number }
