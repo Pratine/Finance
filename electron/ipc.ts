@@ -748,7 +748,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     // Auto-create a savings goal for every savings-type account that doesn't have one yet.
     // upsert on accountId ensures this is idempotent even if called concurrently.
     const savingsAccounts = await prisma.account.findMany({
-      where: { type: { name: { equals: 'Savings', mode: 'insensitive' } } },
+      where: { type: { name: { equals: 'Savings' } } },
     })
     for (const acc of savingsAccounts) {
       await prisma.savingsGoal.upsert({
