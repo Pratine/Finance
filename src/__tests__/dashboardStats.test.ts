@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { calcMonthlyStats, calcNetWorth, calcSavingsTotal } from '../utils/dashboardStats'
 
+let _id = 1
+function nextId() { return _id++ }
+
 function makeTx(overrides: Partial<Transaction> = {}): Transaction {
   return {
-    id: 1, accountId: 1, categoryId: null, category: null,
+    id: nextId(), accountId: 1, categoryId: null, category: null,
     date: '2026-04-15T00:00:00.000Z', valueDate: null,
     description: 'Test', amount: '100', type: 'CREDIT',
     runningBalance: null, notes: null,
@@ -13,7 +16,7 @@ function makeTx(overrides: Partial<Transaction> = {}): Transaction {
 
 function makeAccount(balance: string): Account {
   return {
-    id: 1, name: 'Test', bankId: 1,
+    id: nextId(), name: 'Test', bankId: 1,
     bank: { id: 1, name: 'Bank', color: null, icon: null },
     accountNumber: null, typeId: 1,
     type: { id: 1, name: 'Checking', color: null, icon: null },
@@ -23,16 +26,19 @@ function makeAccount(balance: string): Account {
 
 function makeInvestment(amountIn: string, currentValue: string): Investment {
   return {
-    id: 1, name: 'ETF', typeId: 1, brokerId: null, broker: null,
+    id: nextId(), name: 'ETF', typeId: 1, brokerId: null, broker: null,
     type: { id: 1, name: 'ETF', color: null, icon: null },
     amountIn, currentValue, currency: 'EUR', notes: null,
+    isin: null, ticker: null, shares: null,
+    lastPriceFetched: null, priceUpdatedAt: null,
+    lots: [],
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
   }
 }
 
 function makeGoal(currentAmount: string, targetAmount: string): SavingsGoal {
   return {
-    id: 1, name: 'Goal', accountId: null, account: null,
+    id: nextId(), name: 'Goal', accountId: null, account: null,
     currentAmount, targetAmount, deadline: null,
     interestType: null, interestValue: null, interestFrequencyDays: null,
     lastInterestApplied: null, contributionAmount: null, contributionFrequencyDays: null,
