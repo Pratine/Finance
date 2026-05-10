@@ -1336,8 +1336,12 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const debt = await prisma.debt.findUniqueOrThrow({ where: { id: payment.debtId } })
     const restored = Math.min(Number(debt.principal), Number(debt.outstanding) + Number(payment.principal))
 
-    // Find the account transaction created by recordPayment (matched by description + date + amount).
-    // We delete it and reverse the balance in the same atomic operation.
+    // Find the account transaction created by recordPayment.
+    // Matched heuristically by description + date since there is no FK linking them.
+    // Limitation: if two payments share the same date and debt name, findFirst returns
+    // one arbitrarily. If the debt name was edited after the payment, no match is found
+    // and the account balance is not restored (logged as a console warning).
+    // The proper fix is a schema change adding debtPaymentId to Transaction.
     const linkedTx = debt.accountId
       ? await prisma.transaction.findFirst({
           where: {
