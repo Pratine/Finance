@@ -283,9 +283,9 @@ model RecurringIncome {
   frequency        String   // WEEKLY | MONTHLY | QUARTERLY | YEARLY
   nextExpectedDate DateTime
   categoryId       Int?
-  category         Category? @relation(fields: [categoryId], references: [id])
+  category         Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   accountId        Int?
-  account          Account?  @relation(fields: [accountId], references: [id])
+  account          Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
   notes            String?
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
