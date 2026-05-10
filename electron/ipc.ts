@@ -794,9 +794,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     if (data.amount !== undefined || data.type !== undefined) {
       const newType = data.type ?? current.type
       const newAbs  = Math.abs(data.amount ?? Math.abs(Number(current.amount)))
-      const newStoredAmount = newType === 'DEBIT' ? -newAbs : newAbs
-      const balanceDelta = newStoredAmount - Number(current.amount)
-      updateData.amount = newStoredAmount
+      const balanceDelta = computeBalanceDelta(Number(current.amount), newType, newAbs)
+      updateData.amount = toStoredAmount(newAbs, newType)
       updateData.type   = newType
       const [updated] = await prisma.$transaction([
         prisma.transaction.update({ where: { id }, data: updateData, include: txInclude }),
