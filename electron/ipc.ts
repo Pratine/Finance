@@ -321,14 +321,19 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   ipcMain.handle('import:millenniumCSV', async (_event, filePath: string, accountId: number) => {
     const rules = await prisma.categoryRule.findMany()
     const result = await importMillenniumCSV(filePath, accountId, rules)
-    await logImport(filePath, 'millennium', accountId, result)
+    // Log after the import — a logging failure must not mark a successful import as failed.
+    logImport(filePath, 'millennium', accountId, result).catch(e =>
+      console.error('Failed to log import history:', e)
+    )
     return result
   })
 
   ipcMain.handle('import:revolut', async (_event, filePath: string, accountId: number) => {
     const rules = await prisma.categoryRule.findMany()
     const result = await importRevolutCSV(filePath, accountId, rules)
-    await logImport(filePath, 'revolut', accountId, result)
+    logImport(filePath, 'revolut', accountId, result).catch(e =>
+      console.error('Failed to log import history:', e)
+    )
     return result
   })
 
