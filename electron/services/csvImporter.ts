@@ -107,9 +107,7 @@ export async function importMillenniumCSV(
 
     const hash = rowHash(row)
     const amount = parseDecimal(row.montante)
-    const type = normalise(row.tipo).toLowerCase().includes('cr')
-      ? TransactionType.CREDIT
-      : TransactionType.DEBIT
+    const type = normalise(row.tipo).toLowerCase().includes('cr') ? 'CREDIT' : 'DEBIT'
 
     try {
       const description = normalise(row.descricao)
