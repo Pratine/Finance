@@ -146,8 +146,13 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   // The entire operation runs inside a single SQLite transaction — if any step
   // fails the database is rolled back to its state before the restore started.
   ipcMain.handle('import:backup', async (_event, filePath: string) => {
-    const raw = fs.readFileSync(filePath, 'utf8')
-    const backup = JSON.parse(raw)
+    let backup: any
+    try {
+      const raw = await readFile(filePath, 'utf8')
+      backup = JSON.parse(raw)
+    } catch (e: any) {
+      throw new Error(`The selected file is not a valid Finance backup: ${e.message}`)
+    }
 
     if (backup.version !== 2) {
       throw new Error(`Incompatible backup version: expected 2, got ${backup.version ?? 'missing'}. Use the app that created this backup to export it again.`)
