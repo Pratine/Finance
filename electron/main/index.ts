@@ -4,6 +4,12 @@ import fs from 'fs'
 import { execFileSync } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 
+// Enforce a single running instance — quit immediately if another is already open.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+  process.exit(0)
+}
+
 // Force Chromium to use Portuguese locale so <input type="date"> renders DD/MM/YYYY.
 // Must be set before app.whenReady().
 app.commandLine.appendSwitch('lang', 'pt-PT')
