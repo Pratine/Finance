@@ -237,8 +237,14 @@ function CategoryAddRow({ onAdd }: { onAdd: (data: Omit<Category, 'id'>) => Prom
   async function save() {
     if (!name.trim()) return
     setSaving(true)
-    await onAdd({ name: name.trim(), type, color, icon: icon || null })
-    setName(''); setColor('#64748b'); setIcon(''); setSaving(false); setOpen(false)
+    try {
+      await onAdd({ name: name.trim(), type, color, icon: icon || null })
+      setName(''); setColor('#64748b'); setIcon(''); setOpen(false)
+    } catch {
+      // onAdd surfaces errors via the parent's error state
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!open) return (
