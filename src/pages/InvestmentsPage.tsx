@@ -49,19 +49,33 @@ export default function InvestmentsPage() {
   const [expandedSparklineId, setExpandedSparklineId] = useState<number | null>(null)
   const [expandedLotsId, setExpandedLotsId] = useState<number | null>(null)
 
+  // Full load — used on mount and after refreshAllPrices (which changes history).
   async function load() {
-    const [inv, t, b, hist, rates] = await Promise.all([
-      window.api.listInvestments(),
-      window.api.listInvestmentTypes(),
-      window.api.listBrokers(),
-      window.api.getInvestmentPriceHistory(),
-      window.api.listExchangeRates(),
-    ])
-    setInvestments(inv)
-    setTypes(t)
-    setBrokers(b)
-    setPriceHistory(hist)
-    setExchangeRates(rates)
+    try {
+      const [inv, t, b, hist, rates] = await Promise.all([
+        window.api.listInvestments(),
+        window.api.listInvestmentTypes(),
+        window.api.listBrokers(),
+        window.api.getInvestmentPriceHistory(),
+        window.api.listExchangeRates(),
+      ])
+      setInvestments(inv)
+      setTypes(t)
+      setBrokers(b)
+      setPriceHistory(hist)
+      setExchangeRates(rates)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load investments')
+    }
+  }
+
+  // Lightweight reload — only investments change after create/update/delete.
+  async function reloadInvestments() {
+    try {
+      setInvestments(await window.api.listInvestments())
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to reload investments')
+    }
   }
 
   useEffect(() => { load() }, [])
