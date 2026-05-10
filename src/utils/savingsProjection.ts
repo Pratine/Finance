@@ -68,7 +68,7 @@ export function projectGoalDate(params: ProjectionParams, now = Date.now()): Pro
     }
 
     if (balance >= targetAmount) {
-      const projectedDate = new Date(Date.now() + day * 86_400_000)
+      const projectedDate = new Date(now + day * 86_400_000)
       return { projectedDate, daysRemaining: day, periodsRemaining: contributionPeriods }
     }
   }
