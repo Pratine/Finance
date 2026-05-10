@@ -136,7 +136,7 @@ export function calcCategoryBreakdown(
   months: number,
 ): CategoryBreakdown[] {
   const now = new Date()
-  const cutoff = new Date(now.getFullYear(), now.getMonth() - months + 1, 1)
+  const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months + 1, 1))
 
   const map = new Map<string, { color: string; total: number }>()
 
