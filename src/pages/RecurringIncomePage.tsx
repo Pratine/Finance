@@ -124,19 +124,23 @@ export default function RecurringIncomePage() {
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
-    const [inc, cats, accs] = await Promise.all([
-      window.api.listIncome(),
-      window.api.listCategories(),
-      window.api.listAccounts(),
-    ])
-    setItems(inc)
-    setCategories(cats.filter(c => c.type === 'INCOME'))
-    setAccounts(accs)
+    try {
+      const [inc, cats, accs] = await Promise.all([
+        window.api.listIncome(),
+        window.api.listCategories(),
+        window.api.listAccounts(),
+      ])
+      setItems(inc)
+      setCategories(cats.filter(c => c.type === 'INCOME'))
+      setAccounts(accs)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load data')
+    }
   }
 
   useEffect(() => { load() }, [])
 
-  function openCreate() { setEditingId(null); setForm(EMPTY_FORM); setError(null); setShowForm(true) }
+  function openCreate() { setEditingId(null); setForm(emptyForm()); setError(null); setShowForm(true) }
   function openEdit(item: RecurringIncome) {
     setEditingId(item.id)
     setForm({
