@@ -125,7 +125,7 @@ model Transaction {
   categoryId      Int?
   category        Category? @relation(fields: [categoryId], references: [id])
   recurringBillId Int?
-  recurringBill   RecurringBill? @relation(fields: [recurringBillId], references: [id])
+  recurringBill   RecurringBill? @relation(fields: [recurringBillId], references: [id], onDelete: SetNull)
   date            DateTime
   valueDate       DateTime?
   description     String
