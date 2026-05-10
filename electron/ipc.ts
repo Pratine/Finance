@@ -138,7 +138,14 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       transactionSplits, balanceCorrections, debts, debtPayments, importHistory,
     })
     await writeFile(filePath, JSON.stringify(backup, null, 2), 'utf8')
-    return { exported: transactions.length }
+    const total = [
+      accountTypes, banks, brokers, investmentTypes, categories, categoryRules,
+      accounts, tags, budgets, savingsGoals, savingsSnapshots,
+      investments, investmentLots, priceHistory, exchangeRates,
+      recurringBills, recurringIncome, transactions, transactionTags,
+      transactionSplits, balanceCorrections, debts, debtPayments, importHistory,
+    ].reduce((s, t) => s + t.length, 0)
+    return { exported: total }
   })
 
   // Restores all data from a full backup JSON file.
