@@ -88,7 +88,6 @@ export function simulate(params: SimulationParams): SimulationResult {
         yearDividends,
         totalDividends,
       })
-      snapshotStart = portfolio
       yearDividends = 0
     }
   }
