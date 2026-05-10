@@ -36,24 +36,48 @@ function rowHash(row: RawRow): string {
 }
 
 function parseSeparator(header: string): string {
-  // Detect comma or semicolon separator from the header line
   return header.includes(';') ? ';' : ','
 }
 
-function parseRow(cols: string[], headers: string[], sep: string): RawRow | null {
-  const get = (name: string) => (cols[headers.indexOf(name)] ?? '').trim().replace(/^"|"$/g, '')
+// RFC 4180-compliant CSV line parser — handles quoted fields containing the separator.
+function parseCSVLine(line: string, sep: string): string[] {
+  const cols: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i]
+    if (c === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"'
+        i++ // skip escaped quote
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (c === sep && !inQuotes) {
+      cols.push(current)
+      current = ''
+    } else {
+      current += c
+    }
+  }
+  cols.push(current)
+  return cols
+}
+
+function parseRow(cols: string[], headers: string[]): RawRow | null {
+  const get = (name: string) => (cols[headers.indexOf(name)] ?? '').trim()
   const state = get('State').toUpperCase()
   if (state !== 'COMPLETED') return null
   return {
-    type: get('Type'),
-    startedDate: get('Started Date'),
+    type:          get('Type'),
+    startedDate:   get('Started Date'),
     completedDate: get('Completed Date'),
-    description: get('Description'),
-    amount: get('Amount'),
-    fee: get('Fee'),
-    currency: get('Currency'),
+    description:   get('Description'),
+    amount:        get('Amount'),
+    fee:           get('Fee'),
+    currency:      get('Currency'),
     state,
-    balance: get('Balance'),
+    balance:       get('Balance'),
   }
 }
 
@@ -64,25 +88,26 @@ export async function importRevolutCSV(
 ): Promise<ImportResult> {
   const content = fs.readFileSync(filePath, 'utf8')
   const lines = content.split(/\r?\n/).filter(l => l.trim())
-
   if (lines.length < 2) throw new Error('File appears to be empty')
 
   const sep = parseSeparator(lines[0])
-  const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''))
+  const headers = parseCSVLine(lines[0], sep).map(h => h.trim())
 
-  // Validate it looks like a Revolut file
   if (!headers.includes('Started Date') || !headers.includes('Amount') || !headers.includes('State')) {
     throw new Error('This does not look like a Revolut statement CSV')
   }
 
-  const result: ImportResult = { imported: 0, skipped: 0, errors: [] }
+  // ── Parse all rows upfront ───────────────────────────────────────────────────
+  type PendingRow = { hash: string; data: Parameters<typeof prisma.transaction.create>[0]['data'] }
+  const pending: PendingRow[] = []
+  const parseErrors: string[] = []
 
   for (const line of lines.slice(1)) {
-    const cols = line.split(sep)
+    const cols = parseCSVLine(line, sep)
     if (cols.length < headers.length) continue
 
-    const row = parseRow(cols, headers, sep)
-    if (!row) { result.skipped++; continue }
+    const row = parseRow(cols, headers)
+    if (!row) continue // PENDING / REVERTED — intentionally skipped, not an error
 
     const amount = parseFloat(row.amount)
     if (isNaN(amount)) continue
@@ -90,47 +115,63 @@ export async function importRevolutCSV(
     const type = amount >= 0 ? 'CREDIT' : 'DEBIT'
     const hash = rowHash(row)
     const description = row.description || row.type
-
     const lower = description.toLowerCase()
     const matchedRule = rules.find(r => lower.includes(r.pattern.toLowerCase()))
 
-    try {
-      await prisma.transaction.create({
-        data: {
-          accountId,
-          date: parseDate(row.completedDate || row.startedDate),
-          valueDate: row.startedDate ? parseDate(row.startedDate) : null,
-          description,
-          amount,
-          type,
-          runningBalance: row.balance ? parseFloat(row.balance) : null,
-          importHash: hash,
-          categoryId: matchedRule?.categoryId ?? null,
-        },
-      })
-      result.imported++
-    } catch (e: any) {
-      if (e?.code === 'P2002') {
-        result.skipped++
-      } else {
-        result.errors.push(`Row "${description}": ${e?.message ?? e}`)
-      }
-    }
+    // If the transaction is not in EUR, append the original currency to the
+    // description so the user can see it. Revolut multi-currency conversions
+    // are not auto-converted here — the stored amount is the EUR equivalent
+    // as shown in the Revolut statement's Amount column.
+    const notesPrefix = row.currency && row.currency.toUpperCase() !== 'EUR'
+      ? `[${row.currency}] `
+      : ''
+
+    pending.push({
+      hash,
+      data: {
+        accountId,
+        date: parseDate(row.completedDate || row.startedDate),
+        valueDate: row.startedDate ? parseDate(row.startedDate) : null,
+        description: `${notesPrefix}${description}`,
+        amount,
+        type,
+        runningBalance: row.balance ? parseFloat(row.balance) : null,
+        importHash: hash,
+        categoryId: matchedRule?.categoryId ?? null,
+      },
+    })
   }
 
-  // Update account balance from last completed row's balance
-  if (result.imported > 0) {
-    const latest = await prisma.transaction.findFirst({
+  if (pending.length === 0) {
+    return { imported: 0, skipped: 0, errors: parseErrors }
+  }
+
+  // ── Deduplicate against existing imports in one query ────────────────────────
+  const existing = new Set(
+    (await prisma.transaction.findMany({
+      where: { importHash: { in: pending.map(p => p.hash) } },
+      select: { importHash: true },
+    })).map(t => t.importHash!)
+  )
+
+  const newRows = pending.filter(p => !existing.has(p.hash))
+  const skipped = pending.length - newRows.length
+
+  if (newRows.length === 0) {
+    return { imported: 0, skipped, errors: parseErrors }
+  }
+
+  // ── Atomic: insert all new rows + update balance in one transaction ──────────
+  await prisma.$transaction(async (tx) => {
+    await tx.transaction.createMany({ data: newRows.map(p => p.data) })
+    const latest = await tx.transaction.findFirst({
       where: { accountId, runningBalance: { not: null } },
       orderBy: { date: 'desc' },
     })
     if (latest?.runningBalance != null) {
-      await prisma.account.update({
-        where: { id: accountId },
-        data: { balance: latest.runningBalance },
-      })
+      await tx.account.update({ where: { id: accountId }, data: { balance: latest.runningBalance } })
     }
-  }
+  })
 
-  return result
+  return { imported: newRows.length, skipped, errors: parseErrors }
 }
