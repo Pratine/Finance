@@ -49,7 +49,6 @@ export function simulate(params: SimulationParams): SimulationResult {
 
   const snapshots: YearSnapshot[] = []
   let yearDividends = 0
-  let snapshotStart = 0
 
   for (let m = 1; m <= months; m++) {
     // Increase contribution at the start of each new year (except year 1)
