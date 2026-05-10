@@ -1033,9 +1033,13 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={async () => {
-                const { updated } = await window.api.applyRulesToAll()
-                setApplyMsg(`${updated} transaction${updated !== 1 ? 's' : ''} categorised`)
-                setTimeout(() => setApplyMsg(null), 3000)
+                try {
+                  const { updated } = await window.api.applyRulesToAll()
+                  setApplyMsg(`${updated} transaction${updated !== 1 ? 's' : ''} categorised`)
+                  setTimeout(() => setApplyMsg(null), 3000)
+                } catch (e: any) {
+                  setError(e?.message ?? 'Failed to apply rules')
+                }
               }}
               className="ml-4 shrink-0 px-3 py-1.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
             >
