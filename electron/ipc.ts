@@ -765,14 +765,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
         },
         include: { category: true },
       }),
-    ])
-    const [from, to] = await Promise.all([
-      prisma.account.findUniqueOrThrow({ where: { id: data.fromAccountId } }),
-      prisma.account.findUniqueOrThrow({ where: { id: data.toAccountId } }),
-    ])
-    await Promise.all([
-      prisma.account.update({ where: { id: data.fromAccountId }, data: { balance: Number(from.balance) - abs } }),
-      prisma.account.update({ where: { id: data.toAccountId }, data: { balance: Number(to.balance) + abs } }),
+      prisma.account.update({ where: { id: data.fromAccountId }, data: { balance: { decrement: abs } } }),
+      prisma.account.update({ where: { id: data.toAccountId },   data: { balance: { increment: abs } } }),
     ])
     return serialize({ debit, credit })
   })
