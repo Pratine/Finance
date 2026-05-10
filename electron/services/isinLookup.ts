@@ -26,6 +26,8 @@ const EXCHANGE_MAP: Record<string, { suffix: string; label: string }> = {
   NMS:    { suffix: '',    label: 'NASDAQ' },
 }
 
+const TIMEOUT_MS = 10_000
+
 function post(url: string, body: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url)
@@ -43,6 +45,9 @@ function post(url: string, body: string): Promise<string> {
       res.on('data', c => { data += c })
       res.on('end', () => resolve(data))
       res.on('error', reject)
+    })
+    req.setTimeout(TIMEOUT_MS, () => {
+      req.destroy(new Error(`Request timed out after ${TIMEOUT_MS}ms`))
     })
     req.on('error', reject)
     req.write(body)
