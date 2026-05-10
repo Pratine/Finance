@@ -38,11 +38,8 @@ export class ErrorBoundary extends Component<Props, State> {
         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
           Something went wrong
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1 max-w-sm">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
           {error.message || 'An unexpected error occurred on this page.'}
-        </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mb-6 max-w-sm font-mono break-all">
-          {error.stack?.split('\n')[1]?.trim()}
         </p>
         <button
           onClick={this.reset}
