@@ -56,9 +56,11 @@ describe('calcBudgetStatus', () => {
 
 function makeBill(overrides: Partial<RecurringBill> = {}): RecurringBill {
   return {
-    id: 1, name: 'Netflix', amount: '15', frequency: 'MONTHLY',
+    id: nextId(), name: 'Netflix', amount: '15', frequency: 'MONTHLY',
     nextDueDate: '2026-05-15T00:00:00.000Z', categoryId: 1, category: null,
-    notes: null, isActive: true, createdAt: '', updatedAt: '',
+    accountId: null, account: null,
+    notes: null, isActive: true,
+    createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   }
 }
