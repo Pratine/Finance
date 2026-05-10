@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { writeFile } from 'fs/promises'
 import path from 'path'
 import { app } from 'electron'
 import type { RefreshInterval } from './priceScheduler'
