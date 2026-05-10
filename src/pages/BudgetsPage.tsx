@@ -220,6 +220,10 @@ export default function BudgetsPage() {
   }, 0)
   const totalSurplus = totalBudgeted - totalSpent
 
+  if (loadError) {
+    return <div className="text-sm text-red-500 pt-10 text-center">Failed to load budgets. Please restart the app.</div>
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
       {/* Header */}
