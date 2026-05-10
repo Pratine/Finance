@@ -9,7 +9,7 @@ type Handler = () => void
 
 interface ShortcutContextValue {
   config: ShortcutConfig
-  setConfig: (c: ShortcutConfig) => void
+  setConfig: (c: ShortcutConfig) => Promise<void>
   register: (action: ActionName, handler: Handler) => () => void
 }
 
