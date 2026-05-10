@@ -1,6 +1,6 @@
 // Pure interest calculation logic — extracted so it can be unit tested independently.
-
-export type InterestType = 'PERCENTAGE' | 'FIXED'
+import type { InterestType } from '../domainTypes'
+export type { InterestType }
 
 export interface InterestConfig {
   interestType: InterestType
