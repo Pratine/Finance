@@ -772,13 +772,15 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   ipcMain.handle('transactions:setSplits', async (_event, transactionId: number, splits: Array<{ categoryId: number | null; amount: number; notes?: string | null }>) => {
-    await prisma.$transaction([
-      prisma.transactionSplit.deleteMany({ where: { transactionId } }),
-      ...splits.map(s => prisma.transactionSplit.create({
-        data: { transactionId, categoryId: s.categoryId ?? null, amount: s.amount, notes: s.notes ?? null },
-      })),
-    ])
-    return serialize(await prisma.transaction.findUniqueOrThrow({ where: { id: transactionId }, include: txInclude }))
+    return serialize(await prisma.$transaction(async (tx) => {
+      await tx.transactionSplit.deleteMany({ where: { transactionId } })
+      for (const s of splits) {
+        await tx.transactionSplit.create({
+          data: { transactionId, categoryId: s.categoryId ?? null, amount: s.amount, notes: s.notes ?? null },
+        })
+      }
+      return tx.transaction.findUniqueOrThrow({ where: { id: transactionId }, include: txInclude })
+    }))
   })
 
   ipcMain.handle('transactions:update', async (_event, id: number, data: {
