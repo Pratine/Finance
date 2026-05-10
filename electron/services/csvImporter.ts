@@ -106,6 +106,10 @@ export async function importMillenniumCSV(
     }
 
     const hash = rowHash(row)
+    // Millennium BCP exports amounts already signed: credits are positive, debits
+    // are negative. We store the value as-is — do NOT take Math.abs() here.
+    // The `tipo` field ('CR'/'DB') is used only to set the transaction type enum;
+    // the sign on `montante` is the source of truth for the stored amount.
     const amount = parseDecimal(row.montante)
     const type = normalise(row.tipo).toLowerCase().includes('cr') ? 'CREDIT' : 'DEBIT'
 
