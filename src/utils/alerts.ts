@@ -29,13 +29,13 @@ export function calcAlerts({
 }: AlertsInput): AppAlert[] {
   const alerts: AppAlert[] = []
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  today.setUTCHours(0, 0, 0, 0)
 
   // ── Bills ────────────────────────────────────────────────────────────────────
   for (const bill of bills) {
     if (!bill.isActive) continue
     const due = new Date(bill.nextDueDate)
-    due.setHours(0, 0, 0, 0)
+    due.setUTCHours(0, 0, 0, 0)
     const days = Math.round((due.getTime() - today.getTime()) / 86_400_000)
 
     if (days < 0) {
