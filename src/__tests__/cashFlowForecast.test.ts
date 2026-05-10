@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { buildForecast, avgMonthlyIncome } from '../utils/cashFlowForecast'
 
+let _id = 1
+function nextId() { return _id++ }
+
 function makeTx(amount: string, type: 'CREDIT' | 'DEBIT', monthsAgo = 0): Transaction {
   const d = new Date()
   d.setUTCMonth(d.getUTCMonth() - monthsAgo)
   return {
-    id: 1, accountId: 1, categoryId: null, valueDate: null,
+    id: nextId(), accountId: 1, categoryId: null, valueDate: null,
     runningBalance: null, notes: null, description: 'test',
     category: null, tags: [],
     date: d.toISOString(), amount, type,
@@ -16,7 +19,7 @@ function makeBill(name: string, amount: string, freq: RecurringBill['frequency']
   const next = new Date()
   next.setUTCDate(15)
   return {
-    id: 1, name, amount, frequency: freq,
+    id: nextId(), name, amount, frequency: freq,
     nextDueDate: next.toISOString(),
     categoryId: null, category: null, accountId: null, account: null,
     notes: null, isActive: true,
