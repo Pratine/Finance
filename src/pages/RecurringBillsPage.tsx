@@ -66,16 +66,20 @@ export default function RecurringBillsPage() {
   const [markingPaidId, setMarkingPaidId] = useState<number | null>(null)
 
   async function load() {
-    const [b, c, bdg, accs] = await Promise.all([
-      window.api.listBills(),
-      window.api.listCategories(),
-      window.api.listBudgets(),
-      window.api.listAccounts(),
-    ])
-    setBills(b)
-    setCategories(c)
-    setBudgets(bdg)
-    setAccounts(accs)
+    try {
+      const [b, c, bdg, accs] = await Promise.all([
+        window.api.listBills(),
+        window.api.listCategories(),
+        window.api.listBudgets(),
+        window.api.listAccounts(),
+      ])
+      setBills(b)
+      setCategories(c)
+      setBudgets(bdg)
+      setAccounts(accs)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to load data')
+    }
   }
 
   useEffect(() => { load() }, [])
