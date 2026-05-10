@@ -23,19 +23,20 @@ export function fmtPct(value: number): string {
 }
 
 // CAGR: (end/start)^(1/years) - 1
-// Returns null when there's not enough time to be meaningful (< 7 days)
-export function calcCAGR(amountIn: string | number, currentValue: string | number, createdAt: string): number | null {
+// startDate should be the first buy lot's date (not the investment record's createdAt).
+// Returns null when there's not enough time to be meaningful (< 7 days).
+export function calcCAGR(amountIn: string | number, currentValue: string | number, startDate: string): number | null {
   const invested = parseFloat(String(amountIn))
   const current = parseFloat(String(currentValue))
   if (invested <= 0) return null
-  const days = (Date.now() - new Date(createdAt).getTime()) / 86_400_000
+  const days = (Date.now() - new Date(startDate).getTime()) / 86_400_000
   if (days < 7) return null
   const years = days / 365.25
   return (Math.pow(current / invested, 1 / years) - 1) * 100
 }
 
-export function daysHeld(createdAt: string): number {
-  return Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000)
+export function daysHeld(startDate: string): number {
+  return Math.floor((Date.now() - new Date(startDate).getTime()) / 86_400_000)
 }
 
 // Average cost basis across BUY lots only: totalBuyCost / totalBuyShares.
