@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Upload, FileText, CheckCircle, AlertCircle, ChevronDown, History, Trash2 } from 'lucide-react'
 import { fmtDateLong } from '../utils/formatDate'
+import { FORMAT_LABELS } from '../utils/importFormats'
 
 type Status = 'idle' | 'importing' | 'done' | 'error'
 type Format = 'millennium' | 'revolut'
@@ -16,8 +17,6 @@ interface ImportResult {
   skipped: number
   errors: string[]
 }
-
-const FORMAT_LABELS: Record<string, string> = { millennium: 'Millennium BCP', revolut: 'Revolut' }
 
 export default function ImportPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
