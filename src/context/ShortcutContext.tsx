@@ -79,7 +79,15 @@ export function useShortcuts() {
 }
 
 // Registers a handler for an action while the calling component is mounted.
+// The handler ref is updated on every render so the latest closure is always
+// called, but the registration effect only runs when action changes — not on
+// every render — avoiding constant unregister/re-register churn.
 export function useShortcutAction(action: ActionName, handler: Handler) {
   const { register } = useShortcuts()
-  useEffect(() => register(action, handler), [action, handler, register])
+  const handlerRef = useRef(handler)
+  handlerRef.current = handler
+  useEffect(
+    () => register(action, () => handlerRef.current()),
+    [action, register],
+  )
 }
