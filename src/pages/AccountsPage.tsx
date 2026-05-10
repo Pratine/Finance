@@ -446,7 +446,7 @@ export default function AccountsPage() {
               <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
                 <button onClick={() => setShowHistory(h => !h)}
                   className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 mb-2">
-                  {showHistory ? 'â–²' : 'â–¼'} History ({corrections.length})
+                  {showHistory ? '▲' : '▼'} History ({corrections.length})
                 </button>
                 {showHistory && (
                   <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">

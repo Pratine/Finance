@@ -316,7 +316,7 @@ function ExportTab() {
       )
       if (!filePath) return
       const { exported } = await window.api.exportBackup(filePath)
-      setMsg(`â Full backup saved (${exported} records)`)
+      setMsg(`✓ Full backup saved (${exported} records)`)
     } catch (e: any) {
       setMsg(`Error: ${e?.message ?? 'Backup failed'}`)
     } finally {
@@ -654,10 +654,10 @@ function AppTab() {
 
   const statusText: Record<string, string> = {
     idle: 'Not checked yet',
-    checking: 'Checking for updatesâ¦',
+    checking: 'Checking for updates…',
     available: `Update available: v${status.version}`,
     'not-available': 'You are on the latest version',
-    downloading: `Downloadingâ¦ ${status.percent ?? 0}%`,
+    downloading: `Downloading… ${status.percent ?? 0}%`,
     ready: `v${status.version} ready to install`,
     error: `Update error: ${status.error ?? 'unknown'}`,
   }
