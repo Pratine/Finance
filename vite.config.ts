@@ -9,6 +9,7 @@ const { version } = JSON.parse(readFileSync('./package.json', 'utf8'))
 // with Electron's built-in module system.
 export default defineConfig({
   plugins: [react()],
+  base: './',
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },
