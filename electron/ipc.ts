@@ -915,21 +915,24 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   }
 
   ipcMain.handle('savings:create', async (_event, data) => {
-    const goal = await prisma.savingsGoal.create({ data, include: savingsInclude })
-    if (Number(goal.currentAmount) > 0) {
-      await recordSavingsSnapshot(goal.id, Number(goal.currentAmount), 'initial')
-    }
-    return serialize(goal)
+    return serialize(await prisma.$transaction(async (tx) => {
+      const goal = await tx.savingsGoal.create({ data, include: savingsInclude })
+      if (Number(goal.currentAmount) > 0) {
+        await tx.savingsSnapshot.create({ data: { goalId: goal.id, amount: Number(goal.currentAmount), note: 'initial' } })
+      }
+      return goal
+    }))
   })
 
   ipcMain.handle('savings:update', async (_event, id: number, data) => {
-    const current = await prisma.savingsGoal.findUniqueOrThrow({ where: { id } })
-    const updated = await prisma.savingsGoal.update({ where: { id }, data, include: savingsInclude })
-    // Snapshot if the amount changed
-    if (data.currentAmount !== undefined && Number(data.currentAmount) !== Number(current.currentAmount)) {
-      await recordSavingsSnapshot(id, Number(updated.currentAmount), 'update')
-    }
-    return serialize(updated)
+    return serialize(await prisma.$transaction(async (tx) => {
+      const current = await tx.savingsGoal.findUniqueOrThrow({ where: { id } })
+      const updated = await tx.savingsGoal.update({ where: { id }, data, include: savingsInclude })
+      if (data.currentAmount !== undefined && Number(data.currentAmount) !== Number(current.currentAmount)) {
+        await tx.savingsSnapshot.create({ data: { goalId: id, amount: Number(updated.currentAmount), note: 'update' } })
+      }
+      return updated
+    }))
   })
 
   ipcMain.handle('savings:delete', async (_event, id: number) => {
