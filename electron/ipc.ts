@@ -522,8 +522,9 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   })
 
   ipcMain.handle('investments:priceHistoryById', async (_event, id: number) => {
+    const since = new Date(); since.setUTCFullYear(since.getUTCFullYear() - 2)
     const history = await prisma.priceHistory.findMany({
-      where: { investmentId: id },
+      where: { investmentId: id, recordedAt: { gte: since } },
       orderBy: { recordedAt: 'asc' },
     })
     return serialize(history.map(h => ({
