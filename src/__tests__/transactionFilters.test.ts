@@ -125,13 +125,11 @@ describe('applyFilters', () => {
   })
 
   it('filters by maximum amount', () => {
-    const txns = [
-      makeTx({ amount: '5.00' }),
-      makeTx({ id: 2, amount: '200.00' }),
-    ]
-    const result = applyFilters(txns, { ...BASE_FILTER, maxAmount: '50' })
+    const t1 = makeTx({ amount: '5.00' })
+    const t2 = makeTx({ amount: '200.00' })
+    const result = applyFilters([t1, t2], { ...BASE_FILTER, maxAmount: '50' })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe(1)
+    expect(result[0].id).toBe(t1.id)
   })
 
   it('uses absolute value for amount filter — works for debits too', () => {
