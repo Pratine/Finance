@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { calcAvgCostBasis, calcLotGain } from '../utils/investmentCalcs'
+import { calcInvestmentTotals } from '../../electron/services/lotCalcs'
+
+let _nextId = 1
+function nextId() { return _nextId++ }
 
 function makeLot(shares: number, pricePerShare: number): InvestmentLot {
   return {
-    id: Math.random(),
+    id: nextId(),
     investmentId: 1,
     type: 'BUY',
     date: new Date().toISOString(),
@@ -75,48 +79,43 @@ describe('calcLotGain', () => {
   })
 })
 
-describe('syncInvestmentTotals logic (average cost method)', () => {
+// Tests for the production calcInvestmentTotals used by syncInvestmentTotals in ipc.ts.
+describe('calcInvestmentTotals (average cost method)', () => {
   function makeSell(shares: number, pricePerShare: number, realizedGain: number): InvestmentLot {
     return { ...makeLot(shares, pricePerShare), type: 'SELL', realizedGain: String(realizedGain) }
   }
 
-  function syncTotals(lots: InvestmentLot[]) {
-    const buys  = lots.filter(l => l.type === 'BUY')
-    const sells = lots.filter(l => l.type === 'SELL')
-    const totalBuyShares  = buys.reduce((s, l) => s + parseFloat(l.shares), 0)
-    const totalSellShares = sells.reduce((s, l) => s + parseFloat(l.shares), 0)
-    const totalShares = Math.max(0, totalBuyShares - totalSellShares)
-    const totalBuyCost = buys.reduce((s, l) => s + parseFloat(l.totalCost), 0)
-    const avgBuyPrice = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
-    const remainingCost = Math.round(totalShares * avgBuyPrice * 100) / 100
-    return { shares: totalShares, amountIn: remainingCost }
-  }
+  it('empty lots — returns zeros', () => {
+    const { shares, amountIn } = calcInvestmentTotals([])
+    expect(shares).toBe(0)
+    expect(amountIn).toBe(0)
+  })
 
   it('buy only: shares and cost match', () => {
-    const { shares, amountIn } = syncTotals([makeLot(10, 80), makeLot(5, 100)])
+    const { shares, amountIn } = calcInvestmentTotals([makeLot(10, 80), makeLot(5, 100)])
     expect(shares).toBeCloseTo(15)
     expect(amountIn).toBeCloseTo(1300)
   })
 
   it('sell reduces share count', () => {
-    const { shares } = syncTotals([makeLot(10, 80), makeSell(4, 100, 80)])
+    const { shares } = calcInvestmentTotals([makeLot(10, 80), makeSell(4, 100, 80)])
     expect(shares).toBeCloseTo(6)
   })
 
   it('remaining cost uses avg cost method', () => {
     // Buy 10 at €80 (avg = €80), sell 5 → remaining cost = 5 × €80 = €400
-    const { amountIn } = syncTotals([makeLot(10, 80), makeSell(5, 100, 100)])
+    const { amountIn } = calcInvestmentTotals([makeLot(10, 80), makeSell(5, 100, 100)])
     expect(amountIn).toBeCloseTo(400)
   })
 
   it('selling all shares leaves zero', () => {
-    const { shares, amountIn } = syncTotals([makeLot(5, 80), makeSell(5, 100, 100)])
+    const { shares, amountIn } = calcInvestmentTotals([makeLot(5, 80), makeSell(5, 100, 100)])
     expect(shares).toBeCloseTo(0)
     expect(amountIn).toBeCloseTo(0)
   })
 
   it('cannot go negative (clamped to zero)', () => {
-    const { shares } = syncTotals([makeLot(5, 80), makeSell(10, 100, 100)])
+    const { shares } = calcInvestmentTotals([makeLot(5, 80), makeSell(10, 100, 100)])
     expect(shares).toBe(0)
   })
 })
@@ -124,9 +123,7 @@ describe('syncInvestmentTotals logic (average cost method)', () => {
 describe('realized gain calculation', () => {
   it('profit when sell price > avg cost', () => {
     // avg cost €80, sell 5 at €100 → gain = (100-80) × 5 = €100
-    const avgCost = 80
-    const sellShares = 5
-    const sellPrice = 100
+    const avgCost = 80, sellShares = 5, sellPrice = 100
     const proceeds  = sellShares * sellPrice
     const costBasis = sellShares * avgCost
     expect(proceeds - costBasis).toBeCloseTo(100)
