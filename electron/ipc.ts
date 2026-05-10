@@ -689,7 +689,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     if (data.description !== undefined) updateData.description = data.description.trim()
     if (data.notes !== undefined) updateData.notes = data.notes || null
 
-    // Recompute amount + adjust account balance when either field changes
+    // Recompute amount + atomically adjust account balance when either field changes
     if (data.amount !== undefined || data.type !== undefined) {
       const newType = data.type ?? current.type
       const newAbs  = Math.abs(data.amount ?? Math.abs(Number(current.amount)))
@@ -697,11 +697,11 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       const balanceDelta = newStoredAmount - Number(current.amount)
       updateData.amount = newStoredAmount
       updateData.type   = newType
-      const account = await prisma.account.findUniqueOrThrow({ where: { id: current.accountId } })
-      await prisma.account.update({
-        where: { id: current.accountId },
-        data: { balance: Number(account.balance) + balanceDelta },
-      })
+      const [updated] = await prisma.$transaction([
+        prisma.transaction.update({ where: { id }, data: updateData, include: txInclude }),
+        prisma.account.update({ where: { id: current.accountId }, data: { balance: { increment: balanceDelta } } }),
+      ])
+      return serialize(updated)
     }
 
     return serialize(await prisma.transaction.update({ where: { id }, data: updateData, include: txInclude }))
