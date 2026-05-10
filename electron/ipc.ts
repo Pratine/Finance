@@ -262,11 +262,11 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   // â”€â”€ Shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const shortcutsPath = path.join(app.getPath('userData'), 'shortcuts.json')
 
-  ipcMain.handle('shortcuts:load', () => {
+  ipcMain.handle(‘shortcuts:load’, async () => {
     try {
-      return JSON.parse(fs.readFileSync(shortcutsPath, 'utf8'))
+      return JSON.parse(await readFile(shortcutsPath, ‘utf8’))
     } catch {
-      return null // returns null â†’ renderer uses defaults
+      return null // returns null → renderer uses defaults
     }
   })
 
