@@ -6,7 +6,9 @@
       "PowerShell(cd \"C:\\\\Users\\\\pratine\\\\Desktop\\\\Finance\"; $ts = Get-Date -Format \"yyyyMMddHHmmss\"; $dir = \"prisma\\\\migrations\\\\${ts}_add_recurring_income\"; New-Item -ItemType Directory $dir | Out-Null; $sql = npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script 2>&1; [System.IO.File]::WriteAllText\\(\"$PWD\\\\$dir\\\\migration.sql\", \\($sql -join \"`n\"\\), [System.Text.UTF8Encoding]::new\\($false\\)\\); npx prisma migrate resolve --applied \"${ts}_add_recurring_income\" 2>&1 | Select-Object -Last 3)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\pratine\\\\Desktop\\\\Finance\" -Recurse -Directory | Select-Object -First 20 | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\pratine\\\\Desktop\\\\Finance\" -Recurse -Directory | Select-Object -First 20 | ForEach-Object { $_.FullName })",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const c=fs.readFileSync\\('src/pages/SettingsPage.tsx','utf8'\\);const l=c.split\\('\\\\n'\\)[299];console.log\\(JSON.stringify\\(l\\)\\);\")"
     ]
   }
 }
