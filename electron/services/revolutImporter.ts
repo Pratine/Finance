@@ -94,8 +94,10 @@ export async function importRevolutCSV(
   const sep = parseSeparator(lines[0])
   const headers = parseCSVLine(lines[0], sep).map(h => h.trim())
 
-  if (!headers.includes('Started Date') || !headers.includes('Amount') || !headers.includes('State')) {
-    throw new Error('This does not look like a Revolut statement CSV')
+  const required = ['Type', 'Started Date', 'Completed Date', 'Description', 'Amount', 'Currency', 'State', 'Balance']
+  const missing = required.filter(col => !headers.includes(col))
+  if (missing.length > 0) {
+    throw new Error(`This does not look like a Revolut statement CSV — missing columns: ${missing.join(', ')}`)
   }
 
   // ── Parse all rows upfront ───────────────────────────────────────────────────
