@@ -697,24 +697,25 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     notes?: string
   }) => {
     const absAmount = Math.abs(data.amount)
-    const tx = await prisma.transaction.create({
-      data: {
-        accountId: data.accountId,
-        categoryId: data.categoryId ?? null,
-        date: new Date(data.date),
-        description: data.description.trim(),
-        amount: data.type === 'DEBIT' ? -absAmount : absAmount,
-        type: data.type,
-        notes: data.notes ?? null,
-      },
-      include: txInclude,
-    })
-    const account = await prisma.account.findUniqueOrThrow({ where: { id: data.accountId } })
-    const delta = data.type === 'CREDIT' ? absAmount : -absAmount
-    await prisma.account.update({
-      where: { id: data.accountId },
-      data: { balance: Number(account.balance) + delta },
-    })
+    const storedAmount = data.type === 'DEBIT' ? -absAmount : absAmount
+    const [tx] = await prisma.$transaction([
+      prisma.transaction.create({
+        data: {
+          accountId: data.accountId,
+          categoryId: data.categoryId ?? null,
+          date: new Date(data.date),
+          description: data.description.trim(),
+          amount: storedAmount,
+          type: data.type,
+          notes: data.notes ?? null,
+        },
+        include: txInclude,
+      }),
+      prisma.account.update({
+        where: { id: data.accountId },
+        data: { balance: { increment: storedAmount } },
+      }),
+    ])
     return serialize(tx)
   })
 
