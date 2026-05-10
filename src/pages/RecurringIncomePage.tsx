@@ -16,10 +16,12 @@ type FormState = {
   notes: string; isActive: boolean
 }
 
-const EMPTY_FORM: FormState = {
-  name: '', amount: '', frequency: 'MONTHLY',
-  nextExpectedDate: new Date().toISOString().slice(0, 10),
-  categoryId: '', accountId: '', notes: '', isActive: true,
+function emptyForm(): FormState {
+  return {
+    name: '', amount: '', frequency: 'MONTHLY',
+    nextExpectedDate: new Date().toISOString().slice(0, 10),
+    categoryId: '', accountId: '', notes: '', isActive: true,
+  }
 }
 
 function DueBadge({ days }: { days: number }) {
