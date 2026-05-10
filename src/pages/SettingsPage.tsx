@@ -170,12 +170,17 @@ function AddRow({ onAdd }: { onAdd: (data: Omit<BaseItem, 'id'>) => Promise<void
   async function save() {
     if (!name.trim()) return
     setSaving(true)
-    await onAdd({ name: name.trim(), color, icon: icon || null })
-    setName('')
-    setColor('#64748b')
-    setIcon('')
-    setSaving(false)
-    setOpen(false)
+    try {
+      await onAdd({ name: name.trim(), color, icon: icon || null })
+      setName('')
+      setColor('#64748b')
+      setIcon('')
+      setOpen(false)
+    } catch {
+      // onAdd surfaces errors via the parent's error state
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!open) {
