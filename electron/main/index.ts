@@ -151,11 +151,16 @@ function createWindow() {
 
   if (saved.maximized) win.maximize()
 
-  // Persist window size/position so the next launch restores it
-  const persistState = () => saveWindowState(win)
+  // Persist window size/position so the next launch restores it.
+  // move/resize fire on every pixel — debounce to avoid hammering the disk.
+  let _persistTimer: ReturnType<typeof setTimeout> | null = null
+  const persistState = () => {
+    if (_persistTimer) clearTimeout(_persistTimer)
+    _persistTimer = setTimeout(() => saveWindowState(win), 500)
+  }
   win.on('resize', persistState)
   win.on('move',   persistState)
-  win.on('close',  persistState)
+  win.on('close',  () => { if (_persistTimer) clearTimeout(_persistTimer); saveWindowState(win) })
 
   if (isDev) {
     win.loadURL(DEV_URL)
