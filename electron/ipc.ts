@@ -907,7 +907,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const effectivePeriods = Math.max(1, periods) // apply at least one period on manual trigger
     const newAmount = applyPeriods(
       Number(goal.currentAmount),
-      goal.interestType as 'PERCENTAGE' | 'FIXED',
+      goal.interestType as InterestType,
       Number(goal.interestValue),
       effectivePeriods,
     )
