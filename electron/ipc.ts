@@ -196,6 +196,18 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const mapPayment     = (r: any) => ({ id: r.id, debtId: r.debtId, date: new Date(r.date), amount: r.amount, principal: r.principal, interest: r.interest, notes: r.notes })
     const mapImport      = (r: any) => ({ id: r.id, filename: r.filename, format: r.format, accountId: r.accountId, imported: r.imported, skipped: r.skipped, errors: r.errors })
 
+    // Spot-check required fields on the first record of key tables so a corrupted
+    // or mismatched backup fails early with a clear error rather than mid-restore.
+    const check = (arr: any[] | undefined, table: string, ...fields: string[]) => {
+      if (!arr?.length) return
+      const missing = fields.filter(f => arr[0][f] === undefined)
+      if (missing.length) throw new Error(`Backup appears corrupted: ${table}[0] is missing fields: ${missing.join(', ')}`)
+    }
+    check(backup.accounts,     'accounts',     'id', 'name', 'bankId', 'typeId', 'balance')
+    check(backup.transactions, 'transactions', 'id', 'accountId', 'date', 'amount', 'type')
+    check(backup.investments,  'investments',  'id', 'name', 'typeId', 'amountIn', 'currentValue')
+    check(backup.debts,        'debts',        'id', 'name', 'type', 'principal', 'outstanding')
+
     await prisma.$transaction(async (tx) => {
       // Delete every table in reverse FK order
       for (const t of [
