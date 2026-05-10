@@ -131,6 +131,7 @@ declare global {
 
       // Savings goals
       listSavings: () => Promise<SavingsGoal[]>
+      syncSavings: () => Promise<void>
       createSavings: (data: Omit<SavingsGoal, 'id' | 'account' | 'createdAt' | 'updatedAt'>) => Promise<SavingsGoal>
       updateSavings: (id: number, data: Partial<Omit<SavingsGoal, 'id' | 'account'>>) => Promise<SavingsGoal>
       deleteSavings: (id: number) => Promise<SavingsGoal>
