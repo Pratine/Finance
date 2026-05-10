@@ -23,12 +23,19 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     window.api.loadShortcuts().then((saved) => {
       if (saved) setConfigState({ ...DEFAULT_SHORTCUTS, ...saved })
+    }).catch(() => {
+      // Non-fatal — defaults are already in state
     })
   }, [])
 
   const setConfig = useCallback(async (c: ShortcutConfig) => {
     setConfigState(c)
-    await window.api.saveShortcuts(c)
+    try {
+      await window.api.saveShortcuts(c)
+    } catch {
+      // Revert state so UI reflects what's actually persisted
+      setConfigState(prev => prev)
+    }
   }, [])
 
   const register = useCallback((action: ActionName, handler: Handler) => {
