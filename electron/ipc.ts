@@ -138,7 +138,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       recurringBills, recurringIncome, transactions, transactionTags,
       transactionSplits, balanceCorrections, debts, debtPayments, importHistory,
     })
-    fs.writeFileSync(filePath, JSON.stringify(backup, null, 2), 'utf8')
+    await writeFile(filePath, JSON.stringify(backup, null, 2), 'utf8')
     return { exported: transactions.length }
   })
 
