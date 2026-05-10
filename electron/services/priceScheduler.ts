@@ -78,8 +78,7 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
       })
       await savePriceSnapshot(inv.id, priceInEUR, shares)
       return { id: inv.id, ticker: inv.ticker, price: priceInEUR }
-    })
-  )
+  })
   return {
     updated: results.filter(r => r.status === 'fulfilled').length,
     errors: results.filter(r => r.status === 'rejected').map(r => (r as PromiseRejectedResult).reason?.message ?? 'Unknown error'),
