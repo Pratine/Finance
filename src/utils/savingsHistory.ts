@@ -19,14 +19,12 @@ export function buildMonthlySavingsHistory(
   for (const p of points) {
     byDate.set(p.date, p.amount)
   }
+  // Collapse to month → last-in-month value. ISO date strings sort correctly
+  // lexicographically, so iterating in sorted order and overwriting gives the
+  // latest date's value for each month with no extra comparison needed.
   const byMonth = new Map<string, number>()
-  for (const [date, amount] of byDate) {
-    const monthKey = date.slice(0, 7) // YYYY-MM
-    const prev = byMonth.get(monthKey)
-    // Keep the latest date's value within each month
-    if (prev === undefined || date > (byDate.has(monthKey + '-31') ? monthKey + '-31' : monthKey + '-01')) {
-      byMonth.set(monthKey, amount)
-    }
+  for (const [date, amount] of [...byDate.entries()].sort()) {
+    byMonth.set(date.slice(0, 7), amount)
   }
 
   // Determine the range: from first snapshot to today (all in UTC to avoid tz drift)
