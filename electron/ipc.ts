@@ -283,7 +283,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // â”€â”€ DB health check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   ipcMain.handle('db:ping', async () => {
-    await prisma.$queryRaw`SELECT 1`
+    // Query a real table to verify the schema is applied, not just the connection.
+    await prisma.account.count()
     return true
   })
 
