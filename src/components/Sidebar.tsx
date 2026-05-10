@@ -32,6 +32,9 @@ const nav = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const SEARCH_KBD = isMac ? '⌘K' : 'Ctrl+K'
+
 export default function Sidebar() {
   const [searchOpen, setSearchOpen] = useState(false)
 
