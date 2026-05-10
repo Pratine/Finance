@@ -84,11 +84,11 @@ export function calcCategoryTrends(
   // Build month labels and collect per-month per-category totals
   const monthKeys: Array<{ label: string; month: number; year: number }> = []
   for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1))
     monthKeys.push({
-      label: d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' }),
-      month: d.getMonth(),
-      year: d.getFullYear(),
+      label: d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
+      month: d.getUTCMonth(),
+      year: d.getUTCFullYear(),
     })
   }
 
