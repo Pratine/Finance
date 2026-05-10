@@ -553,11 +553,20 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const priceInEUR = result.price * rate
     const shares = Number(inv.shares)
     const newValue = priceInEUR * shares
-    await savePriceSnapshot(id, priceInEUR, shares)
-    return serialize(await prisma.investment.update({
-      where: { id },
-      data: { currentValue: newValue, lastPriceFetched: priceInEUR, priceUpdatedAt: new Date() },
-      include: investmentInclude,
+    // Snapshot and investment update in one transaction — a failed update should
+    // not leave a dangling price history entry.
+    return serialize(await prisma.$transaction(async (tx) => {
+      const today = new Date(); today.setUTCHours(0, 0, 0, 0)
+      await tx.priceHistory.upsert({
+        where: { investmentId_recordedAt: { investmentId: id, recordedAt: today } },
+        create: { investmentId: id, price: priceInEUR, value: newValue, recordedAt: today },
+        update: { price: priceInEUR, value: newValue },
+      })
+      return tx.investment.update({
+        where: { id },
+        data: { currentValue: newValue, lastPriceFetched: priceInEUR, priceUpdatedAt: new Date() },
+        include: investmentInclude,
+      })
     }))
   })
 
