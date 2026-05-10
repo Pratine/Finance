@@ -148,7 +148,9 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const raw = fs.readFileSync(filePath, 'utf8')
     const backup = JSON.parse(raw)
 
-    if (!backup.version) throw new Error('Invalid backup file: missing version field.')
+    if (backup.version !== 2) {
+      throw new Error(`Incompatible backup version: expected 2, got ${backup.version ?? 'missing'}. Use the app that created this backup to export it again.`)
+    }
 
     // Mapper helpers — one per model, named so the createMany calls below stay readable.
     const d = (v: string | null | undefined) => v ? new Date(v) : null
