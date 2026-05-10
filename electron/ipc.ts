@@ -963,6 +963,8 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // Returns a merged chronological array of { date, amount } for a goal's balance history.
   // Combines saved snapshots with account transaction runningBalance data (for linked accounts).
+  // Three separate reads — not wrapped in a transaction. For a single-user desktop app phantom
+  // reads are not a practical concern, but data added between reads may appear in results.
   ipcMain.handle('savings:history', async (_event, goalId: number) => {
     const goal = await prisma.savingsGoal.findUniqueOrThrow({ where: { id: goalId } })
     const snapshots = await prisma.savingsSnapshot.findMany({
