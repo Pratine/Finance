@@ -87,7 +87,9 @@ export async function lookupISIN(isin: string): Promise<ISINResult[]> {
       exchange: label,
       exchCode,
       name: item.name ?? item.ticker,
-      currency: item.marketSector ?? '',
+      // OpenFIGI v3/mapping returns `currency` when available; marketSector is
+      // the asset class ("Equity", "Index") and must not be used here.
+      currency: item.currency ?? '',
     })
   }
 
