@@ -1382,17 +1382,9 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const newOutstanding = Math.max(0, Number(debt.outstanding) - data.principal)
     const newStatus: DebtStatus = newOutstanding <= 0 ? 'PAID' : 'ACTIVE'
 
-    // Calculate next payment date
-    let nextDate: Date | null = null
-    if (newStatus === 'ACTIVE' && debt.frequency && debt.nextPaymentDate) {
-      nextDate = new Date(debt.nextPaymentDate)
-      switch (debt.frequency) {
-        case 'WEEKLY':    nextDate.setUTCDate(nextDate.getUTCDate() + 7); break
-        case 'MONTHLY':   nextDate.setUTCMonth(nextDate.getUTCMonth() + 1); break
-        case 'QUARTERLY': nextDate.setUTCMonth(nextDate.getUTCMonth() + 3); break
-        case 'YEARLY':    nextDate.setUTCFullYear(nextDate.getUTCFullYear() + 1); break
-      }
-    }
+    const nextDate: Date | null = (newStatus === 'ACTIVE' && debt.frequency && debt.nextPaymentDate)
+      ? advanceByFrequency(new Date(debt.nextPaymentDate), debt.frequency as Frequency)
+      : null
 
     await prisma.$transaction(async (tx) => {
       await tx.debtPayment.create({
