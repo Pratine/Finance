@@ -154,9 +154,8 @@ const api: Window['api'] = {
   checkForUpdates: () => ipcRenderer.invoke('updater:check'),
   getUpdateStatus: () => ipcRenderer.invoke('updater:getStatus'),
   installUpdate: () => ipcRenderer.invoke('updater:install'),
-  onUpdateStatus: (cb: (payload: { status: string; version?: string; percent?: number; error?: string }) => void) => {
-    type Payload = { status: string; version?: string; percent?: number; error?: string }
-    const listener = (_e: Electron.IpcRendererEvent, payload: Payload) => cb(payload)
+  onUpdateStatus: (cb: (payload: UpdaterStatus) => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, payload: UpdaterStatus) => cb(payload)
     ipcRenderer.on('updater:status', listener)
     return () => ipcRenderer.removeListener('updater:status', listener)
   },
