@@ -145,10 +145,23 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   // The entire operation runs inside a single SQLite transaction — if any step
   // fails the database is rolled back to its state before the restore started.
   ipcMain.handle('import:backup', async (_event, filePath: string) => {
-    let backup: any
+    // Typed shape for the v2 backup format.
+    type BackupFile = {
+      version: number
+      exportedAt: string
+      accountTypes?: any[]; banks?: any[]; brokers?: any[]; investmentTypes?: any[]
+      categories?: any[]; categoryRules?: any[]; accounts?: any[]; tags?: any[]
+      budgets?: any[]; exchangeRates?: any[]; savingsGoals?: any[]; savingsSnapshots?: any[]
+      investments?: any[]; investmentLots?: any[]; priceHistory?: any[]
+      recurringBills?: any[]; recurringIncome?: any[]; transactions?: any[]
+      transactionTags?: any[]; transactionSplits?: any[]; balanceCorrections?: any[]
+      debts?: any[]; debtPayments?: any[]; importHistory?: any[]
+    }
+
+    let backup: BackupFile
     try {
       const raw = await readFile(filePath, 'utf8')
-      backup = JSON.parse(raw)
+      backup = JSON.parse(raw) as BackupFile
     } catch (e: any) {
       throw new Error(`The selected file is not a valid Finance backup: ${e.message}`)
     }
@@ -156,6 +169,21 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     if (backup.version !== 2) {
       throw new Error(`Incompatible backup version: expected 2, got ${backup.version ?? 'missing'}. Use the app that created this backup to export it again.`)
     }
+
+    // Validate required fields exist on a sample of records from critical tables.
+    // Checks multiple records, not just the first, to catch partially-corrupted arrays.
+    const checkSample = (arr: any[] | undefined, table: string, ...fields: string[]) => {
+      if (!arr?.length) return
+      const sample = arr.length <= 3 ? arr : [arr[0], arr[Math.floor(arr.length / 2)], arr[arr.length - 1]]
+      for (const r of sample) {
+        const missing = fields.filter(f => r[f] === undefined)
+        if (missing.length) throw new Error(`Backup appears corrupted: ${table} record is missing fields: ${missing.join(', ')}`)
+      }
+    }
+    checkSample(backup.accounts,     'accounts',     'id', 'name', 'bankId', 'typeId', 'balance')
+    checkSample(backup.transactions,  'transactions', 'id', 'accountId', 'date', 'amount', 'type')
+    checkSample(backup.investments,   'investments',  'id', 'name', 'typeId', 'amountIn', 'currentValue')
+    checkSample(backup.debts,         'debts',        'id', 'name', 'type', 'principal', 'outstanding')
 
     // Mapper helpers — one per model, named so the createMany calls below stay readable.
     const d = (v: string | null | undefined) => v ? new Date(v) : null
