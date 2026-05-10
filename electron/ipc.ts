@@ -1341,7 +1341,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       })
       // LOAN (I owe) → paying out is a DEBIT; RECEIVABLE (owed to me) → receiving is a CREDIT
       if (debt.accountId && data.amount > 0) {
-        const txType = debt.type === 'LOAN' ? 'DEBIT' : 'CREDIT'
+        const txType = (debt.type as DebtType) === 'LOAN' ? 'DEBIT' : 'CREDIT'
         const txAmount = txType === 'DEBIT' ? -data.amount : data.amount
         await tx.transaction.create({
           data: {
