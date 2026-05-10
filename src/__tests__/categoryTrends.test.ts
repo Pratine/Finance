@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { calcCategoryTrends } from '../utils/reportingStats'
 
+let _id = 1
+function nextId() { return _id++ }
+
 function makeTx(overrides: Partial<Transaction>): Transaction {
   return {
-    id: 1, accountId: 1, categoryId: null, valueDate: null,
+    id: nextId(), accountId: 1, categoryId: null, valueDate: null,
     runningBalance: null, notes: null, category: null,
     date: new Date().toISOString(),
     description: 'test', amount: '-50', type: 'DEBIT',
