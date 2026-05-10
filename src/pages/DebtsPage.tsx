@@ -322,8 +322,9 @@ function DebtCard({
     : isLoan ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
     : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
 
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0)
   const nextDue = debt.nextPaymentDate ? new Date(debt.nextPaymentDate) : null
+  if (nextDue) nextDue.setUTCHours(0, 0, 0, 0)
   const daysUntil = nextDue ? Math.round((nextDue.getTime() - today.getTime()) / 86_400_000) : null
 
   async function handleDeletePayment(paymentId: number) {
