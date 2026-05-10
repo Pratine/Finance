@@ -597,24 +597,27 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
   ipcMain.handle('accounts:update', async (_event, id: number, data) => {
     // Destructure the internal-only _note field so it is never passed to Prisma.
     const { _note, ...prismaData } = data
-    if (prismaData.balance !== undefined) {
-      const current = await prisma.account.findUniqueOrThrow({ where: { id } })
-      if (Number(current.balance) !== Number(prismaData.balance)) {
-        await prisma.balanceCorrection.create({
-          data: {
-            accountId: id,
-            oldBalance: Number(current.balance),
-            newBalance: Number(prismaData.balance),
-            note: _note ?? null,
-          },
-        })
+
+    return await prisma.$transaction(async (tx) => {
+      if (prismaData.balance !== undefined) {
+        const current = await tx.account.findUniqueOrThrow({ where: { id } })
+        if (Number(current.balance) !== Number(prismaData.balance)) {
+          await tx.balanceCorrection.create({
+            data: {
+              accountId: id,
+              oldBalance: Number(current.balance),
+              newBalance: Number(prismaData.balance),
+              note: _note ?? null,
+            },
+          })
+        }
       }
-    }
-    const updated = await prisma.account.update({ where: { id }, data: prismaData, include: { type: true, bank: true } })
-    if (data.name) {
-      await prisma.savingsGoal.updateMany({ where: { accountId: id }, data: { name: data.name } })
-    }
-    return serialize(updated)
+      const updated = await tx.account.update({ where: { id }, data: prismaData, include: { type: true, bank: true } })
+      if (prismaData.name) {
+        await tx.savingsGoal.updateMany({ where: { accountId: id }, data: { name: prismaData.name } })
+      }
+      return serialize(updated)
+    })
   })
 
   ipcMain.handle('accounts:corrections', async (_event, accountId: number) => {
