@@ -25,10 +25,12 @@ type FormState = {
   isActive: boolean
 }
 
-const EMPTY_FORM: FormState = {
-  name: '', amount: '', frequency: 'MONTHLY',
-  nextDueDate: new Date().toISOString().slice(0, 10),
-  categoryId: '', accountId: '', notes: '', isActive: true,
+function emptyForm(): FormState {
+  return {
+    name: '', amount: '', frequency: 'MONTHLY',
+    nextDueDate: new Date().toISOString().slice(0, 10),
+    categoryId: '', accountId: '', notes: '', isActive: true,
+  }
 }
 
 // â”€â”€â”€ Status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
