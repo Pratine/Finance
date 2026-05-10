@@ -471,11 +471,16 @@ export default function DebtsPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [filter, setFilter] = useState<'ALL' | 'LOAN' | 'RECEIVABLE'>('ALL')
+  const [loadError, setLoadError] = useState(false)
 
   async function load() {
-    const [d, a] = await Promise.all([window.api.listDebts(), window.api.listAccounts()])
-    setDebts(d)
-    setAccounts(a)
+    try {
+      const [d, a] = await Promise.all([window.api.listDebts(), window.api.listAccounts()])
+      setDebts(d)
+      setAccounts(a)
+    } catch {
+      setLoadError(true)
+    }
   }
 
   useEffect(() => { load() }, [])
@@ -485,8 +490,12 @@ export default function DebtsPage() {
   }
 
   async function deleteDebt(id: number) {
-    await window.api.deleteDebt(id)
-    setDebts(prev => prev.filter(d => d.id !== id))
+    try {
+      await window.api.deleteDebt(id)
+      setDebts(prev => prev.filter(d => d.id !== id))
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to delete debt')
+    }
   }
 
   const active = debts.filter(d => d.status === 'ACTIVE')
