@@ -98,7 +98,7 @@ model CategoryRule {
   id         Int      @id @default(autoincrement())
   pattern    String
   categoryId Int
-  category   Category @relation(fields: [categoryId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
 }
 
