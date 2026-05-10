@@ -1278,15 +1278,16 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     accountId?: number | null
     notes?: string | null
   }) => {
+    const { nextPaymentDate, endDate, ...rest } = data
     return serialize(await prisma.debt.update({
       where: { id },
       data: {
-        ...data,
-        nextPaymentDate: data.nextPaymentDate !== undefined
-          ? (data.nextPaymentDate ? new Date(data.nextPaymentDate) : null)
+        ...rest,
+        nextPaymentDate: nextPaymentDate !== undefined
+          ? (nextPaymentDate ? new Date(nextPaymentDate) : null)
           : undefined,
-        endDate: data.endDate !== undefined
-          ? (data.endDate ? new Date(data.endDate) : null)
+        endDate: endDate !== undefined
+          ? (endDate ? new Date(endDate) : null)
           : undefined,
       },
       include: debtInclude,
