@@ -138,7 +138,7 @@ declare global {
       applyInterest: (id: number) => Promise<SavingsGoal>
       getSavingsHistory: (goalId: number) => Promise<Array<{ date: string; amount: number }>>
 
-      // Categories
+      // Category rules
       listRules: () => Promise<CategoryRule[]>
       createRule: (pattern: string, categoryId: number) => Promise<CategoryRule>
       deleteRule: (id: number) => Promise<CategoryRule>
