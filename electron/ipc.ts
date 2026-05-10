@@ -341,7 +341,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   // Recalculates amountIn and shares on the parent Investment using the average cost method.
   // Must be called inside a $transaction so it sees the committed lot state.
-  async function syncInvestmentTotals(investmentId: number, tx: typeof prisma) {
+  async function syncInvestmentTotals(investmentId: number, tx: Prisma.TransactionClient) {
     const lots = await tx.investmentLot.findMany({ where: { investmentId } })
     if (lots.length === 0) return
     const buys  = lots.filter(l => l.type === 'BUY')
