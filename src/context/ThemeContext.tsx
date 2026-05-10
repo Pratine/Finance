@@ -10,22 +10,26 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
+  // Read localStorage synchronously in the initialiser so the correct theme
+  // is applied before the first render — avoids a light→dark flash on startup.
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('theme')
+    return saved === 'dark' ? 'dark' : 'light'
+  })
 
+  // Apply the initial theme to the DOM on mount (state is set but classList is not yet updated).
   useEffect(() => {
-    // Load persisted theme
-    const saved = localStorage.getItem('theme') as Theme | null
-    if (saved === 'dark' || saved === 'light') apply(saved)
-    else apply('light')
-  }, [])
+    applyDOM(theme)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function applyDOM(t: Theme) {
+    if (t === 'dark') document.documentElement.classList.add('dark')
+    else document.documentElement.classList.remove('dark')
+  }
 
   function apply(t: Theme) {
     setTheme(t)
-    if (t === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    applyDOM(t)
     localStorage.setItem('theme', t)
   }
 
