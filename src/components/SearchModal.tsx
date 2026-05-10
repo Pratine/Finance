@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X, ArrowRight } from 'lucide-react'
 import { matchesSearch } from '../utils/transactionFilters'
