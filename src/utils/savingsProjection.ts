@@ -79,7 +79,7 @@ export function projectGoalDate(params: ProjectionParams, now = Date.now()): Pro
 export function formatProjectedDate(result: ProjectionResult | null): string | null {
   if (!result) return null
   const d = result.projectedDate
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  return `${day}/${month}/${d.getFullYear()}`
+  const day   = String(d.getUTCDate()).padStart(2, '0')
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${day}/${month}/${d.getUTCFullYear()}`
 }
