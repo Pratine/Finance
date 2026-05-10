@@ -64,11 +64,17 @@
       "dist/**/*",
       "dist-electron/**/*",
       "node_modules/**/*",
-      "node_modules/.prisma/**/*",
       "prisma/migrations/**/*",
       "prisma/schema.prisma",
       "prisma/**/*",
       "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "node_modules/.prisma",
+        "to": "resources/app/node_modules/.prisma",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }]
