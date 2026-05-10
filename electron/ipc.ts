@@ -1025,27 +1025,27 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     }
     // Auto-create a debit transaction if the bill has a linked account
     if (bill.accountId) {
-      // Verify the category still exists before referencing it
       const categoryExists = bill.categoryId
         ? await prisma.category.findUnique({ where: { id: bill.categoryId } })
         : null
-      await prisma.transaction.create({
-        data: {
-          accountId: bill.accountId,
-          categoryId: categoryExists ? bill.categoryId : null,
-          recurringBillId: bill.id,
-          date: new Date(),
-          description: bill.name,
-          amount: -Math.abs(Number(bill.amount)),
-          type: 'DEBIT',
-        },
-      })
-      // Update account balance
-      const account = await prisma.account.findUniqueOrThrow({ where: { id: bill.accountId } })
-      await prisma.account.update({
-        where: { id: bill.accountId },
-        data: { balance: Number(account.balance) - Math.abs(Number(bill.amount)) },
-      })
+      const billAmount = Math.abs(Number(bill.amount))
+      await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            accountId: bill.accountId,
+            categoryId: categoryExists ? bill.categoryId : null,
+            recurringBillId: bill.id,
+            date: new Date(),
+            description: bill.name,
+            amount: -billAmount,
+            type: 'DEBIT',
+          },
+        }),
+        prisma.account.update({
+          where: { id: bill.accountId },
+          data: { balance: { decrement: billAmount } },
+        }),
+      ])
     }
     return serialize(await prisma.recurringBill.update({
       where: { id },
