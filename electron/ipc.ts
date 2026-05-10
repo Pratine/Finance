@@ -811,7 +811,7 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       const base = goal.lastInterestApplied ?? goal.createdAt
       const newAmount = applyPeriods(
         Number(goal.currentAmount),
-        goal.interestType as 'PERCENTAGE' | 'FIXED',
+        goal.interestType as InterestType,
         Number(goal.interestValue),
         periods,
       )
