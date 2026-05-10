@@ -50,7 +50,12 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
         }
       }
       const priceInEUR = result.price * rate
-      const shares = Number(inv.shares ?? 1)
+      if (inv.shares === null) {
+        // No share count recorded — skip value update to avoid showing
+        // a meaningless per-unit price as the portfolio value.
+        throw new Error(`${inv.ticker}: shares not set — add a buy lot to track position size`)
+      }
+      const shares = Number(inv.shares)
       await prisma.investment.update({
         where: { id: inv.id },
         data: { currentValue: priceInEUR * shares, lastPriceFetched: priceInEUR, priceUpdatedAt: new Date() },
