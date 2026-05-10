@@ -110,7 +110,7 @@ export default function InvestmentsPage() {
     setRefreshMsg(null)
     try {
       const { updated, errors } = await window.api.refreshAllPrices()
-      setRefreshMsg(`${updated} price${updated !== 1 ? 's' : ''} updated${errors.length ? ` Â· ${errors.length} failed` : ''}`)
+      setRefreshMsg(`${updated} price${updated !== 1 ? 's' : ''} updated${errors.length ? ` · ${errors.length} failed` : ''}`)
       await load()
     } catch (e: any) {
       setRefreshMsg(e?.message ?? 'Refresh failed')
@@ -432,13 +432,13 @@ export default function InvestmentsPage() {
                             <span>{parseFloat(inv.shares)} shares</span>
                           )}
                           {inv.priceUpdatedAt && (
-                            <span className="text-slate-300 dark:text-slate-600">Â· updated {fmtDate(inv.priceUpdatedAt)}</span>
+                            <span className="text-slate-300 dark:text-slate-600">· updated {fmtDate(inv.priceUpdatedAt)}</span>
                           )}
                           {inv.currency && inv.currency !== 'EUR' && (() => {
                             const r = exchangeRates.find(e => e.fromCurrency === inv.currency)
                             return r ? (
                               <span className="text-slate-300 dark:text-slate-600">
-                                Â· 1 {r.fromCurrency} = €{parseFloat(r.rate).toFixed(4)}
+                                · 1 {r.fromCurrency} = €{parseFloat(r.rate).toFixed(4)}
                               </span>
                             ) : null
                           })()}
@@ -877,7 +877,7 @@ function SellLotModal({
         <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">{investment.name}</p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
           Holding {heldShares.toFixed(6).replace(/\.?0+$/, '')} shares
-          {avgCost !== null && <> Â· avg cost {fmt(avgCost)}/share</>}
+          {avgCost !== null && <> · avg cost {fmt(avgCost)}/share</>}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -1041,7 +1041,7 @@ function LotPanel({
                     </td>
                     <td className="py-1.5 text-slate-600 dark:text-slate-400">
                       {new Date(lot.date).toLocaleDateString('pt-PT')}
-                      {lot.notes && <span className="ml-2 text-slate-400 dark:text-slate-500 italic truncate max-w-[80px] inline-block align-bottom" title={lot.notes}>Â· {lot.notes}</span>}
+                      {lot.notes && <span className="ml-2 text-slate-400 dark:text-slate-500 italic truncate max-w-[80px] inline-block align-bottom" title={lot.notes}>· {lot.notes}</span>}
                     </td>
                     <td className="py-1.5 text-right text-slate-700 dark:text-slate-300 font-mono">
                       {parseFloat(lot.shares).toFixed(6).replace(/\.?0+$/, '')}

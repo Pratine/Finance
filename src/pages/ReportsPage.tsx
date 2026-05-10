@@ -65,7 +65,7 @@ function SpendingTrendsChart({
           ))}
         </div>
       </div>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Monthly expense per category Â· click legend to hide</p>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Monthly expense per category · click legend to hide</p>
 
       <ResponsiveContainer width="100%" height={240}>
         {mode === 'line' ? (
@@ -346,7 +346,7 @@ export default function ReportsPage() {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
                       <span className="text-slate-700 dark:text-slate-300 truncate">{c.name}</span>
                     </span>
-                    <span className="text-slate-500 dark:text-slate-400 shrink-0 ml-2">{fmt(c.total)} Â· {c.pct.toFixed(0)}%</span>
+                    <span className="text-slate-500 dark:text-slate-400 shrink-0 ml-2">{fmt(c.total)} · {c.pct.toFixed(0)}%</span>
                   </div>
                   <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${c.pct}%`, backgroundColor: c.color }} />

@@ -194,8 +194,8 @@ export default function RecurringBillsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Recurring Bills</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {fmt(totalMonthly)}/month Â· {active.length} active
-            {overdueCount > 0 && <span className="text-red-500 ml-2">Â· {overdueCount} overdue</span>}
+            {fmt(totalMonthly)}/month · {active.length} active
+            {overdueCount > 0 && <span className="text-red-500 ml-2">· {overdueCount} overdue</span>}
           </p>
         </div>
         <button onClick={openCreate}
@@ -243,7 +243,7 @@ export default function RecurringBillsPage() {
                     const budget = bill.categoryId ? budgetByCategory.get(bill.categoryId) : null
                     return (
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
-                        <span>{FREQUENCY_LABELS[bill.frequency]} Â· next {fmtDate(bill.nextDueDate)}</span>
+                        <span>{FREQUENCY_LABELS[bill.frequency]} · next {fmtDate(bill.nextDueDate)}</span>
                         {budget && (
                           <span className="px-1.5 py-0.5 rounded text-xs font-medium"
                             style={{ backgroundColor: `${budget.category.color}22`, color: budget.category.color ?? '#64748b' }}>
@@ -297,7 +297,7 @@ export default function RecurringBillsPage() {
               <div key={bill.id} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 group flex items-center gap-4 opacity-60">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{bill.name}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">{FREQUENCY_LABELS[bill.frequency]} Â· {fmt(parseFloat(bill.amount))}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{FREQUENCY_LABELS[bill.frequency]} · {fmt(parseFloat(bill.amount))}</p>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => handleToggleActive(bill)}
@@ -389,7 +389,7 @@ export default function RecurringBillsPage() {
                   onChange={e => setForm({ ...form, accountId: e.target.value === '' ? '' : Number(e.target.value) })}
                   className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500">
                   <option value="">None</option>
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} Â· {a.bank.name}</option>)}
+                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} · {a.bank.name}</option>)}
                 </select>
               </div>
 

@@ -130,7 +130,7 @@ export default function ImportPage() {
                 <option value="">Select account…</option>
                 {accounts.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.name}{a.bank ? ` Â· ${a.bank.name}` : ''}
+                    {a.name}{a.bank ? ` · ${a.bank.name}` : ''}
                   </option>
                 ))}
               </select>
@@ -191,7 +191,7 @@ export default function ImportPage() {
               <div className="mt-3">
                 <p className="text-xs font-medium text-amber-700 mb-1">{result.errors.length} row(s) had errors:</p>
                 <ul className="text-xs text-amber-600 space-y-0.5">
-                  {result.errors.map((e, i) => <li key={i} className="truncate">Â· {e}</li>)}
+                  {result.errors.map((e, i) => <li key={i} className="truncate">· {e}</li>)}
                 </ul>
               </div>
             )}
@@ -228,8 +228,8 @@ export default function ImportPage() {
                   <p className="text-sm text-slate-800 dark:text-slate-200 truncate font-medium">{h.filename}</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                     {FORMAT_LABELS[h.format] ?? h.format}
-                    {h.account && <> Â· {h.account.name}</>}
-                    {' Â· '}{fmtDateLong(h.importedAt)}
+                    {h.account && <> · {h.account.name}</>}
+                    {' · '}{fmtDateLong(h.importedAt)}
                   </p>
                 </div>
 

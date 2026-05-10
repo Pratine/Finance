@@ -305,10 +305,10 @@ export default function BudgetsPage() {
                         <span className="ml-1 text-slate-300 dark:text-slate-600">(bills)</span>
                       )}
                       {status.over
-                        ? <span className="text-red-500 ml-1">Â· {fmt(Math.abs(status.remaining))} over</span>
+                        ? <span className="text-red-500 ml-1">· {fmt(Math.abs(status.remaining))} over</span>
                         : past && spent > 0
-                          ? <span className="text-emerald-600 ml-1">Â· {fmt(surplus)} surplus</span>
-                          : <span className="ml-1">Â· {fmt(status.remaining)} left</span>
+                          ? <span className="text-emerald-600 ml-1">· {fmt(surplus)} surplus</span>
+                          : <span className="ml-1">· {fmt(status.remaining)} left</span>
                       }
                     </p>
                   </div>

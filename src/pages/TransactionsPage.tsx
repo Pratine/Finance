@@ -828,7 +828,7 @@ export default function TransactionsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Transactions</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {filtered.length} of {total} transaction{total !== 1 ? 's' : ''} Â·{' '}
+            {filtered.length} of {total} transaction{total !== 1 ? 's' : ''} ·{' '}
             <span className="text-emerald-600">+{fmt(String(totalIn))}</span>
             {' '}<span className="text-red-500">−{fmt(String(totalOut))}</span>
             {' '}<span className="text-slate-600 dark:text-slate-400">net {fmt(String(totalIn - totalOut))}</span>
@@ -1028,7 +1028,7 @@ export default function TransactionsPage() {
                             )}
                             {item.tx.notes && (
                               <span className="italic text-slate-400 dark:text-slate-500 truncate" title={item.tx.notes}>
-                                {accounts.length > 1 && 'Â· '}{item.tx.notes}
+                                {accounts.length > 1 && '· '}{item.tx.notes}
                               </span>
                             )}
                           </p>

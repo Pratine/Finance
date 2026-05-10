@@ -75,7 +75,7 @@ function ReceiveModal({
 
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
           <span className="font-medium text-slate-900 dark:text-slate-100">{item.name}</span>
-          <span className="text-slate-400 dark:text-slate-500"> Â· expected {fmt(expected)}</span>
+          <span className="text-slate-400 dark:text-slate-500"> · expected {fmt(expected)}</span>
         </p>
 
         <div className="mb-4">
@@ -216,8 +216,8 @@ export default function RecurringIncomePage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Recurring Income</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {fmt(totalMonthly)}/month Â· {active.length} active
-            {lateCount > 0 && <span className="text-amber-500 ml-2">Â· {lateCount} late</span>}
+            {fmt(totalMonthly)}/month · {active.length} active
+            {lateCount > 0 && <span className="text-amber-500 ml-2">· {lateCount} late</span>}
           </p>
         </div>
         <button onClick={openCreate}
@@ -258,7 +258,7 @@ export default function RecurringIncomePage() {
                     <DueBadge days={days} />
                   </div>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-2">
-                    <span>{FREQUENCY_LABELS[item.frequency]} Â· next {fmtDate(item.nextExpectedDate)}</span>
+                    <span>{FREQUENCY_LABELS[item.frequency]} · next {fmtDate(item.nextExpectedDate)}</span>
                     {item.account && <span className="text-slate-300 dark:text-slate-600">→ {item.account.name}</span>}
                   </p>
                 </div>
@@ -302,7 +302,7 @@ export default function RecurringIncomePage() {
               <div key={item.id} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 group flex items-center gap-4 opacity-60">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{item.name}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">{FREQUENCY_LABELS[item.frequency]} Â· {fmt(parseFloat(item.amount))}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">{FREQUENCY_LABELS[item.frequency]} · {fmt(parseFloat(item.amount))}</p>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => handleToggle(item)}
@@ -380,7 +380,7 @@ export default function RecurringIncomePage() {
                 </label>
                 <select value={form.accountId} onChange={e => setForm({ ...form, accountId: e.target.value === '' ? '' : Number(e.target.value) })} className={inputCls}>
                   <option value="">None</option>
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} Â· {a.bank.name}</option>)}
+                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name} · {a.bank.name}</option>)}
                 </select>
               </div>
               <div>

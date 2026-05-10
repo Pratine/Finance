@@ -239,7 +239,7 @@ export default function AccountsPage() {
                   <AccountIcon icon={acc.bank.icon} size={11} className="shrink-0" />
                 )}
                 {acc.bank ? acc.bank.name : acc.type.name}
-                {acc.accountNumber ? ` Â· ${acc.accountNumber}` : ''}
+                {acc.accountNumber ? ` · ${acc.accountNumber}` : ''}
               </p>
             </div>
 

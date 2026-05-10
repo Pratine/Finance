@@ -370,7 +370,7 @@ export default function SavingsPage() {
 
                   <div className="flex items-center gap-3 mt-1 flex-wrap text-xs text-slate-400 dark:text-slate-500">
                     {goal.account && (
-                      <span>{goal.account.bank.name} Â· {goal.account.name}</span>
+                      <span>{goal.account.bank.name} · {goal.account.name}</span>
                     )}
                     {days !== null && (
                       <span className={`flex items-center gap-1 ${days < 30 ? 'text-amber-500' : ''}`}>
@@ -390,13 +390,13 @@ export default function SavingsPage() {
                         {goal.interestType === 'PERCENTAGE'
                           ? `${goal.interestValue}% ${freqLabel(goal.interestFrequencyDays)}`
                           : `${fmt(goal.interestValue)} ${freqLabel(goal.interestFrequencyDays)}`}
-                        {daysToInterest !== null && daysToInterest > 0 && ` Â· next in ${daysToInterest}d`}
+                        {daysToInterest !== null && daysToInterest > 0 && ` · next in ${daysToInterest}d`}
                       </span>
                     )}
                     {projection && (
                       <span className="flex items-center gap-1 text-slate-500">
                         <CalendarClock size={11} />
-                        Goal by {formatProjectedDate(projection)} Â· {projection.daysRemaining}d
+                        Goal by {formatProjectedDate(projection)} · {projection.daysRemaining}d
                       </span>
                     )}
                   </div>
@@ -547,7 +547,7 @@ export default function SavingsPage() {
                 >
                   <option value="">None (track manually)</option>
                   {savingsAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name} Â· {a.bank.name}</option>
+                    <option key={a.id} value={a.id}>{a.name} · {a.bank.name}</option>
                   ))}
                 </select>
                 {form.accountId !== '' && (
