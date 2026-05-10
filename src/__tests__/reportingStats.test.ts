@@ -53,7 +53,7 @@ describe('calcCumulativeBalance', () => {
 
 describe('calcCategoryBreakdown', () => {
   it('groups expenses by category and computes percentage', () => {
-    const cat: Category = { id: 1, name: 'Food', type: 'EXPENSE', color: '#green', icon: null }
+    const cat: Category = { id: 1, name: 'Food', type: 'EXPENSE', color: '#4ade80', icon: null }
     const now = new Date()
     const iso = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-15T00:00:00.000Z`
     const txns = [
