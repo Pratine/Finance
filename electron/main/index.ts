@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Notification } from 'electron'
+import { app, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { execFileSync } from 'child_process'
