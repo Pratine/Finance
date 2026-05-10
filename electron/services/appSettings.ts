@@ -32,9 +32,9 @@ export function loadAppSettings(): AppSettings {
   return settings
 }
 
-export function saveAppSettings(settings: Partial<AppSettings>): AppSettings {
+export async function saveAppSettings(settings: Partial<AppSettings>): Promise<AppSettings> {
   const updated = { ...loadAppSettings(), ...settings }
-  fs.writeFileSync(settingsPath(), JSON.stringify(updated, null, 2))
+  await writeFile(settingsPath(), JSON.stringify(updated, null, 2), 'utf8')
   cache = updated
   return updated
 }
