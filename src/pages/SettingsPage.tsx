@@ -26,11 +26,11 @@ const COLORS = [
 function ColourPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
     <div>
-      <p className=âtext-xs text-slate-500 dark:text-slate-400 mb-1.5â>Colour</p>
-      <div className=âflex flex-wrap gap-1.5â>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Colour</p>
+      <div className="flex flex-wrap gap-1.5">
         {COLORS.map(c => (
           <button key={c} onClick={() => onChange(c)}
-            className=âw-6 h-6 rounded-full border-2 transition-allâ
+            className="w-6 h-6 rounded-full border-2 transition-all"
             style={{ backgroundColor: c, borderColor: value === c ? '#0f172a' : 'transparent' }}
           />
         ))}
@@ -42,15 +42,15 @@ function ColourPicker({ value, onChange }: { value: string; onChange: (c: string
 function IconPicker({ value, onChange }: { value: string; onChange: (i: string) => void }) {
   return (
     <div>
-      <p className=âtext-xs text-slate-500 dark:text-slate-400 mb-1.5â>Icon</p>
-      <div className=âflex flex-wrap gap-1.5â>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Icon</p>
+      <div className="flex flex-wrap gap-1.5">
         {ICONS.map(i => (
           <button key={i} onClick={() => onChange(i)}
             className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
               value === i ? 'border-slate-900 bg-slate-100 dark:border-slate-100 dark:bg-slate-700' : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
           >
-            <AccountIcon icon={i} size={14} className=âtext-slate-600 dark:text-slate-400â />
+            <AccountIcon icon={i} size={14} className="text-slate-600 dark:text-slate-400" />
           </button>
         ))}
       </div>
@@ -359,7 +359,7 @@ function ExportTab() {
 
           <button onClick={handleExportTransactions} disabled={exporting}
             className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-sm py-2 rounded-lg hover:bg-slate-700 dark:hover:bg-white disabled:opacity-50 transition-colors">
-            {exporting ? 'ExportingÃ¢â¬Â¦' : 'Export transactions'}
+            {exporting ? 'Exporting…' : 'Export transactions'}
           </button>
         </div>
       </div>
@@ -372,7 +372,7 @@ function ExportTab() {
         </p>
         <button onClick={handleBackup} disabled={exporting}
           className="w-full border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors">
-          {exporting ? 'Backing upÃ¢â¬Â¦' : 'Download full backup'}
+          {exporting ? 'Backing up…' : 'Download full backup'}
         </button>
       </div>
 
@@ -411,12 +411,12 @@ function RestoreSection({ onDone, disabled }: { onDone: (msg: string) => void; d
     <div className="bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900 rounded-2xl p-5">
       <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">Restore from backup</h2>
       <p className="text-xs text-red-500 dark:text-red-400 mb-4">
-        Ã¢Å¡Â  This will permanently overwrite all current data with the contents of the backup file.
+        ⚠  This will permanently overwrite all current data with the contents of the backup file.
       </p>
       {!confirm ? (
         <button onClick={() => setConfirm(true)} disabled={disabled}
           className="w-full border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 text-sm py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors">
-          Restore from backupÃ¢â¬Â¦
+          Restore from backup…
         </button>
       ) : (
         <div className="flex flex-col gap-2">
@@ -428,7 +428,7 @@ function RestoreSection({ onDone, disabled }: { onDone: (msg: string) => void; d
             </button>
             <button onClick={handleRestore} disabled={restoring}
               className="flex-1 bg-red-600 text-white text-sm py-1.5 rounded-lg hover:bg-red-700 disabled:opacity-50">
-              {restoring ? 'RestoringÃ¢â¬Â¦' : 'Yes, restore'}
+              {restoring ? 'Restoring…' : 'Yes, restore'}
             </button>
           </div>
         </div>
@@ -485,7 +485,7 @@ function ShortcutsTab() {
                 onKeyDown={e => onKeyDown(e, action)}
                 onBlur={() => setCapturing(null)}
               >
-                Press a keyÃ¢â¬Â¦
+                Press a key…
               </div>
             ) : (
               <button
@@ -620,7 +620,7 @@ function InvestmentsTab() {
           disabled={refreshing}
           className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium disabled:opacity-50 hover:bg-slate-700 dark:hover:bg-slate-200 transition-colors"
         >
-          {refreshing ? 'RefreshingÃ¢â¬Â¦' : 'Refresh now'}
+          {refreshing ? 'Refreshing…' : 'Refresh now'}
         </button>
         {msg && <p className="text-xs text-slate-500 dark:text-slate-400">{msg}</p>}
       </div>
@@ -977,16 +977,20 @@ export default function SettingsPage() {
               onChange={e => setNewRuleCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
               className="border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
             >
-              <option value="">CategoryÃ¢â¬Â¦</option>
+              <option value="">Category…</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <button
               onClick={async () => {
                 if (!newPattern.trim() || newRuleCategoryId === '') return
-                await window.api.createRule(newPattern.trim(), Number(newRuleCategoryId))
-                setNewPattern('')
-                setNewRuleCategoryId('')
-                await load()
+                try {
+                  await window.api.createRule(newPattern.trim(), Number(newRuleCategoryId))
+                  setNewPattern('')
+                  setNewRuleCategoryId('')
+                  await load()
+                } catch (e: any) {
+                  setError(e?.message ?? 'Failed to create rule')
+                }
               }}
               disabled={!newPattern.trim() || newRuleCategoryId === ''}
               className="px-3 py-1.5 bg-slate-900 text-white text-sm rounded-lg hover:bg-slate-700 disabled:opacity-40"
