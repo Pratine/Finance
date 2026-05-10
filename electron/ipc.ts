@@ -1086,41 +1086,32 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('bills:markPaid', async (_event, id: number) => {
     const bill = await prisma.recurringBill.findUniqueOrThrow({ where: { id } })
-    const next = new Date(bill.nextDueDate)
-    switch (bill.frequency) {
-      case 'WEEKLY':    next.setDate(next.getDate() + 7); break
-      case 'MONTHLY':   next.setMonth(next.getMonth() + 1); break
-      case 'QUARTERLY': next.setMonth(next.getMonth() + 3); break
-      case 'YEARLY':    next.setFullYear(next.getFullYear() + 1); break
-    }
-    // Auto-create a debit transaction if the bill has a linked account
-    if (bill.accountId) {
-      const categoryExists = bill.categoryId
-        ? await prisma.category.findUnique({ where: { id: bill.categoryId } })
-        : null
-      const billAmount = Math.abs(Number(bill.amount))
-      await prisma.$transaction([
-        prisma.transaction.create({
+    const next = advanceByFrequency(new Date(bill.nextDueDate), bill.frequency as Frequency)
+    const billAmount = Math.abs(Number(bill.amount))
+
+    return serialize(await prisma.$transaction(async (tx) => {
+      if (bill.accountId) {
+        await tx.transaction.create({
           data: {
             accountId: bill.accountId,
-            categoryId: categoryExists ? bill.categoryId : null,
+            categoryId: bill.categoryId ?? null,
             recurringBillId: bill.id,
             date: new Date(),
             description: bill.name,
             amount: -billAmount,
             type: 'DEBIT',
           },
-        }),
-        prisma.account.update({
+        })
+        await tx.account.update({
           where: { id: bill.accountId },
           data: { balance: { decrement: billAmount } },
-        }),
-      ])
-    }
-    return serialize(await prisma.recurringBill.update({
-      where: { id },
-      data: { nextDueDate: next },
-      include: billInclude,
+        })
+      }
+      return tx.recurringBill.update({
+        where: { id },
+        data: { nextDueDate: next },
+        include: billInclude,
+      })
     }))
   })
 
