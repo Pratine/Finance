@@ -12,6 +12,7 @@ import { refreshAllPrices, getLastRefresh, startScheduler, type RefreshInterval 
 import { loadAppSettings, saveAppSettings } from './services/appSettings'
 import { lookupISIN } from './services/isinLookup'
 import { elapsedPeriods, applyPeriods } from './services/interest'
+import { calcInvestmentTotals } from './services/lotCalcs'
 import type { Frequency, InterestType, DebtType, DebtStatus } from './domainTypes'
 import type { Prisma } from '@prisma/client'
 
