@@ -126,13 +126,15 @@ function AddModal({ categories, budgets, onSave, onClose }: {
 // â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function BudgetsPage() {
-  const now = new Date()
-  const [month, setMonth] = useState(now.getMonth() + 1)
-  const [year, setYear] = useState(now.getFullYear())
+  // Month is 1-indexed, UTC-based so it matches how transaction dates are stored.
+  const nowUTC = new Date()
+  const [month, setMonth] = useState(nowUTC.getUTCMonth() + 1)
+  const [year, setYear] = useState(nowUTC.getUTCFullYear())
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [bills, setBills] = useState<RecurringBill[]>([])
+  const [loadError, setLoadError] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -140,20 +142,21 @@ export default function BudgetsPage() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null)
 
-  async function load() {
-    const [b, c, t, bl] = await Promise.all([
+  // Load static data once — budgets, categories, bills, and all transactions.
+  // Month navigation only changes client-side filtering, not the data set.
+  useEffect(() => {
+    Promise.all([
       window.api.listBudgets(),
       window.api.listCategories(),
       window.api.listTransactions(),
       window.api.listBills(),
-    ])
-    setBudgets(b)
-    setCategories(c)
-    setTransactions(t)
-    setBills(bl)
-  }
-
-  useEffect(() => { load() }, [month, year])
+    ]).then(([b, c, t, bl]) => {
+      setBudgets(b)
+      setCategories(c)
+      setTransactions(t)
+      setBills(bl)
+    }).catch(() => setLoadError(true))
+  }, [])
 
   useShortcutAction('prevMonth', prevMonth)
   useShortcutAction('nextMonth', nextMonth)
@@ -169,23 +172,38 @@ export default function BudgetsPage() {
   }
 
   async function handleSave(categoryId: number, amount: number) {
-    await window.api.upsertBudget(categoryId, amount)
-    await load()
+    try {
+      await window.api.upsertBudget(categoryId, amount)
+      setBudgets(await window.api.listBudgets())
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to save budget')
+    }
   }
 
   async function handleDelete(id: number) {
-    await window.api.deleteBudget(id)
-    setDeleteId(null)
-    await load()
+    try {
+      await window.api.deleteBudget(id)
+      setDeleteId(null)
+      setBudgets(await window.api.listBudgets())
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to delete budget')
+    }
   }
 
-  const spending = calcSpendingByCategory(transactions, month - 1, year)
-  const billsReserved = calcBillsReservedByCategory(bills)
-  const billsByCategory = new Map<number, RecurringBill[]>()
-  bills.filter(b => b.isActive && b.categoryId).forEach(b => {
-    const list = billsByCategory.get(b.categoryId!) ?? []
-    billsByCategory.set(b.categoryId!, [...list, b])
-  })
+  // month is 1-indexed; calcSpendingByCategory expects 0-indexed UTC month.
+  const spending = useMemo(
+    () => calcSpendingByCategory(transactions, month - 1, year),
+    [transactions, month, year]
+  )
+  const billsReserved = useMemo(() => calcBillsReservedByCategory(bills), [bills])
+  const billsByCategory = useMemo(() => {
+    const map = new Map<number, RecurringBill[]>()
+    bills.filter(b => b.isActive && b.categoryId).forEach(b => {
+      map.set(b.categoryId!, [...(map.get(b.categoryId!) ?? []), b])
+    })
+    return map
+  }, [bills])
+
   const canEdit = isFutureOrCurrent(month, year)
   const past = isPast(month, year)
 
