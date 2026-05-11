@@ -251,7 +251,7 @@ db.transaction(() => {
       { desc: 'CP COMBOIOS PORTUGAL', amt: () => rnd(3, 12) },
       { desc: 'GALP COMBUSTIVEL',     amt: () => rnd(40, 70) },
     ]
-    for (let t = 0; t < Math.floor(rnd(2, 5)); t++) {
+    for (let t = 0; t < rndInt(2, 5); t++) {
       const tr = pick(transportDefs)
       tx(accRevolutId, tr.desc, tr.amt(), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Transport'])
     }
