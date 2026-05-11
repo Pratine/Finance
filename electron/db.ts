@@ -32,7 +32,12 @@ let _dbPath: string | null = null
 function open(): Database.Database {
   if (_db) return _db
   _dbPath = resolveDbPath()
-  _db = new Database(_dbPath)
+  // When packaged with asar, the native binary is in app.asar.unpacked — tell
+  // better-sqlite3 exactly where to find it so it doesn't search inside the archive.
+  const nativePath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'better-sqlite3', 'build', 'Release', 'better_sqlite3.node')
+    : undefined
+  _db = new Database(_dbPath, nativePath ? { nativeBinding: nativePath } : {})
   // WAL gives much better concurrency for a single-writer/multi-reader workload
   // (we never block the renderer waiting on the DB), and foreign_keys must be
   // turned on explicitly — SQLite ships with them off for backwards compat.
