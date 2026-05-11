@@ -57,6 +57,8 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+const now = new Date().toISOString()
+
 // ─── Seed ─────────────────────────────────────────────────────────────────────
 
 console.log('Seeding database...')
