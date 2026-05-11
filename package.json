@@ -79,6 +79,9 @@
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }]
     },
+    "portable": {
+      "artifactName": "Finance-Demo-${version}-portable.exe"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
