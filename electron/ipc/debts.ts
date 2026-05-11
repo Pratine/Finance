@@ -5,38 +5,40 @@ import {
 } from './shared'
 import type { Frequency, DebtType, DebtStatus } from '../domainTypes'
 
-const stmtDebtsList     = db.prepare(`SELECT * FROM "Debt" ORDER BY createdAt ASC`)
-const stmtDebtById      = db.prepare(`SELECT * FROM "Debt" WHERE id = ?`)
-const stmtDebtInsert    = db.prepare(`
-  INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)
-  VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @frequency, @nextPaymentDate, @startDate, @endDate, 'ACTIVE', @accountId, @notes, @createdAt, @updatedAt)
-`)
-const stmtDebtDelete    = db.prepare(`DELETE FROM "Debt" WHERE id = ?`)
-const stmtDebtUpdateAfterPayment = db.prepare(`
-  UPDATE "Debt" SET outstanding = ?, status = ?, nextPaymentDate = ?, updatedAt = ? WHERE id = ?
-`)
-const stmtDebtUpdateAfterReverse = db.prepare(
-  `UPDATE "Debt" SET outstanding = ?, status = ?, updatedAt = ? WHERE id = ?`,
-)
-const stmtPaymentInsert = db.prepare(`
-  INSERT INTO "DebtPayment" (debtId, date, amount, principal, interest, notes)
-  VALUES (?, ?, ?, ?, ?, ?)
-`)
-const stmtPaymentLinkTx = db.prepare(
-  `UPDATE "DebtPayment" SET linkedTransactionId = ? WHERE id = ?`,
-)
-const stmtPaymentById   = db.prepare(`SELECT * FROM "DebtPayment" WHERE id = ?`)
-const stmtPaymentDelete = db.prepare(`DELETE FROM "DebtPayment" WHERE id = ?`)
-const stmtTxInsertForDebt = db.prepare(`
-  INSERT INTO "Transaction" (accountId, date, description, amount, type)
-  VALUES (?, ?, ?, ?, ?)
-`)
-const stmtTxById = db.prepare(`SELECT * FROM "Transaction" WHERE id = ?`)
-const stmtTxDelete = db.prepare(`DELETE FROM "Transaction" WHERE id = ?`)
-const stmtAccBalanceAdd = db.prepare(`UPDATE "Account" SET balance = balance + ?, updatedAt = ? WHERE id = ?`)
-const stmtAccBalanceSub = db.prepare(`UPDATE "Account" SET balance = balance - ?, updatedAt = ? WHERE id = ?`)
-
 export function registerDebtsHandlers(ipcMain: IpcMain) {
+  // Statements are prepared here (inside the register function) rather than at
+  // module level because module imports execute before runMigrations() in
+  // app.whenReady() — referencing migration-added columns at module scope crashes.
+  const stmtDebtsList     = db.prepare(`SELECT * FROM "Debt" ORDER BY createdAt ASC`)
+  const stmtDebtById      = db.prepare(`SELECT * FROM "Debt" WHERE id = ?`)
+  const stmtDebtInsert    = db.prepare(`
+    INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)
+    VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @frequency, @nextPaymentDate, @startDate, @endDate, 'ACTIVE', @accountId, @notes, @createdAt, @updatedAt)
+  `)
+  const stmtDebtDelete    = db.prepare(`DELETE FROM "Debt" WHERE id = ?`)
+  const stmtDebtUpdateAfterPayment = db.prepare(`
+    UPDATE "Debt" SET outstanding = ?, status = ?, nextPaymentDate = ?, updatedAt = ? WHERE id = ?
+  `)
+  const stmtDebtUpdateAfterReverse = db.prepare(
+    `UPDATE "Debt" SET outstanding = ?, status = ?, updatedAt = ? WHERE id = ?`,
+  )
+  const stmtPaymentInsert = db.prepare(`
+    INSERT INTO "DebtPayment" (debtId, date, amount, principal, interest, notes)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  const stmtPaymentLinkTx = db.prepare(
+    `UPDATE "DebtPayment" SET linkedTransactionId = ? WHERE id = ?`,
+  )
+  const stmtPaymentById   = db.prepare(`SELECT * FROM "DebtPayment" WHERE id = ?`)
+  const stmtPaymentDelete = db.prepare(`DELETE FROM "DebtPayment" WHERE id = ?`)
+  const stmtTxInsertForDebt = db.prepare(`
+    INSERT INTO "Transaction" (accountId, date, description, amount, type)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  const stmtTxById        = db.prepare(`SELECT * FROM "Transaction" WHERE id = ?`)
+  const stmtTxDelete      = db.prepare(`DELETE FROM "Transaction" WHERE id = ?`)
+  const stmtAccBalanceAdd = db.prepare(`UPDATE "Account" SET balance = balance + ?, updatedAt = ? WHERE id = ?`)
+  const stmtAccBalanceSub = db.prepare(`UPDATE "Account" SET balance = balance - ?, updatedAt = ? WHERE id = ?`)
   // ── List ───────────────────────────────────────────────────────────────────
   // Batch-fetch payments for every debt in a single query, group by debtId,
   // then hand the pre-grouped lists to hydrateDebt (avoids N+1).
