@@ -116,7 +116,7 @@ db.transaction(() => {
   }
 
   // ── Category rules ───────────────────────────────────────────────────────────
-  const insRule = db.prepare(`INSERT INTO "CategoryRule" (pattern, categoryId) VALUES (@pattern, @categoryId)`)
+  const insRule = db.prepare(`INSERT INTO "CategoryRule" (pattern, categoryId, createdAt) VALUES (@pattern, @categoryId, @createdAt)`)
   const rules = [
     { pattern: 'pingo doce',    categoryId: cats['Groceries'] },
     { pattern: 'continente',    categoryId: cats['Groceries'] },
