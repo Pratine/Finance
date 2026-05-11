@@ -25,12 +25,12 @@ function run(cmd) {
 }
 
 try {
-  run('vitest run')
-  run('prisma generate')
+  run('npx vitest run')
+  run('npx prisma generate')
 
   // Reset + seed a fresh demo database
-  run('prisma migrate reset --force --skip-seed')
-  run('prisma migrate deploy')
+  run('npx prisma migrate reset --force --skip-seed')
+  run('npx prisma migrate deploy')
   run('node prisma/seed.js')
 
   // Bundle the seeded db
