@@ -7,7 +7,7 @@ import Database from 'better-sqlite3'
 // installations continue to read/write the same file.
 function resolveDbPath(): string {
   if (!app.isPackaged) {
-    return path.join(app.getAppPath(), 'prisma', 'dev.db')
+    return path.join(app.getAppPath(), 'prisma', 'prisma', 'dev.db')
   }
   if (process.env.PORTABLE_EXECUTABLE_DIR) {
     // Portable demo: store the db next to the exe so it never conflicts with
