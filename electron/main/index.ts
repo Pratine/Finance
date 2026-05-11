@@ -2,9 +2,7 @@ import { app, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
-// ipc modules are intentionally NOT imported at the top level — module-level
-// db.prepare() calls in each domain file must run after runMigrations(), not at
-// import time. We require() the module inside app.whenReady() after migrations.
+import { setupIpcHandlers } from '../ipc'
 import { db } from '../db'
 import { runMigrations as applyMigrations } from '../migrations'
 import { startScheduler, stopScheduler } from '../services/priceScheduler'
