@@ -339,6 +339,7 @@ db.transaction(() => {
       isin: def.isin, ticker: def.ticker, shares: def.shares, amountIn: def.amountIn,
       currentValue, lastPriceFetched: def.endPrice * fxRate,
       currency: def.currency, priceUpdatedAt: new Date().toISOString(), notes: null,
+      createdAt: now, updatedAt: now,
     }).lastInsertRowid
 
     const priceRange = def.endPrice - def.startPrice
