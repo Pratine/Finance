@@ -3,10 +3,21 @@
 // by hashing each row and storing the hash in the `importHash` column.
 import fs from 'fs'
 import crypto from 'crypto'
-import { prisma } from '../db'
-import type { Prisma } from '@prisma/client'
+import { db } from '../db'
 
 interface Rule { id: number; pattern: string; categoryId: number }
+
+interface TxInsert {
+  accountId: number
+  date: string
+  valueDate: string | null
+  description: string
+  amount: number
+  type: string
+  runningBalance: number | null
+  importHash: string
+  categoryId: number | null
+}
 
 export interface RawRow {
   dataLancamento: string
