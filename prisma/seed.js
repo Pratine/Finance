@@ -195,7 +195,7 @@ db.transaction(() => {
   }
 
   for (let mo = MONTHS - 1; mo >= 0; mo--) {
-    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - mo, 1))
+    const d = new Date(Date.UTC(loopNow.getUTCFullYear(), loopNow.getUTCMonth() - mo, 1))
     const y = d.getUTCFullYear()
     const m = d.getUTCMonth() + 1
 
