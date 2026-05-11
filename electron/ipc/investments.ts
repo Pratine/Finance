@@ -60,21 +60,6 @@ const stmtPriceHistById = db.prepare(`
   WHERE investmentId = ? AND recordedAt >= ?
   ORDER BY recordedAt ASC
 `)
-const stmtRateGet = db.prepare(`SELECT rate FROM "ExchangeRate" WHERE fromCurrency = ?`)
-const stmtRateUpsert = db.prepare(`
-  INSERT INTO "ExchangeRate" (fromCurrency, rate, updatedAt) VALUES (?, ?, ?)
-  ON CONFLICT(fromCurrency) DO UPDATE SET rate = excluded.rate, updatedAt = excluded.updatedAt
-`)
-const stmtPriceHistUpsert = db.prepare(`
-  INSERT INTO "PriceHistory" (investmentId, price, value, recordedAt)
-  VALUES (?, ?, ?, ?)
-  ON CONFLICT(investmentId, recordedAt) DO UPDATE SET price = excluded.price, value = excluded.value
-`)
-const stmtInvSyncPrice = db.prepare(`
-  UPDATE "Investment"
-  SET currentValue = ?, lastPriceFetched = ?, priceUpdatedAt = ?, updatedAt = ?
-  WHERE id = ?
-`)
 const stmtRatesList = db.prepare(`SELECT * FROM "ExchangeRate" ORDER BY fromCurrency ASC`)
 
 export function registerInvestmentsHandlers(ipcMain: IpcMain) {
