@@ -1,3 +1,4 @@
+import './prismaSetup' // must be first — sets PRISMA_QUERY_ENGINE_LIBRARY before PrismaClient loads
 import { app, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
 import path from 'path'
 import fs from 'fs'
