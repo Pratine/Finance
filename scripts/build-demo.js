@@ -12,6 +12,7 @@
  */
 
 const { execSync } = require('child_process')
+const { build } = require('electron-builder')
 const fs = require('fs')
 const path = require('path')
 
@@ -24,32 +25,41 @@ function run(cmd) {
   execSync(cmd, { stdio: 'inherit', cwd: root })
 }
 
-try {
-  run('npx vitest run')
-  run('npx prisma generate')
+async function main() {
+  try {
+    run('npx vitest run')
+    run('npx prisma generate')
 
-  // Reset + seed a fresh demo database
-  run('npx prisma migrate reset --force --skip-seed')
-  run('npx prisma migrate deploy')
-  run('node prisma/seed.js')
+    // Reset + seed a fresh demo database
+    run('npx prisma migrate reset --force --skip-seed')
+    run('npx prisma migrate deploy')
+    run('node prisma/seed.js')
 
-  // Bundle the seeded db
-  fs.mkdirSync(path.join(root, 'resources'), { recursive: true })
-  fs.copyFileSync(sourceDB, demoDB)
-  console.log('\n> Copied seeded demo.db to resources/')
+    // Bundle the seeded db
+    fs.mkdirSync(path.join(root, 'resources'), { recursive: true })
+    fs.copyFileSync(sourceDB, demoDB)
+    console.log('\n> Copied seeded demo.db to resources/')
 
-  // Build app
-  run('npx vite build')
-  run('npx tsc -p tsconfig.electron.json')
+    // Build app
+    run('npx vite build')
+    run('npx tsc -p tsconfig.electron.json')
 
-  // Build portable only
-  run('npx electron-builder --win portable --config.extraResources[0].from=resources/demo.db --config.extraResources[0].to=demo.db')
+    // Build portable with demo.db as extra resource
+    await build({
+      targets: require('electron-builder').Platform.WINDOWS.createTarget(['portable']),
+      config: {
+        extraResources: [{ from: 'resources/demo.db', to: 'demo.db' }],
+        portable: { artifactName: 'Finance-Demo-${version}-portable.exe' },
+      },
+    })
 
-  console.log('\n✓ Demo portable build complete — see release/')
-} finally {
-  // Always clean up so the regular build is not affected
-  if (fs.existsSync(demoDB)) {
-    fs.unlinkSync(demoDB)
-    console.log('> Cleaned up resources/demo.db')
+    console.log('\n✓ Demo portable build complete — see release/')
+  } finally {
+    if (fs.existsSync(demoDB)) {
+      fs.unlinkSync(demoDB)
+      console.log('> Cleaned up resources/demo.db')
+    }
   }
 }
+
+main().catch(e => { console.error(e); process.exit(1) })
