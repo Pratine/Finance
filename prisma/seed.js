@@ -112,7 +112,7 @@ db.transaction(() => {
   ]
   const cats = {}
   for (const c of catDefs) {
-    cats[c.name] = insCat.run(c).lastInsertRowid
+    cats[c.name] = insCat.run({ ...c, createdAt: now }).lastInsertRowid
   }
 
   // ── Category rules ───────────────────────────────────────────────────────────
