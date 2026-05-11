@@ -370,6 +370,7 @@ db.transaction(() => {
     nextPaymentDate: monthsAgo(0, 15), startDate: monthsAgo(18, 1),
     endDate: new Date(Date.UTC(new Date().getUTCFullYear() + 3, 0, 1)).toISOString(),
     status: 'ACTIVE', accountId: accMainId, notes: 'Citroen C3 — 48 month loan',
+    createdAt: now, updatedAt: now,
   }).lastInsertRowid
 
   let carOutstanding = 9200
