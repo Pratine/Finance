@@ -7,62 +7,62 @@ import {
 import { calcInvestmentTotals } from '../services/lotCalcs'
 // refreshPrice/lookupISIN handlers live in settings.ts (per refactor spec).
 
-// ── Brokers ──────────────────────────────────────────────────────────────────
-const stmtBrokersList  = db.prepare(`SELECT * FROM "Broker" ORDER BY name ASC`)
-const stmtBrokerInsert = db.prepare(`INSERT INTO "Broker" (name, color, icon) VALUES (?, ?, ?)`)
-const stmtBrokerById   = db.prepare(`SELECT * FROM "Broker" WHERE id = ?`)
-const stmtBrokerDelete = db.prepare(`DELETE FROM "Broker" WHERE id = ?`)
-
-// ── Investment types ─────────────────────────────────────────────────────────
-const stmtInvTypesList  = db.prepare(`SELECT * FROM "InvestmentType" ORDER BY name ASC`)
-const stmtInvTypeInsert = db.prepare(`INSERT INTO "InvestmentType" (name, color, icon) VALUES (?, ?, ?)`)
-const stmtInvTypeById   = db.prepare(`SELECT * FROM "InvestmentType" WHERE id = ?`)
-const stmtInvTypeDelete = db.prepare(`DELETE FROM "InvestmentType" WHERE id = ?`)
-
-// ── Investment lots ──────────────────────────────────────────────────────────
-const stmtLotsForInv = db.prepare(`SELECT * FROM "InvestmentLot" WHERE investmentId = ? ORDER BY date ASC`)
-const stmtLotsRawForInv = db.prepare(`SELECT * FROM "InvestmentLot" WHERE investmentId = ?`)
-const stmtInvSyncTotals = db.prepare(`UPDATE "Investment" SET shares = ?, amountIn = ?, updatedAt = ? WHERE id = ?`)
-const stmtLotInsertBuy = db.prepare(`
-  INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, notes)
-  VALUES (?, 'BUY', ?, ?, ?, ?, ?)
-`)
-const stmtLotInsertSell = db.prepare(`
-  INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, realizedGain, notes)
-  VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?)
-`)
-const stmtLotById     = db.prepare(`SELECT * FROM "InvestmentLot" WHERE id = ?`)
-const stmtLotDelete   = db.prepare(`DELETE FROM "InvestmentLot" WHERE id = ?`)
-
-function syncInvestmentTotals(investmentId: number) {
-  const lots = stmtLotsRawForInv.all(investmentId)
-  const { shares, amountIn } = calcInvestmentTotals(lots as any)
-  stmtInvSyncTotals.run(shares, amountIn, nowIso(), investmentId)
-}
-
-// ── Investments ──────────────────────────────────────────────────────────────
-const stmtInvList = db.prepare(
-  `SELECT ${investmentSelect} FROM "Investment" i ${investmentJoins} ORDER BY i.createdAt ASC`,
-)
-const stmtInvInsert = db.prepare(`
-  INSERT INTO "Investment" (name, typeId, brokerId, amountIn, currentValue, currency, isin, ticker, shares, lastPriceFetched, priceUpdatedAt, notes, createdAt, updatedAt)
-  VALUES (@name, @typeId, @brokerId, @amountIn, @currentValue, @currency, @isin, @ticker, @shares, @lastPriceFetched, @priceUpdatedAt, @notes, @createdAt, @updatedAt)
-`)
-const stmtInvRaw      = db.prepare(`SELECT * FROM "Investment" WHERE id = ?`)
-const stmtInvDelete   = db.prepare(`DELETE FROM "Investment" WHERE id = ?`)
-const stmtPriceHistAll = db.prepare(`
-  SELECT recordedAt, value FROM "PriceHistory"
-  WHERE recordedAt >= ?
-  ORDER BY recordedAt ASC
-`)
-const stmtPriceHistById = db.prepare(`
-  SELECT recordedAt, price, value FROM "PriceHistory"
-  WHERE investmentId = ? AND recordedAt >= ?
-  ORDER BY recordedAt ASC
-`)
-const stmtRatesList = db.prepare(`SELECT * FROM "ExchangeRate" ORDER BY fromCurrency ASC`)
-
 export function registerInvestmentsHandlers(ipcMain: IpcMain) {
+  // ── Brokers ──────────────────────────────────────────────────────────────────
+  const stmtBrokersList  = db.prepare(`SELECT * FROM "Broker" ORDER BY name ASC`)
+  const stmtBrokerInsert = db.prepare(`INSERT INTO "Broker" (name, color, icon) VALUES (?, ?, ?)`)
+  const stmtBrokerById   = db.prepare(`SELECT * FROM "Broker" WHERE id = ?`)
+  const stmtBrokerDelete = db.prepare(`DELETE FROM "Broker" WHERE id = ?`)
+
+  // ── Investment types ─────────────────────────────────────────────────────────
+  const stmtInvTypesList  = db.prepare(`SELECT * FROM "InvestmentType" ORDER BY name ASC`)
+  const stmtInvTypeInsert = db.prepare(`INSERT INTO "InvestmentType" (name, color, icon) VALUES (?, ?, ?)`)
+  const stmtInvTypeById   = db.prepare(`SELECT * FROM "InvestmentType" WHERE id = ?`)
+  const stmtInvTypeDelete = db.prepare(`DELETE FROM "InvestmentType" WHERE id = ?`)
+
+  // ── Investment lots ──────────────────────────────────────────────────────────
+  const stmtLotsForInv = db.prepare(`SELECT * FROM "InvestmentLot" WHERE investmentId = ? ORDER BY date ASC`)
+  const stmtLotsRawForInv = db.prepare(`SELECT * FROM "InvestmentLot" WHERE investmentId = ?`)
+  const stmtInvSyncTotals = db.prepare(`UPDATE "Investment" SET shares = ?, amountIn = ?, updatedAt = ? WHERE id = ?`)
+  const stmtLotInsertBuy = db.prepare(`
+    INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, notes)
+    VALUES (?, 'BUY', ?, ?, ?, ?, ?)
+  `)
+  const stmtLotInsertSell = db.prepare(`
+    INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, realizedGain, notes)
+    VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?)
+  `)
+  const stmtLotById     = db.prepare(`SELECT * FROM "InvestmentLot" WHERE id = ?`)
+  const stmtLotDelete   = db.prepare(`DELETE FROM "InvestmentLot" WHERE id = ?`)
+
+  function syncInvestmentTotals(investmentId: number) {
+    const lots = stmtLotsRawForInv.all(investmentId)
+    const { shares, amountIn } = calcInvestmentTotals(lots as any)
+    stmtInvSyncTotals.run(shares, amountIn, nowIso(), investmentId)
+  }
+
+  // ── Investments ──────────────────────────────────────────────────────────────
+  const stmtInvList = db.prepare(
+    `SELECT ${investmentSelect} FROM "Investment" i ${investmentJoins} ORDER BY i.createdAt ASC`,
+  )
+  const stmtInvInsert = db.prepare(`
+    INSERT INTO "Investment" (name, typeId, brokerId, amountIn, currentValue, currency, isin, ticker, shares, lastPriceFetched, priceUpdatedAt, notes, createdAt, updatedAt)
+    VALUES (@name, @typeId, @brokerId, @amountIn, @currentValue, @currency, @isin, @ticker, @shares, @lastPriceFetched, @priceUpdatedAt, @notes, @createdAt, @updatedAt)
+  `)
+  const stmtInvRaw      = db.prepare(`SELECT * FROM "Investment" WHERE id = ?`)
+  const stmtInvDelete   = db.prepare(`DELETE FROM "Investment" WHERE id = ?`)
+  const stmtPriceHistAll = db.prepare(`
+    SELECT recordedAt, value FROM "PriceHistory"
+    WHERE recordedAt >= ?
+    ORDER BY recordedAt ASC
+  `)
+  const stmtPriceHistById = db.prepare(`
+    SELECT recordedAt, price, value FROM "PriceHistory"
+    WHERE investmentId = ? AND recordedAt >= ?
+    ORDER BY recordedAt ASC
+  `)
+  const stmtRatesList = db.prepare(`SELECT * FROM "ExchangeRate" ORDER BY fromCurrency ASC`)
+
   // Brokers
   ipcMain.handle('brokers:list', () => stmtBrokersList.all())
   ipcMain.handle('brokers:create', (_e, data: { name: string; color?: string | null; icon?: string | null }) => {
