@@ -1,11 +1,10 @@
-import './prismaSetup' // must be first — sets PRISMA_QUERY_ENGINE_LIBRARY before PrismaClient loads
 import { app, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { execFileSync } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import { setupIpcHandlers } from '../ipc'
-import { prisma } from '../db'
+import { db } from '../db'
+import { runMigrations as applyMigrations } from '../migrations'
 import { startScheduler, stopScheduler } from '../services/priceScheduler'
 import { loadAppSettings } from '../services/appSettings'
 
@@ -20,19 +19,12 @@ if (!app.requestSingleInstanceLock()) {
 // Must be set before app.whenReady().
 app.commandLine.appendSwitch('lang', 'pt-PT')
 
-// Runs pending Prisma migrations at startup — safe to call repeatedly.
-// Uses ELECTRON_RUN_AS_NODE=1 so the Electron binary behaves as plain Node.js
-// when spawned as a child, avoiding the infinite re-launch loop that would
-// occur if we called process.execPath without that flag.
+// Runs pending DB migrations at startup — safe to call repeatedly.
+// Migrations are applied via better-sqlite3 directly (see ../migrations.ts);
+// there is no Prisma CLI to spawn.
 function runMigrations() {
   try {
-    const base = app.getAppPath()
-    const prismaCli = path.join(base, 'node_modules', 'prisma', 'build', 'index.js')
-    execFileSync(process.execPath, [prismaCli, 'migrate', 'deploy'], {
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
-      cwd: base,
-      stdio: 'pipe',
-    })
+    applyMigrations()
   } catch (e: any) {
     console.error('Migration error:', e)
     // Show a visible error in production — a silent failure here means the app
@@ -188,13 +180,13 @@ function notify(title: string, body: string) {
   new Notification({ title, body }).show()
 }
 
-async function checkNotifications() {
+function checkNotifications() {
   try {
     const now = new Date()
     const today = new Date(now); today.setUTCHours(0, 0, 0, 0)
 
     // ── Bills ──────────────────────────────────────────────────────────────────
-    const bills = await prisma.recurringBill.findMany({ where: { isActive: true } })
+    const bills = db.prepare(`SELECT name, nextDueDate FROM "RecurringBill" WHERE isActive = 1`).all() as Array<{ name: string; nextDueDate: string }>
     const overdue: string[] = []
     const dueSoon: string[] = []
     for (const bill of bills) {
@@ -207,12 +199,17 @@ async function checkNotifications() {
     if (dueSoon.length > 0) notify(`Bill${dueSoon.length > 1 ? 's' : ''} due soon`, dueSoon.join(', '))
 
     // ── Budgets ────────────────────────────────────────────────────────────────
-    const budgets = await prisma.budget.findMany({ include: { category: true } })
-    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-    const monthEnd   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
-    const monthTxns  = await prisma.transaction.findMany({
-      where: { type: 'DEBIT', date: { gte: monthStart, lt: monthEnd } },
-    })
+    const budgets = db.prepare(`
+      SELECT b.id, b.categoryId, b.amount, c.name AS categoryName
+      FROM "Budget" b
+      JOIN "Category" c ON c.id = b.categoryId
+    `).all() as Array<{ id: number; categoryId: number; amount: number; categoryName: string }>
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+    const monthEnd   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString()
+    const monthTxns = db.prepare(`
+      SELECT categoryId, amount FROM "Transaction"
+      WHERE type = 'DEBIT' AND date >= ? AND date < ?
+    `).all(monthStart, monthEnd) as Array<{ categoryId: number | null; amount: number }>
     const exceededBudgets: string[] = []
     const warningBudgets: string[] = []
     for (const budget of budgets) {
@@ -222,14 +219,14 @@ async function checkNotifications() {
         .filter(t => t.categoryId === budget.categoryId)
         .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
       const pct = (spent / limit) * 100
-      if (pct >= 100) exceededBudgets.push(`${budget.category.name} (${Math.round(pct)}%)`)
-      else if (pct >= 80) warningBudgets.push(`${budget.category.name} (${Math.round(pct)}%)`)
+      if (pct >= 100) exceededBudgets.push(`${budget.categoryName} (${Math.round(pct)}%)`)
+      else if (pct >= 80) warningBudgets.push(`${budget.categoryName} (${Math.round(pct)}%)`)
     }
     if (exceededBudgets.length > 0) notify(`${exceededBudgets.length} budget${exceededBudgets.length > 1 ? 's' : ''} exceeded`, exceededBudgets.join(', '))
     if (warningBudgets.length > 0) notify(`${warningBudgets.length} budget${warningBudgets.length > 1 ? 's' : ''} near limit`, warningBudgets.join(', '))
 
     // ── Recurring income (late) ────────────────────────────────────────────────
-    const incomeItems = await prisma.recurringIncome.findMany({ where: { isActive: true } })
+    const incomeItems = db.prepare(`SELECT name, nextExpectedDate FROM "RecurringIncome" WHERE isActive = 1`).all() as Array<{ name: string; nextExpectedDate: string }>
     const lateIncome: string[] = []
     for (const inc of incomeItems) {
       const due = new Date(inc.nextExpectedDate); due.setUTCHours(0, 0, 0, 0)
@@ -239,7 +236,7 @@ async function checkNotifications() {
     if (lateIncome.length > 0) notify('Expected income not yet received', lateIncome.join(', '))
 
     // ── Savings goals ──────────────────────────────────────────────────────────
-    const goals = await prisma.savingsGoal.findMany()
+    const goals = db.prepare(`SELECT name, targetAmount, currentAmount FROM "SavingsGoal"`).all() as Array<{ name: string; targetAmount: number; currentAmount: number }>
     const reachedGoals: string[] = []
     for (const goal of goals) {
       const pct = Number(goal.targetAmount) > 0
@@ -247,7 +244,7 @@ async function checkNotifications() {
         : 0
       if (pct >= 100) reachedGoals.push(goal.name)
     }
-    if (reachedGoals.length > 0) notify(`🎉 ${reachedGoals.length} savings goal${reachedGoals.length > 1 ? 's' : ''} reached!`, reachedGoals.join(', '))
+    if (reachedGoals.length > 0) notify(`${reachedGoals.length} savings goal${reachedGoals.length > 1 ? 's' : ''} reached!`, reachedGoals.join(', '))
   } catch {
     // DB not ready — ignore
   }
@@ -279,8 +276,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-app.on('will-quit', async (e) => {
-  e.preventDefault()
-  await prisma.$disconnect()
-  app.exit(0)
+app.on('will-quit', () => {
+  // better-sqlite3 close is synchronous; no need to defer quit.
+  try { db.close() } catch { /* already closed */ }
 })
