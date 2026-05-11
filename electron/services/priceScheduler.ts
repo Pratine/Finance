@@ -1,7 +1,7 @@
 // Shared price-refresh logic used by both the IPC handler and the background scheduler.
 // Extracted so the main process can call it directly without going through IPC.
 
-import { prisma } from '../db'
+import { db } from '../db'
 import { fetchPrice, fetchExchangeRate } from './priceFetcher'
 
 export interface RefreshResult {
@@ -10,15 +10,15 @@ export interface RefreshResult {
   timestamp: Date
 }
 
-export async function savePriceSnapshot(investmentId: number, price: number, shares: number) {
+export function savePriceSnapshot(investmentId: number, price: number, shares: number) {
   const value = price * shares
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
-  await prisma.priceHistory.upsert({
-    where: { investmentId_recordedAt: { investmentId, recordedAt: today } },
-    create: { investmentId, price, value, recordedAt: today },
-    update: { price, value },
-  })
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0)
+  const recordedAt = today.toISOString()
+  db.prepare(`
+    INSERT INTO "PriceHistory" (investmentId, price, value, recordedAt)
+    VALUES (@investmentId, @price, @value, @recordedAt)
+    ON CONFLICT(investmentId, recordedAt) DO UPDATE SET price = excluded.price, value = excluded.value
+  `).run({ investmentId, price, value, recordedAt })
 }
 
 // Processes tasks in sequential fixed-size batches, with at most `limit` running
@@ -42,8 +42,29 @@ async function withConcurrencyLimit<T>(
 
 const PRICE_FETCH_CONCURRENCY = 4
 
+interface InvestmentRow {
+  id: number
+  ticker: string | null
+  shares: number | null
+}
+
 export async function refreshAllPrices(): Promise<RefreshResult> {
-  const investments = await prisma.investment.findMany({ where: { ticker: { not: null } } })
+  const investments = db
+    .prepare(`SELECT id, ticker, shares FROM "Investment" WHERE ticker IS NOT NULL`)
+    .all() as InvestmentRow[]
+
+  const upsertRate = db.prepare(`
+    INSERT INTO "ExchangeRate" (fromCurrency, rate, updatedAt)
+    VALUES (@fromCurrency, @rate, @updatedAt)
+    ON CONFLICT(fromCurrency) DO UPDATE SET rate = excluded.rate, updatedAt = excluded.updatedAt
+  `)
+  const getCachedRate = db.prepare(`SELECT rate FROM "ExchangeRate" WHERE fromCurrency = ?`)
+  const updateInvestment = db.prepare(`
+    UPDATE "Investment"
+    SET currentValue = @currentValue, lastPriceFetched = @lastPriceFetched, priceUpdatedAt = @priceUpdatedAt, updatedAt = @updatedAt
+    WHERE id = @id
+  `)
+
   const results = await withConcurrencyLimit(investments, PRICE_FETCH_CONCURRENCY, async (inv) => {
     const result = await fetchPrice(inv.ticker!)
     // fetchExchangeRate throws on failure — use a cached rate if we have one,
@@ -54,13 +75,9 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
     } else {
       try {
         rate = await fetchExchangeRate(result.currency)
-        await prisma.exchangeRate.upsert({
-          where: { fromCurrency: result.currency },
-          create: { fromCurrency: result.currency, rate },
-          update: { rate },
-        })
+        upsertRate.run({ fromCurrency: result.currency, rate, updatedAt: new Date().toISOString() })
       } catch (rateErr) {
-        const cached = await prisma.exchangeRate.findUnique({ where: { fromCurrency: result.currency } })
+        const cached = getCachedRate.get(result.currency) as { rate: number } | undefined
         if (cached) {
           rate = Number(cached.rate)
           console.warn(`Exchange rate fetch failed for ${result.currency}, using cached rate ${rate}`)
@@ -74,11 +91,15 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
       throw new Error(`${inv.ticker}: shares not set — add a buy lot to track position size`)
     }
     const shares = Number(inv.shares)
-    await prisma.investment.update({
-      where: { id: inv.id },
-      data: { currentValue: priceInEUR * shares, lastPriceFetched: priceInEUR, priceUpdatedAt: new Date() },
+    const now = new Date().toISOString()
+    updateInvestment.run({
+      id: inv.id,
+      currentValue: priceInEUR * shares,
+      lastPriceFetched: priceInEUR,
+      priceUpdatedAt: now,
+      updatedAt: now,
     })
-    await savePriceSnapshot(inv.id, priceInEUR, shares)
+    savePriceSnapshot(inv.id, priceInEUR, shares)
     return { id: inv.id, ticker: inv.ticker, price: priceInEUR }
   })
   return {
