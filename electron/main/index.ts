@@ -56,7 +56,17 @@ function sendUpdateStatus(win: BrowserWindow) {
   win.webContents.send('updater:status', { status: updateStatus, ...updateInfo })
 }
 
+const isPortable = !!process.env.PORTABLE_EXECUTABLE_DIR
+
 function setupAutoUpdater(win: BrowserWindow) {
+  // Updater is disabled in the portable demo — it has no installer to update.
+  if (isPortable) {
+    ipcMain.handle('updater:check', () => ({ status: 'not-available' }))
+    ipcMain.handle('updater:getStatus', () => ({ status: 'not-available' }))
+    ipcMain.handle('updater:install', () => {})
+    return
+  }
+
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
 
