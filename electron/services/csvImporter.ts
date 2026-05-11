@@ -103,7 +103,7 @@ export async function importMillenniumCSV(
   }
 
   // ── Parse all valid rows upfront ────────────────────────────────────────────
-  type PendingRow = { hash: string; data: Prisma.TransactionCreateManyInput }
+  type PendingRow = { hash: string; data: TxInsert }
   const pending: PendingRow[] = []
   const errors: string[] = []
 
