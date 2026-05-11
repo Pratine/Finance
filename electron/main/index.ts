@@ -257,7 +257,13 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   runMigrations()
-  setupIpcHandlers(ipcMain)
+  try {
+    setupIpcHandlers(ipcMain)
+  } catch (e: any) {
+    dialog.showErrorBox('Startup error', `Failed to initialise IPC handlers:\n\n${e?.message ?? e}`)
+    app.quit()
+    return
+  }
   createWindow()
 
   const { priceRefreshInterval } = loadAppSettings()
