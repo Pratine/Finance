@@ -237,12 +237,12 @@ db.transaction(() => {
     const groceryTrips = rndInt(4, 6)
     for (let g = 0; g < groceryTrips; g++) {
       const store = pick(['Pingo Doce', 'Continente', 'Lidl', 'Aldi', 'Minipreço'])
-      tx(accRevolutId, store.toUpperCase(), rnd(18, 75), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Groceries'])
+      tx(accRevolutId, store.toUpperCase(), rnd(18, 75), 'DEBIT', date(y, m, rndInt(1, 28)), cats['Groceries'])
     }
 
     const restNames = ["Tasca da Esquina", "Time Out Market", "McDonald's", "Nando's", "Pizza Hut", "Sushi Place", "Taberna Moderna", "O Corvo"]
     for (let r = 0; r < rndInt(2, 6); r++) {
-      tx(accRevolutId, pick(restNames).toUpperCase(), rnd(12, 55), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Restaurants'])
+      tx(accRevolutId, pick(restNames).toUpperCase(), rnd(12, 55), 'DEBIT', date(y, m, rndInt(1, 28)), cats['Restaurants'])
     }
 
     const transportDefs = [
@@ -253,7 +253,7 @@ db.transaction(() => {
     ]
     for (let t = 0; t < rndInt(2, 5); t++) {
       const tr = pick(transportDefs)
-      tx(accRevolutId, tr.desc, tr.amt(), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Transport'])
+      tx(accRevolutId, tr.desc, tr.amt(), 'DEBIT', date(y, m, rndInt(1, 28)), cats['Transport'])
     }
 
     tx(accRevolutId, 'NETFLIX.COM',      15.99, 'DEBIT', date(y, m, 8),  cats['Subscriptions'])
@@ -262,15 +262,15 @@ db.transaction(() => {
 
     if (Math.random() > 0.6) {
       const pharmNames = ['FARMACIA CENTRAL', 'FARMACIA SAUDE', 'DENTAL CLINIC LISBOA']
-      tx(accRevolutId, pick(pharmNames), rnd(8, 85), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Healthcare'])
+      tx(accRevolutId, pick(pharmNames), rnd(8, 85), 'DEBIT', date(y, m, rndInt(1, 28)), cats['Healthcare'])
     }
     if (Math.random() > 0.5) {
       const shops = ['ZARA', 'H&M', 'FNAC PORTUGAL', 'EL CORTE INGLES', 'DECATHLON']
-      tx(accRevolutId, pick(shops), rnd(20, 150), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Shopping'])
+      tx(accRevolutId, pick(shops), rnd(20, 150), 'DEBIT', date(y, m, rndInt(1, 28)), cats['Shopping'])
     }
     if (Math.random() > 0.55) {
       const ent = ['CINEMA NOS', 'TICKETMASTER', 'BOWLING STRIKE', 'ESCAPE ROOM']
-      tx(accRevolutId, pick(ent), rnd(10, 60), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Entertainment'])
+      tx(accRevolutId, pick(ent), rnd(10, 60), 'DEBIT', date(y, m, rndInt(1, 28)), cats['Entertainment'])
     }
     if (mo === 14 || mo === 6) {
       tx(accRevolutId, 'RYANAIR',     rnd(80, 220),  'DEBIT', date(y, m, 10), cats['Travel'])
