@@ -156,7 +156,7 @@ db.transaction(() => {
     { name: 'Shopping',      amount: 100 },
     { name: 'Healthcare',    amount: 50  },
     { name: 'Gym',           amount: 45  },
-  ]) insBudget.run({ categoryId: cats[b.name], amount: b.amount })
+  ]) insBudget.run({ categoryId: cats[b.name], amount: b.amount, createdAt: now, updatedAt: now })
 
   // ── Recurring bills ──────────────────────────────────────────────────────────
   const insBill = db.prepare(`INSERT INTO "RecurringBill" (name, amount, frequency, nextDueDate, categoryId, accountId, isActive) VALUES (@name, @amount, @frequency, @nextDueDate, @categoryId, @accountId, @isActive)`)
