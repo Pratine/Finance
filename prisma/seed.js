@@ -143,7 +143,7 @@ db.transaction(() => {
     { pattern: 'holmes place',  categoryId: cats['Gym'] },
     { pattern: 'ordenado',      categoryId: cats['Salary'] },
   ]
-  for (const r of rules) insRule.run(r)
+  for (const r of rules) insRule.run({ ...r, createdAt: now })
 
   // ── Budgets ──────────────────────────────────────────────────────────────────
   const insBudget = db.prepare(`INSERT INTO "Budget" (categoryId, amount) VALUES (@categoryId, @amount)`)
