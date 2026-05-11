@@ -87,9 +87,9 @@ db.transaction(() => {
 
   // ── Accounts ─────────────────────────────────────────────────────────────────
   const insAcc = db.prepare(`INSERT INTO "Account" (name, bankId, typeId, accountNumber, balance, currency, createdAt, updatedAt) VALUES (@name, @bankId, @typeId, @accountNumber, @balance, @currency, @createdAt, @updatedAt)`)
-  const accMainId    = insAcc.run({ name: 'BCP Conta Ordenado', bankId: bcpId, typeId: typeCheckingId, accountNumber: 'PT50 0010 0001 1234 5678 9015 4', balance: 1247.83, currency: 'EUR' }).lastInsertRowid
-  const accSavingsId = insAcc.run({ name: 'BCP Poupança',       bankId: bcpId, typeId: typeSavingsId,  accountNumber: 'PT50 0010 0001 9876 5432 1015 2', balance: 8542.20, currency: 'EUR' }).lastInsertRowid
-  const accRevolutId = insAcc.run({ name: 'Revolut',            bankId: revId, typeId: typeWalletId,   accountNumber: null,                              balance: 324.55,  currency: 'EUR' }).lastInsertRowid
+  const accMainId    = insAcc.run({ name: 'BCP Conta Ordenado', bankId: bcpId, typeId: typeCheckingId, accountNumber: 'PT50 0010 0001 1234 5678 9015 4', balance: 1247.83, currency: 'EUR', createdAt: now, updatedAt: now }).lastInsertRowid
+  const accSavingsId = insAcc.run({ name: 'BCP Poupanca',       bankId: bcpId, typeId: typeSavingsId,  accountNumber: 'PT50 0010 0001 9876 5432 1015 2', balance: 8542.20, currency: 'EUR', createdAt: now, updatedAt: now }).lastInsertRowid
+  const accRevolutId = insAcc.run({ name: 'Revolut',            bankId: revId, typeId: typeWalletId,   accountNumber: null,                              balance: 324.55,  currency: 'EUR', createdAt: now, updatedAt: now }).lastInsertRowid
 
   // ── Categories ───────────────────────────────────────────────────────────────
   const insCat = db.prepare(`INSERT INTO "Category" (name, type, color, icon) VALUES (@name, @type, @color, @icon)`)
