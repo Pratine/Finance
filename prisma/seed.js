@@ -234,7 +234,7 @@ db.transaction(() => {
     mainBalance -= topup
     tx(accMainId, 'TRANSFERENCIA REVOLUT', topup, 'DEBIT', date(y, m, 5), null, mainBalance)
 
-    const groceryTrips = Math.floor(rnd(4, 6))
+    const groceryTrips = rndInt(4, 6)
     for (let g = 0; g < groceryTrips; g++) {
       const store = pick(['Pingo Doce', 'Continente', 'Lidl', 'Aldi', 'Minipreço'])
       tx(accRevolutId, store.toUpperCase(), rnd(18, 75), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Groceries'])
