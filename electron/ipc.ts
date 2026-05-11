@@ -232,14 +232,18 @@ function hydrateDebt(row: any): any {
 
 // Build `SET col = @col, ...` from a data object, skipping `undefined` values.
 function buildUpdate(data: Record<string, unknown>, alwaysSet: Record<string, unknown> = {}): { sql: string; params: Record<string, unknown> } {
-  const params: Record<string, unknown> = { ...alwaysSet }
+  const params: Record<string, unknown> = {}
   const cols: string[] = []
   for (const [k, v] of Object.entries(data)) {
     if (v === undefined) continue
     cols.push(`"${k}" = @${k}`)
     params[k] = v
   }
-  for (const k of Object.keys(alwaysSet)) cols.push(`"${k}" = @${k}`)
+  // alwaysSet keys override data values and are never duplicated
+  for (const [k, v] of Object.entries(alwaysSet)) {
+    if (!params[k]) cols.push(`"${k}" = @${k}`)
+    params[k] = v
+  }
   return { sql: cols.join(', '), params }
 }
 
