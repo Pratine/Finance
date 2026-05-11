@@ -29,8 +29,12 @@ async function main() {
   try {
     run('npx vitest run')
 
-    // Seed a fresh demo database
-    run('node prisma/seed.js')
+    // Seed via Electron's Node runtime — better-sqlite3 is built for Electron's ABI,
+    // not the system Node, so we must use the Electron binary as the runner.
+    const electronBin = path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe')
+    process.env.ELECTRON_RUN_AS_NODE = '1'
+    run(`"${electronBin}" prisma/seed.js`)
+    delete process.env.ELECTRON_RUN_AS_NODE
 
     // Bundle the seeded db
     fs.mkdirSync(path.join(root, 'resources'), { recursive: true })
