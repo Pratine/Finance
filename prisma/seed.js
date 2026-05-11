@@ -280,8 +280,8 @@ db.transaction(() => {
 
   // ── Savings goal + snapshots ──────────────────────────────────────────────────
   const goalId = db.prepare(`
-    INSERT INTO "SavingsGoal" (accountId, name, targetAmount, currentAmount, interestType, interestValue, interestFrequencyDays, totalInterestEarned, contributionAmount, contributionFrequencyDays, deadline, notes)
-    VALUES (@accountId, @name, @targetAmount, @currentAmount, @interestType, @interestValue, @interestFrequencyDays, @totalInterestEarned, @contributionAmount, @contributionFrequencyDays, @deadline, @notes)
+    INSERT INTO "SavingsGoal" (accountId, name, targetAmount, currentAmount, interestType, interestValue, interestFrequencyDays, totalInterestEarned, contributionAmount, contributionFrequencyDays, deadline, notes, createdAt, updatedAt)
+    VALUES (@accountId, @name, @targetAmount, @currentAmount, @interestType, @interestValue, @interestFrequencyDays, @totalInterestEarned, @contributionAmount, @contributionFrequencyDays, @deadline, @notes, @createdAt, @updatedAt)
   `).run({
     accountId: accSavingsId,
     name: 'BCP Poupança',
