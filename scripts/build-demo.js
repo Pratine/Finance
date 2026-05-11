@@ -18,7 +18,7 @@ const path = require('path')
 
 const root = path.join(__dirname, '..')
 const demoDB = path.join(root, 'resources', 'demo.db')
-const sourceDB = path.join(root, 'prisma', 'dev.db')
+const sourceDB = path.join(root, 'prisma', 'prisma', 'dev.db')
 
 function run(cmd) {
   console.log(`\n> ${cmd}`)
