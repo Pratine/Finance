@@ -4,42 +4,42 @@ import {
   accountSelect, accountJoins, buildUpdate, hydrateAccount, getAccountFull, nowIso,
 } from './shared'
 
-// ── Banks ────────────────────────────────────────────────────────────────────
-const stmtBanksList   = db.prepare(`SELECT * FROM "Bank" ORDER BY name ASC`)
-const stmtBankCreate  = db.prepare(`INSERT INTO "Bank" (name, color, icon) VALUES (?, ?, ?)`)
-const stmtBankById    = db.prepare(`SELECT * FROM "Bank" WHERE id = ?`)
-const stmtBankDelete  = db.prepare(`DELETE FROM "Bank" WHERE id = ?`)
-
-// ── Account types ────────────────────────────────────────────────────────────
-const stmtTypesList   = db.prepare(`SELECT * FROM "AccountType" ORDER BY name ASC`)
-const stmtTypeCreate  = db.prepare(`INSERT INTO "AccountType" (name, color, icon) VALUES (?, ?, ?)`)
-const stmtTypeById    = db.prepare(`SELECT * FROM "AccountType" WHERE id = ?`)
-const stmtTypeDelete  = db.prepare(`DELETE FROM "AccountType" WHERE id = ?`)
-
-// ── Accounts ─────────────────────────────────────────────────────────────────
-const stmtAccountsList = db.prepare(`SELECT ${accountSelect} FROM "Account" a ${accountJoins} ORDER BY a.name ASC`)
-const stmtAccountInsert = db.prepare(`
-  INSERT INTO "Account" (name, bankId, accountNumber, typeId, balance, currency, createdAt, updatedAt)
-  VALUES (@name, @bankId, @accountNumber, @typeId, @balance, @currency, @createdAt, @updatedAt)
-`)
-const stmtAccountBalanceRaw = db.prepare(`SELECT balance FROM "Account" WHERE id = ?`)
-const stmtBalanceCorrection = db.prepare(`
-  INSERT INTO "BalanceCorrection" (accountId, oldBalance, newBalance, note, createdAt)
-  VALUES (?, ?, ?, ?, ?)
-`)
-const stmtSavingsRenameForAccount = db.prepare(
-  `UPDATE "SavingsGoal" SET name = ?, updatedAt = ? WHERE accountId = ?`,
-)
-const stmtCorrectionsForAccount = db.prepare(`
-  SELECT * FROM "BalanceCorrection"
-  WHERE accountId = ?
-  ORDER BY createdAt DESC
-  LIMIT 20
-`)
-const stmtAccountRaw    = db.prepare(`SELECT * FROM "Account" WHERE id = ?`)
-const stmtAccountDelete = db.prepare(`DELETE FROM "Account" WHERE id = ?`)
-
 export function registerAccountsHandlers(ipcMain: IpcMain) {
+  // ── Banks ────────────────────────────────────────────────────────────────────
+  const stmtBanksList   = db.prepare(`SELECT * FROM "Bank" ORDER BY name ASC`)
+  const stmtBankCreate  = db.prepare(`INSERT INTO "Bank" (name, color, icon) VALUES (?, ?, ?)`)
+  const stmtBankById    = db.prepare(`SELECT * FROM "Bank" WHERE id = ?`)
+  const stmtBankDelete  = db.prepare(`DELETE FROM "Bank" WHERE id = ?`)
+
+  // ── Account types ────────────────────────────────────────────────────────────
+  const stmtTypesList   = db.prepare(`SELECT * FROM "AccountType" ORDER BY name ASC`)
+  const stmtTypeCreate  = db.prepare(`INSERT INTO "AccountType" (name, color, icon) VALUES (?, ?, ?)`)
+  const stmtTypeById    = db.prepare(`SELECT * FROM "AccountType" WHERE id = ?`)
+  const stmtTypeDelete  = db.prepare(`DELETE FROM "AccountType" WHERE id = ?`)
+
+  // ── Accounts ─────────────────────────────────────────────────────────────────
+  const stmtAccountsList = db.prepare(`SELECT ${accountSelect} FROM "Account" a ${accountJoins} ORDER BY a.name ASC`)
+  const stmtAccountInsert = db.prepare(`
+    INSERT INTO "Account" (name, bankId, accountNumber, typeId, balance, currency, createdAt, updatedAt)
+    VALUES (@name, @bankId, @accountNumber, @typeId, @balance, @currency, @createdAt, @updatedAt)
+  `)
+  const stmtAccountBalanceRaw = db.prepare(`SELECT balance FROM "Account" WHERE id = ?`)
+  const stmtBalanceCorrection = db.prepare(`
+    INSERT INTO "BalanceCorrection" (accountId, oldBalance, newBalance, note, createdAt)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  const stmtSavingsRenameForAccount = db.prepare(
+    `UPDATE "SavingsGoal" SET name = ?, updatedAt = ? WHERE accountId = ?`,
+  )
+  const stmtCorrectionsForAccount = db.prepare(`
+    SELECT * FROM "BalanceCorrection"
+    WHERE accountId = ?
+    ORDER BY createdAt DESC
+    LIMIT 20
+  `)
+  const stmtAccountRaw    = db.prepare(`SELECT * FROM "Account" WHERE id = ?`)
+  const stmtAccountDelete = db.prepare(`DELETE FROM "Account" WHERE id = ?`)
+
   // Banks
   ipcMain.handle('banks:list', () => stmtBanksList.all())
 
