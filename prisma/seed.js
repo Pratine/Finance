@@ -146,7 +146,7 @@ db.transaction(() => {
   for (const r of rules) insRule.run({ ...r, createdAt: now })
 
   // ── Budgets ──────────────────────────────────────────────────────────────────
-  const insBudget = db.prepare(`INSERT INTO "Budget" (categoryId, amount) VALUES (@categoryId, @amount)`)
+  const insBudget = db.prepare(`INSERT INTO "Budget" (categoryId, amount, createdAt, updatedAt) VALUES (@categoryId, @amount, @createdAt, @updatedAt)`)
   for (const b of [
     { name: 'Groceries',     amount: 350 },
     { name: 'Restaurants',   amount: 150 },
