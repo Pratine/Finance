@@ -174,7 +174,7 @@ db.transaction(() => {
   const insTx = db.prepare(`INSERT INTO "Transaction" (accountId, description, amount, type, date, valueDate, categoryId, runningBalance, notes, importHash, createdAt) VALUES (@accountId, @description, @amount, @type, @date, @valueDate, @categoryId, @runningBalance, @notes, @importHash, @createdAt)`)
 
   let txId = 1
-  const now = new Date()
+  const loopNow = new Date()
   const MONTHS = 18
 
   function tx(accountId, description, amount, type, txDate, categoryId = null, runningBal = null) {
