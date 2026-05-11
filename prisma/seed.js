@@ -17,13 +17,22 @@ db.pragma('foreign_keys = ON')
 db.prepare(`CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY)`).run()
 const applied = new Set(db.prepare(`SELECT name FROM _migrations`).all().map(r => r.name))
 const dirs = fs.readdirSync(migrationsDir).sort()
-for (const dir of dirs) {
-  if (applied.has(dir)) continue
-  const sql = fs.readFileSync(path.join(migrationsDir, dir, 'migration.sql'), 'utf8')
-  db.transaction(() => {
-    db.exec(sql)
-    db.prepare(`INSERT INTO _migrations (name) VALUES (?)`).run(dir)
-  })()
+
+// If tables already exist but _migrations is empty, mark all as applied (Prisma→better-sqlite3 migration)
+const hasExistingTables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='Account'`).get()
+if (hasExistingTables && applied.size === 0) {
+  const ins = db.prepare(`INSERT OR IGNORE INTO _migrations (name) VALUES (?)`)
+  const markAll = db.transaction(() => { for (const dir of dirs) ins.run(dir) })
+  markAll()
+} else {
+  for (const dir of dirs) {
+    if (applied.has(dir)) continue
+    const sql = fs.readFileSync(path.join(migrationsDir, dir, 'migration.sql'), 'utf8')
+    db.transaction(() => {
+      db.exec(sql)
+      db.prepare(`INSERT INTO _migrations (name) VALUES (?)`).run(dir)
+    })()
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
