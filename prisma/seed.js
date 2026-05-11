@@ -1,8 +1,30 @@
 // @ts-check
 'use strict'
 
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
+const Database = require('better-sqlite3')
+const path = require('path')
+const fs = require('fs')
+
+const dbPath = path.join(__dirname, 'prisma', 'dev.db')
+
+// Apply migrations first so schema is up to date
+const migrationsDir = path.join(__dirname, 'migrations')
+const db = new Database(dbPath)
+db.pragma('journal_mode = WAL')
+db.pragma('foreign_keys = ON')
+
+// Apply all migrations
+db.prepare(`CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY)`).run()
+const applied = new Set(db.prepare(`SELECT name FROM _migrations`).all().map(r => r.name))
+const dirs = fs.readdirSync(migrationsDir).sort()
+for (const dir of dirs) {
+  if (applied.has(dir)) continue
+  const sql = fs.readFileSync(path.join(migrationsDir, dir, 'migration.sql'), 'utf8')
+  db.transaction(() => {
+    db.exec(sql)
+    db.prepare(`INSERT INTO _migrations (name) VALUES (?)`).run(dir)
+  })()
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -11,16 +33,15 @@ function rnd(min, max) {
 }
 
 function date(year, month, day) {
-  return new Date(Date.UTC(year, month - 1, day, 10, 0, 0))
+  return new Date(Date.UTC(year, month - 1, day, 10, 0, 0)).toISOString()
 }
 
-// Build a date N months before today
 function monthsAgo(n, day = 15) {
   const d = new Date()
   d.setUTCDate(day)
   d.setUTCHours(10, 0, 0, 0)
   d.setUTCMonth(d.getUTCMonth() - n)
-  return new Date(d)
+  return d.toISOString()
 }
 
 function pick(arr) {
@@ -29,43 +50,39 @@ function pick(arr) {
 
 // ─── Seed ─────────────────────────────────────────────────────────────────────
 
-async function main() {
-  console.log('🌱 Seeding database...')
+console.log('Seeding database...')
 
-  // ── Clear existing data (SQLite uses DELETE FROM, no TRUNCATE) ──────────────
-  // Reset autoincrement counters
+db.transaction(() => {
+  // ── Clear existing data ──────────────────────────────────────────────────────
   for (const t of [
     'TransactionTag','TransactionSplit','Tag','ImportHistory','DebtPayment','Debt',
     'SavingsSnapshot','PriceHistory','ExchangeRate','BalanceCorrection','InvestmentLot',
     'Transaction','SavingsGoal','Budget','RecurringBill','RecurringIncome',
     'CategoryRule','Investment','Account','Category','AccountType','Bank','Broker','InvestmentType',
-  ]) { await prisma.$executeRawUnsafe(`DELETE FROM "${t}"`) }
-  await prisma.$executeRaw`DELETE FROM sqlite_sequence`
+  ]) { db.prepare(`DELETE FROM "${t}"`).run() }
+  db.prepare(`DELETE FROM sqlite_sequence`).run()
 
-  // ── Banks ───────────────────────────────────────────────────────────────────
-  const [bcp, revolut, cgd] = await Promise.all([
-    prisma.bank.create({ data: { name: 'Millennium BCP', color: '#c41e3a', icon: 'building-2' } }),
-    prisma.bank.create({ data: { name: 'Revolut',        color: '#0075eb', icon: 'credit-card' } }),
-    prisma.bank.create({ data: { name: 'Caixa Geral',    color: '#005a2b', icon: 'landmark' } }),
-  ])
+  // ── Banks ────────────────────────────────────────────────────────────────────
+  const insBank = db.prepare(`INSERT INTO "Bank" (name, color, icon) VALUES (@name, @color, @icon)`)
+  const bcpId    = insBank.run({ name: 'Millennium BCP', color: '#c41e3a', icon: 'building-2' }).lastInsertRowid
+  const revId    = insBank.run({ name: 'Revolut',        color: '#0075eb', icon: 'credit-card' }).lastInsertRowid
+  insBank.run({ name: 'Caixa Geral', color: '#005a2b', icon: 'landmark' })
 
-  // ── Account types ───────────────────────────────────────────────────────────
-  const [typeChecking, typeSavings, typeWallet] = await Promise.all([
-    prisma.accountType.create({ data: { name: 'Checking', color: '#3b82f6', icon: 'wallet' } }),
-    prisma.accountType.create({ data: { name: 'Savings',  color: '#10b981', icon: 'piggy-bank' } }),
-    prisma.accountType.create({ data: { name: 'Wallet',   color: '#8b5cf6', icon: 'smartphone' } }),
-  ])
+  // ── Account types ────────────────────────────────────────────────────────────
+  const insType = db.prepare(`INSERT INTO "AccountType" (name, color, icon) VALUES (@name, @color, @icon)`)
+  const typeCheckingId = insType.run({ name: 'Checking', color: '#3b82f6', icon: 'wallet' }).lastInsertRowid
+  const typeSavingsId  = insType.run({ name: 'Savings',  color: '#10b981', icon: 'piggy-bank' }).lastInsertRowid
+  const typeWalletId   = insType.run({ name: 'Wallet',   color: '#8b5cf6', icon: 'smartphone' }).lastInsertRowid
 
-  // ── Accounts ────────────────────────────────────────────────────────────────
-  const [accMain, accSavings, accRevolut] = await Promise.all([
-    prisma.account.create({ data: { name: 'BCP Conta Ordenado', bankId: bcp.id, typeId: typeChecking.id, accountNumber: 'PT50 0010 0001 1234 5678 9015 4', balance: 1247.83, currency: 'EUR' } }),
-    prisma.account.create({ data: { name: 'BCP Poupança',       bankId: bcp.id, typeId: typeSavings.id,  accountNumber: 'PT50 0010 0001 9876 5432 1015 2', balance: 8542.20, currency: 'EUR' } }),
-    prisma.account.create({ data: { name: 'Revolut',            bankId: revolut.id, typeId: typeWallet.id, balance: 324.55, currency: 'EUR' } }),
-  ])
+  // ── Accounts ─────────────────────────────────────────────────────────────────
+  const insAcc = db.prepare(`INSERT INTO "Account" (name, bankId, typeId, accountNumber, balance, currency) VALUES (@name, @bankId, @typeId, @accountNumber, @balance, @currency)`)
+  const accMainId    = insAcc.run({ name: 'BCP Conta Ordenado', bankId: bcpId, typeId: typeCheckingId, accountNumber: 'PT50 0010 0001 1234 5678 9015 4', balance: 1247.83, currency: 'EUR' }).lastInsertRowid
+  const accSavingsId = insAcc.run({ name: 'BCP Poupança',       bankId: bcpId, typeId: typeSavingsId,  accountNumber: 'PT50 0010 0001 9876 5432 1015 2', balance: 8542.20, currency: 'EUR' }).lastInsertRowid
+  const accRevolutId = insAcc.run({ name: 'Revolut',            bankId: revId, typeId: typeWalletId,   accountNumber: null,                              balance: 324.55,  currency: 'EUR' }).lastInsertRowid
 
-  // ── Categories ──────────────────────────────────────────────────────────────
+  // ── Categories ───────────────────────────────────────────────────────────────
+  const insCat = db.prepare(`INSERT INTO "Category" (name, type, color, icon) VALUES (@name, @type, @color, @icon)`)
   const catDefs = [
-    // Expense
     { name: 'Groceries',     type: 'EXPENSE', color: '#10b981', icon: 'shopping-cart' },
     { name: 'Rent',          type: 'EXPENSE', color: '#ef4444', icon: 'home' },
     { name: 'Transport',     type: 'EXPENSE', color: '#f59e0b', icon: 'car' },
@@ -78,49 +95,48 @@ async function main() {
     { name: 'Travel',        type: 'EXPENSE', color: '#a855f7', icon: 'plane' },
     { name: 'Investing',     type: 'EXPENSE', color: '#1d4ed8', icon: 'trending-up' },
     { name: 'Gym',           type: 'EXPENSE', color: '#f43f5e', icon: 'dumbbell' },
-    // Income
     { name: 'Salary',        type: 'INCOME',  color: '#22c55e', icon: 'banknote' },
     { name: 'Freelance',     type: 'INCOME',  color: '#34d399', icon: 'laptop' },
     { name: 'Interest',      type: 'INCOME',  color: '#6ee7b7', icon: 'percent' },
   ]
   const cats = {}
   for (const c of catDefs) {
-    cats[c.name] = await prisma.category.create({ data: c })
+    cats[c.name] = insCat.run(c).lastInsertRowid
   }
 
-  // ── Category rules ──────────────────────────────────────────────────────────
+  // ── Category rules ───────────────────────────────────────────────────────────
+  const insRule = db.prepare(`INSERT INTO "CategoryRule" (pattern, categoryId) VALUES (@pattern, @categoryId)`)
   const rules = [
-    { pattern: 'pingo doce',    categoryId: cats['Groceries'].id },
-    { pattern: 'continente',    categoryId: cats['Groceries'].id },
-    { pattern: 'lidl',          categoryId: cats['Groceries'].id },
-    { pattern: 'aldi',          categoryId: cats['Groceries'].id },
-    { pattern: 'minipreço',     categoryId: cats['Groceries'].id },
-    { pattern: 'renda',         categoryId: cats['Rent'].id },
-    { pattern: 'cp comboios',   categoryId: cats['Transport'].id },
-    { pattern: 'uber',          categoryId: cats['Transport'].id },
-    { pattern: 'bolt',          categoryId: cats['Transport'].id },
-    { pattern: 'galp',          categoryId: cats['Transport'].id },
-    { pattern: 'netflix',       categoryId: cats['Subscriptions'].id },
-    { pattern: 'spotify',       categoryId: cats['Subscriptions'].id },
-    { pattern: 'nzxt',          categoryId: cats['Subscriptions'].id },
-    { pattern: 'farmácia',      categoryId: cats['Healthcare'].id },
-    { pattern: 'dental',        categoryId: cats['Healthcare'].id },
-    { pattern: 'cinema',        categoryId: cats['Entertainment'].id },
-    { pattern: 'trading 212',   categoryId: cats['Investing'].id },
-    { pattern: 'fnac',          categoryId: cats['Shopping'].id },
-    { pattern: 'zara',          categoryId: cats['Shopping'].id },
-    { pattern: 'h&m',           categoryId: cats['Shopping'].id },
-    { pattern: 'edp',           categoryId: cats['Utilities'].id },
-    { pattern: 'nos ',          categoryId: cats['Utilities'].id },
-    { pattern: 'holmes place',  categoryId: cats['Gym'].id },
-    { pattern: 'ordenado',      categoryId: cats['Salary'].id },
+    { pattern: 'pingo doce',    categoryId: cats['Groceries'] },
+    { pattern: 'continente',    categoryId: cats['Groceries'] },
+    { pattern: 'lidl',          categoryId: cats['Groceries'] },
+    { pattern: 'aldi',          categoryId: cats['Groceries'] },
+    { pattern: 'minipreço',     categoryId: cats['Groceries'] },
+    { pattern: 'renda',         categoryId: cats['Rent'] },
+    { pattern: 'cp comboios',   categoryId: cats['Transport'] },
+    { pattern: 'uber',          categoryId: cats['Transport'] },
+    { pattern: 'bolt',          categoryId: cats['Transport'] },
+    { pattern: 'galp',          categoryId: cats['Transport'] },
+    { pattern: 'netflix',       categoryId: cats['Subscriptions'] },
+    { pattern: 'spotify',       categoryId: cats['Subscriptions'] },
+    { pattern: 'nzxt',          categoryId: cats['Subscriptions'] },
+    { pattern: 'farmácia',      categoryId: cats['Healthcare'] },
+    { pattern: 'dental',        categoryId: cats['Healthcare'] },
+    { pattern: 'cinema',        categoryId: cats['Entertainment'] },
+    { pattern: 'trading 212',   categoryId: cats['Investing'] },
+    { pattern: 'fnac',          categoryId: cats['Shopping'] },
+    { pattern: 'zara',          categoryId: cats['Shopping'] },
+    { pattern: 'h&m',           categoryId: cats['Shopping'] },
+    { pattern: 'edp',           categoryId: cats['Utilities'] },
+    { pattern: 'nos ',          categoryId: cats['Utilities'] },
+    { pattern: 'holmes place',  categoryId: cats['Gym'] },
+    { pattern: 'ordenado',      categoryId: cats['Salary'] },
   ]
-  for (const r of rules) {
-    await prisma.categoryRule.create({ data: r })
-  }
+  for (const r of rules) insRule.run(r)
 
-  // ── Budgets ─────────────────────────────────────────────────────────────────
-  const budgetDefs = [
+  // ── Budgets ──────────────────────────────────────────────────────────────────
+  const insBudget = db.prepare(`INSERT INTO "Budget" (categoryId, amount) VALUES (@categoryId, @amount)`)
+  for (const b of [
     { name: 'Groceries',     amount: 350 },
     { name: 'Restaurants',   amount: 150 },
     { name: 'Transport',     amount: 80  },
@@ -129,36 +145,29 @@ async function main() {
     { name: 'Shopping',      amount: 100 },
     { name: 'Healthcare',    amount: 50  },
     { name: 'Gym',           amount: 45  },
-  ]
-  for (const b of budgetDefs) {
-    await prisma.budget.create({ data: { categoryId: cats[b.name].id, amount: b.amount } })
-  }
+  ]) insBudget.run({ categoryId: cats[b.name], amount: b.amount })
 
-  // ── Recurring bills ─────────────────────────────────────────────────────────
-  await Promise.all([
-    prisma.recurringBill.create({ data: { name: 'Renda Apartamento', amount: 850, frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 1), categoryId: cats['Rent'].id, accountId: accMain.id, isActive: true } }),
-    prisma.recurringBill.create({ data: { name: 'Netflix',           amount: 15.99, frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 8), categoryId: cats['Subscriptions'].id, accountId: accRevolut.id, isActive: true } }),
-    prisma.recurringBill.create({ data: { name: 'Spotify',           amount: 9.99, frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 12), categoryId: cats['Subscriptions'].id, accountId: accRevolut.id, isActive: true } }),
-    prisma.recurringBill.create({ data: { name: 'Holmes Place Gym',  amount: 42.90, frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 5), categoryId: cats['Gym'].id, accountId: accRevolut.id, isActive: true } }),
-    prisma.recurringBill.create({ data: { name: 'NOS Internet',      amount: 34.90, frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 20), categoryId: cats['Utilities'].id, accountId: accMain.id, isActive: true } }),
-    prisma.recurringBill.create({ data: { name: 'EDP Electricidade', amount: rnd(55, 110), frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 15), categoryId: cats['Utilities'].id, accountId: accMain.id, isActive: true } }),
-    prisma.recurringBill.create({ data: { name: 'Trading 212 DCA',   amount: 200, frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 3), categoryId: cats['Investing'].id, accountId: accMain.id, isActive: true } }),
-  ])
+  // ── Recurring bills ──────────────────────────────────────────────────────────
+  const insBill = db.prepare(`INSERT INTO "RecurringBill" (name, amount, frequency, nextDueDate, categoryId, accountId, isActive) VALUES (@name, @amount, @frequency, @nextDueDate, @categoryId, @accountId, @isActive)`)
+  insBill.run({ name: 'Renda Apartamento', amount: 850,          frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 1),  categoryId: cats['Rent'],          accountId: accMainId,    isActive: 1 })
+  insBill.run({ name: 'Netflix',           amount: 15.99,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 8),  categoryId: cats['Subscriptions'], accountId: accRevolutId, isActive: 1 })
+  insBill.run({ name: 'Spotify',           amount: 9.99,         frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 12), categoryId: cats['Subscriptions'], accountId: accRevolutId, isActive: 1 })
+  insBill.run({ name: 'Holmes Place Gym',  amount: 42.90,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 5),  categoryId: cats['Gym'],           accountId: accRevolutId, isActive: 1 })
+  insBill.run({ name: 'NOS Internet',      amount: 34.90,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 20), categoryId: cats['Utilities'],     accountId: accMainId,    isActive: 1 })
+  insBill.run({ name: 'EDP Electricidade', amount: rnd(55, 110), frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 15), categoryId: cats['Utilities'],     accountId: accMainId,    isActive: 1 })
+  insBill.run({ name: 'Trading 212 DCA',   amount: 200,          frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 3),  categoryId: cats['Investing'],     accountId: accMainId,    isActive: 1 })
 
   // ── Transactions — 18 months ─────────────────────────────────────────────────
-  // We build them month by month, tracking running balance for the main account.
-  let mainBalance = 1247.83
-  // Reconstruct what it was 18 months ago by subtracting net inflows we'll add
-  // (approximate — we set it and then track forward)
-  mainBalance = 320.00  // starting point 18 months ago
+  let mainBalance = 320.00
+  const insTx = db.prepare(`INSERT INTO "Transaction" (accountId, description, amount, type, date, valueDate, categoryId, runningBalance, notes, importHash) VALUES (@accountId, @description, @amount, @type, @date, @valueDate, @categoryId, @runningBalance, @notes, @importHash)`)
 
-  const txns = []
   let txId = 1
+  const now = new Date()
+  const MONTHS = 18
 
   function tx(accountId, description, amount, type, txDate, categoryId = null, runningBal = null) {
     const id = txId++
-    txns.push({
-      id,
+    insTx.run({
       accountId,
       description,
       amount: type === 'DEBIT' ? -Math.abs(amount) : Math.abs(amount),
@@ -168,330 +177,212 @@ async function main() {
       categoryId,
       runningBalance: runningBal,
       notes: null,
-      importHash: `seed-${id}-${txDate.getTime()}`,
+      importHash: `seed-${id}-${txDate}`,
     })
   }
-
-  const now = new Date()
-  const MONTHS = 18
 
   for (let mo = MONTHS - 1; mo >= 0; mo--) {
     const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - mo, 1))
     const y = d.getUTCFullYear()
     const m = d.getUTCMonth() + 1
 
-    // ── Salary on 25th ──────────────────────────────────────────────────────
     const salary = rnd(2700, 2900)
     mainBalance += salary
-    tx(accMain.id, 'ORDENADO EMPRESA XYZ LDA', salary, 'CREDIT', date(y, m, 25), cats['Salary'].id, mainBalance)
+    tx(accMainId, 'ORDENADO EMPRESA XYZ LDA', salary, 'CREDIT', date(y, m, 25), cats['Salary'], mainBalance)
 
-    // ── Rent on 1st ─────────────────────────────────────────────────────────
     mainBalance -= 850
-    tx(accMain.id, 'TRANSFERENCIA RENDA APT', 850, 'DEBIT', date(y, m, 1), cats['Rent'].id, mainBalance)
+    tx(accMainId, 'TRANSFERENCIA RENDA APT', 850, 'DEBIT', date(y, m, 1), cats['Rent'], mainBalance)
 
-    // ── Utilities ───────────────────────────────────────────────────────────
     const edp = rnd(55, 115)
     mainBalance -= edp
-    tx(accMain.id, 'EDP COMERCIAL ELECTRICIDADE', edp, 'DEBIT', date(y, m, 15), cats['Utilities'].id, mainBalance)
+    tx(accMainId, 'EDP COMERCIAL ELECTRICIDADE', edp, 'DEBIT', date(y, m, 15), cats['Utilities'], mainBalance)
 
     mainBalance -= 34.90
-    tx(accMain.id, 'NOS COMUNICACOES SA', 34.90, 'DEBIT', date(y, m, 20), cats['Utilities'].id, mainBalance)
+    tx(accMainId, 'NOS COMUNICACOES SA', 34.90, 'DEBIT', date(y, m, 20), cats['Utilities'], mainBalance)
 
-    // ── Freelance some months ───────────────────────────────────────────────
     if (mo % 3 === 0) {
       const free = rnd(300, 800)
       mainBalance += free
-      tx(accMain.id, 'FREELANCE PROJETO DIGITAL', free, 'CREDIT', date(y, m, rnd(5, 20)), cats['Freelance'].id, mainBalance)
+      tx(accMainId, 'FREELANCE PROJETO DIGITAL', free, 'CREDIT', date(y, m, rnd(5, 20)), cats['Freelance'], mainBalance)
     }
 
-    // ── Transfer to savings ─────────────────────────────────────────────────
     const savingsTransfer = rnd(150, 400)
     mainBalance -= savingsTransfer
-    tx(accMain.id, 'TRANSFERENCIA POUPANCA', savingsTransfer, 'DEBIT', date(y, m, 28), null, mainBalance)
+    tx(accMainId, 'TRANSFERENCIA POUPANCA', savingsTransfer, 'DEBIT', date(y, m, 28), null, mainBalance)
 
-    // ── Trading 212 investment DCA ──────────────────────────────────────────
     mainBalance -= 200
-    tx(accMain.id, 'TRADING 212 INVEST', 200, 'DEBIT', date(y, m, 3), cats['Investing'].id, mainBalance)
+    tx(accMainId, 'TRADING 212 INVEST', 200, 'DEBIT', date(y, m, 3), cats['Investing'], mainBalance)
 
-    // ── Revolut top-up ──────────────────────────────────────────────────────
     const topup = rnd(200, 400)
     mainBalance -= topup
-    tx(accMain.id, 'TRANSFERENCIA REVOLUT', topup, 'DEBIT', date(y, m, 5), null, mainBalance)
+    tx(accMainId, 'TRANSFERENCIA REVOLUT', topup, 'DEBIT', date(y, m, 5), null, mainBalance)
 
-    // ── Groceries (Revolut) — 4-6 times/month ──────────────────────────────
     const groceryTrips = Math.floor(rnd(4, 6))
     for (let g = 0; g < groceryTrips; g++) {
       const store = pick(['Pingo Doce', 'Continente', 'Lidl', 'Aldi', 'Minipreço'])
-      tx(accRevolut.id, store.toUpperCase(), rnd(18, 75), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Groceries'].id)
+      tx(accRevolutId, store.toUpperCase(), rnd(18, 75), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Groceries'])
     }
 
-    // ── Restaurants ────────────────────────────────────────────────────────
-    const restCount = Math.floor(rnd(2, 6))
-    const restNames = ['Tasca da Esquina', 'Time Out Market', 'McDonald\'s', 'Nando\'s', 'Pizza Hut', 'Sushi Place', 'Taberna Moderna', 'O Corvo']
-    for (let r = 0; r < restCount; r++) {
-      tx(accRevolut.id, pick(restNames).toUpperCase(), rnd(12, 55), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Restaurants'].id)
+    const restNames = ["Tasca da Esquina", "Time Out Market", "McDonald's", "Nando's", "Pizza Hut", "Sushi Place", "Taberna Moderna", "O Corvo"]
+    for (let r = 0; r < Math.floor(rnd(2, 6)); r++) {
+      tx(accRevolutId, pick(restNames).toUpperCase(), rnd(12, 55), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Restaurants'])
     }
 
-    // ── Transport ───────────────────────────────────────────────────────────
     const transportDefs = [
-      { desc: 'UBER TRIP', amt: () => rnd(5, 18) },
-      { desc: 'BOLT TRIP', amt: () => rnd(4, 15) },
+      { desc: 'UBER TRIP',            amt: () => rnd(5, 18) },
+      { desc: 'BOLT TRIP',            amt: () => rnd(4, 15) },
       { desc: 'CP COMBOIOS PORTUGAL', amt: () => rnd(3, 12) },
-      { desc: 'GALP COMBUSTIVEL', amt: () => rnd(40, 70) },
+      { desc: 'GALP COMBUSTIVEL',     amt: () => rnd(40, 70) },
     ]
     for (let t = 0; t < Math.floor(rnd(2, 5)); t++) {
       const tr = pick(transportDefs)
-      tx(accRevolut.id, tr.desc, tr.amt(), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Transport'].id)
+      tx(accRevolutId, tr.desc, tr.amt(), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Transport'])
     }
 
-    // ── Subscriptions ───────────────────────────────────────────────────────
-    tx(accRevolut.id, 'NETFLIX.COM', 15.99, 'DEBIT', date(y, m, 8), cats['Subscriptions'].id)
-    tx(accRevolut.id, 'SPOTIFY AB', 9.99, 'DEBIT', date(y, m, 12), cats['Subscriptions'].id)
+    tx(accRevolutId, 'NETFLIX.COM',      15.99, 'DEBIT', date(y, m, 8),  cats['Subscriptions'])
+    tx(accRevolutId, 'SPOTIFY AB',        9.99, 'DEBIT', date(y, m, 12), cats['Subscriptions'])
+    tx(accRevolutId, 'HOLMES PLACE PORTUGAL', 42.90, 'DEBIT', date(y, m, 5), cats['Gym'])
 
-    // ── Gym ─────────────────────────────────────────────────────────────────
-    tx(accRevolut.id, 'HOLMES PLACE PORTUGAL', 42.90, 'DEBIT', date(y, m, 5), cats['Gym'].id)
-
-    // ── Healthcare (occasional) ──────────────────────────────────────────────
     if (Math.random() > 0.6) {
-      const pharmNames = ['FARMÁCIA CENTRAL', 'FARMÁCIA SAÚDE', 'DENTAL CLINIC LISBOA']
-      tx(accRevolut.id, pick(pharmNames), rnd(8, 85), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Healthcare'].id)
+      const pharmNames = ['FARMACIA CENTRAL', 'FARMACIA SAUDE', 'DENTAL CLINIC LISBOA']
+      tx(accRevolutId, pick(pharmNames), rnd(8, 85), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Healthcare'])
     }
-
-    // ── Shopping (occasional) ────────────────────────────────────────────────
     if (Math.random() > 0.5) {
       const shops = ['ZARA', 'H&M', 'FNAC PORTUGAL', 'EL CORTE INGLES', 'DECATHLON']
-      tx(accRevolut.id, pick(shops), rnd(20, 150), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Shopping'].id)
+      tx(accRevolutId, pick(shops), rnd(20, 150), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Shopping'])
     }
-
-    // ── Entertainment (occasional) ───────────────────────────────────────────
     if (Math.random() > 0.55) {
       const ent = ['CINEMA NOS', 'TICKETMASTER', 'BOWLING STRIKE', 'ESCAPE ROOM']
-      tx(accRevolut.id, pick(ent), rnd(10, 60), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Entertainment'].id)
+      tx(accRevolutId, pick(ent), rnd(10, 60), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Entertainment'])
     }
-
-    // ── Travel (once or twice a year) ────────────────────────────────────────
     if (mo === 14 || mo === 6) {
-      tx(accRevolut.id, 'RYANAIR', rnd(80, 220), 'DEBIT', date(y, m, 10), cats['Travel'].id)
-      tx(accRevolut.id, 'BOOKING.COM', rnd(150, 400), 'DEBIT', date(y, m, 12), cats['Travel'].id)
-      if (mo === 14) {
-        tx(accRevolut.id, 'AIRBNB MADRID', rnd(120, 300), 'DEBIT', date(y, m, 14), cats['Travel'].id)
-      }
+      tx(accRevolutId, 'RYANAIR',     rnd(80, 220),  'DEBIT', date(y, m, 10), cats['Travel'])
+      tx(accRevolutId, 'BOOKING.COM', rnd(150, 400), 'DEBIT', date(y, m, 12), cats['Travel'])
+      if (mo === 14) tx(accRevolutId, 'AIRBNB MADRID', rnd(120, 300), 'DEBIT', date(y, m, 14), cats['Travel'])
     }
   }
 
-  // Insert all transactions
-  await prisma.transaction.createMany({ data: txns })
-  console.log(`  ✓ ${txns.length} transactions`)
+  console.log(`  Transactions: ${txId - 1}`)
+  db.prepare(`UPDATE "Account" SET balance = ? WHERE id = ?`).run(mainBalance, accMainId)
 
-  // ── Update account balances to realistic values ───────────────────────────
-  await prisma.account.update({ where: { id: accMain.id }, data: { balance: mainBalance } })
+  // ── Savings goal + snapshots ──────────────────────────────────────────────────
+  const goalId = db.prepare(`
+    INSERT INTO "SavingsGoal" (accountId, name, targetAmount, currentAmount, interestType, interestValue, interestFrequencyDays, totalInterestEarned, contributionAmount, contributionFrequencyDays, deadline, notes)
+    VALUES (@accountId, @name, @targetAmount, @currentAmount, @interestType, @interestValue, @interestFrequencyDays, @totalInterestEarned, @contributionAmount, @contributionFrequencyDays, @deadline, @notes)
+  `).run({
+    accountId: accSavingsId,
+    name: 'BCP Poupança',
+    targetAmount: 15000,
+    currentAmount: 8542.20,
+    interestType: 'PERCENTAGE',
+    interestValue: 2.5,
+    interestFrequencyDays: 180,
+    totalInterestEarned: 312.40,
+    contributionAmount: 250,
+    contributionFrequencyDays: 30,
+    deadline: new Date(Date.UTC(new Date().getUTCFullYear() + 2, 5, 30)).toISOString(),
+    notes: 'Emergency fund + long-term savings',
+  }).lastInsertRowid
 
-  // ── Savings goal + snapshots ──────────────────────────────────────────────
-  const savingsGoal = await prisma.savingsGoal.create({
-    data: {
-      accountId: accSavings.id,
-      name: 'BCP Poupança',
-      targetAmount: 15000,
-      currentAmount: 8542.20,
-      interestType: 'PERCENTAGE',
-      interestValue: 2.5,
-      interestFrequencyDays: 180,
-      totalInterestEarned: 312.40,
-      contributionAmount: 250,
-      contributionFrequencyDays: 30,
-      deadline: new Date(Date.UTC(new Date().getUTCFullYear() + 2, 5, 30)),
-      notes: 'Emergency fund + long-term savings',
-    },
-  })
-
-  // Add 18 months of savings snapshots (realistic growth curve)
+  const insSnap = db.prepare(`INSERT INTO "SavingsSnapshot" (goalId, date, amount, note) VALUES (@goalId, @date, @amount, @note)`)
   let savBal = 2100
   for (let mo = 17; mo >= 0; mo--) {
     savBal += rnd(200, 420)
-    if (mo % 6 === 0) savBal += savBal * 0.0125  // interest twice a year
-    await prisma.savingsSnapshot.create({
-      data: {
-        goalId: savingsGoal.id,
-        date: monthsAgo(mo, 28),
-        amount: Math.round(savBal * 100) / 100,
-        note: mo % 6 === 0 ? 'interest' : 'contribution',
-      },
-    })
+    if (mo % 6 === 0) savBal += savBal * 0.0125
+    insSnap.run({ goalId, date: monthsAgo(mo, 28), amount: Math.round(savBal * 100) / 100, note: mo % 6 === 0 ? 'interest' : 'contribution' })
   }
-  console.log('  ✓ Savings goal + 18 snapshots')
+  console.log('  Savings goal + 18 snapshots')
 
-  // ── Investment types + brokers ────────────────────────────────────────────
-  const [typeETF, typeStock, typeCrypto] = await Promise.all([
-    prisma.investmentType.create({ data: { name: 'ETF',    color: '#3b82f6', icon: 'trending-up' } }),
-    prisma.investmentType.create({ data: { name: 'Stocks', color: '#8b5cf6', icon: 'bar-chart-2' } }),
-    prisma.investmentType.create({ data: { name: 'Crypto', color: '#f59e0b', icon: 'bitcoin' } }),
-  ])
+  // ── Investment types + brokers ────────────────────────────────────────────────
+  const insInvType = db.prepare(`INSERT INTO "InvestmentType" (name, color, icon) VALUES (@name, @color, @icon)`)
+  const typeETFId    = insInvType.run({ name: 'ETF',    color: '#3b82f6', icon: 'trending-up' }).lastInsertRowid
+  const typeStockId  = insInvType.run({ name: 'Stocks', color: '#8b5cf6', icon: 'bar-chart-2' }).lastInsertRowid
+  const typeCryptoId = insInvType.run({ name: 'Crypto', color: '#f59e0b', icon: 'bitcoin' }).lastInsertRowid
 
-  const [brokerT212, brokerIBKR] = await Promise.all([
-    prisma.broker.create({ data: { name: 'Trading 212',         color: '#00cf73', icon: 'trending-up' } }),
-    prisma.broker.create({ data: { name: 'Interactive Brokers', color: '#c41e3a', icon: 'landmark' } }),
-  ])
+  const insBroker = db.prepare(`INSERT INTO "Broker" (name, color, icon) VALUES (@name, @color, @icon)`)
+  const brokerT212Id = insBroker.run({ name: 'Trading 212',         color: '#00cf73', icon: 'trending-up' }).lastInsertRowid
+  const brokerIBKRId = insBroker.run({ name: 'Interactive Brokers', color: '#c41e3a', icon: 'landmark'    }).lastInsertRowid
 
-  // ── Investments + price history ───────────────────────────────────────────
+  // ── Investments + price history ───────────────────────────────────────────────
+  const insInv = db.prepare(`
+    INSERT INTO "Investment" (name, typeId, brokerId, isin, ticker, shares, amountIn, currentValue, lastPriceFetched, currency, priceUpdatedAt, notes)
+    VALUES (@name, @typeId, @brokerId, @isin, @ticker, @shares, @amountIn, @currentValue, @lastPriceFetched, @currency, @priceUpdatedAt, @notes)
+  `)
+  const insPrice = db.prepare(`INSERT INTO "PriceHistory" (investmentId, price, value, recordedAt) VALUES (@investmentId, @price, @value, @recordedAt)`)
+
   const invDefs = [
-    {
-      name: 'iShares Core MSCI World',
-      typeId: typeETF.id, brokerId: brokerT212.id,
-      isin: 'IE00B4L5Y983', ticker: 'IWDA.AS',
-      shares: 18.742, amountIn: 2800,
-      // price 18 months ago ~€72, now ~€95 (realistic MSCI World growth)
-      startPrice: 72, endPrice: 95, currency: 'EUR',
-    },
-    {
-      name: 'Vanguard S&P 500',
-      typeId: typeETF.id, brokerId: brokerT212.id,
-      isin: 'IE00B3XXRP09', ticker: 'VUSA.AS',
-      shares: 22.15, amountIn: 1750,
-      startPrice: 76, endPrice: 102, currency: 'EUR',
-    },
-    {
-      name: 'Apple Inc.',
-      typeId: typeStock.id, brokerId: brokerIBKR.id,
-      isin: null, ticker: 'AAPL',
-      shares: 3.5, amountIn: 620,
-      startPrice: 165, endPrice: 213, currency: 'USD',
-    },
-    {
-      name: 'Bitcoin',
-      typeId: typeCrypto.id, brokerId: null,
-      isin: null, ticker: 'BTC-EUR',
-      shares: 0.04182, amountIn: 1200,
-      startPrice: 28000, endPrice: 87000, currency: 'EUR',
-    },
+    { name: 'iShares Core MSCI World', typeId: typeETFId,    brokerId: brokerT212Id, isin: 'IE00B4L5Y983', ticker: 'IWDA.AS',  shares: 18.742, amountIn: 2800, startPrice: 72,    endPrice: 95,    currency: 'EUR' },
+    { name: 'Vanguard S&P 500',        typeId: typeETFId,    brokerId: brokerT212Id, isin: 'IE00B3XXRP09', ticker: 'VUSA.AS',  shares: 22.15,  amountIn: 1750, startPrice: 76,    endPrice: 102,   currency: 'EUR' },
+    { name: 'Apple Inc.',              typeId: typeStockId,  brokerId: brokerIBKRId, isin: null,           ticker: 'AAPL',     shares: 3.5,    amountIn: 620,  startPrice: 165,   endPrice: 213,   currency: 'USD' },
+    { name: 'Bitcoin',                 typeId: typeCryptoId, brokerId: null,         isin: null,           ticker: 'BTC-EUR',  shares: 0.04182,amountIn: 1200, startPrice: 28000, endPrice: 87000, currency: 'EUR' },
   ]
 
   for (const def of invDefs) {
-    const currentValue = def.endPrice * def.shares * (def.currency === 'USD' ? 0.93 : 1)
-    const inv = await prisma.investment.create({
-      data: {
-        name: def.name,
-        typeId: def.typeId,
-        brokerId: def.brokerId,
-        isin: def.isin,
-        ticker: def.ticker,
-        shares: def.shares,
-        amountIn: def.amountIn,
-        currentValue: Math.round(currentValue * 100) / 100,
-        lastPriceFetched: def.endPrice * (def.currency === 'USD' ? 0.93 : 1),
-        currency: def.currency === 'USD' ? 'USD' : 'EUR',
-        priceUpdatedAt: new Date(),
-        notes: null,
-      },
-    })
+    const fxRate = def.currency === 'USD' ? 0.93 : 1
+    const currentValue = Math.round(def.endPrice * def.shares * fxRate * 100) / 100
+    const invId = insInv.run({
+      name: def.name, typeId: def.typeId, brokerId: def.brokerId,
+      isin: def.isin, ticker: def.ticker, shares: def.shares, amountIn: def.amountIn,
+      currentValue, lastPriceFetched: def.endPrice * fxRate,
+      currency: def.currency, priceUpdatedAt: new Date().toISOString(), notes: null,
+    }).lastInsertRowid
 
-    // Generate 18 monthly price history snapshots
     const priceRange = def.endPrice - def.startPrice
     for (let mo = 17; mo >= 0; mo--) {
-      // Simulate realistic growth with some noise
       const progress = (17 - mo) / 17
       const noise = rnd(-0.03, 0.04)
       const price = def.startPrice + priceRange * (progress + noise)
-      const priceEUR = price * (def.currency === 'USD' ? 0.93 : 1)
-      const value = priceEUR * def.shares
-      const snapDate = monthsAgo(mo, 1)
-      snapDate.setUTCHours(0, 0, 0, 0)
-
-      await prisma.priceHistory.create({
-        data: {
-          investmentId: inv.id,
-          price: Math.round(priceEUR * 10000) / 10000,
-          value: Math.round(value * 100) / 100,
-          recordedAt: snapDate,
-        },
-      })
+      const priceEUR = price * fxRate
+      const snapDate = new Date(); snapDate.setUTCDate(1); snapDate.setUTCHours(0,0,0,0); snapDate.setUTCMonth(snapDate.getUTCMonth() - mo)
+      insPrice.run({ investmentId: invId, price: Math.round(priceEUR * 10000) / 10000, value: Math.round(priceEUR * def.shares * 100) / 100, recordedAt: snapDate.toISOString() })
     }
   }
-  console.log('  ✓ 4 investments + price history')
+  console.log('  4 investments + price history')
 
-  // Exchange rate
-  await prisma.exchangeRate.create({ data: { fromCurrency: 'USD', rate: 0.93 } })
+  // ── Exchange rate ────────────────────────────────────────────────────────────
+  db.prepare(`INSERT INTO "ExchangeRate" (fromCurrency, rate) VALUES ('USD', 0.93)`).run()
 
-  // ── Debts ─────────────────────────────────────────────────────────────────
-  const carLoan = await prisma.debt.create({
-    data: {
-      name: 'Empréstimo Automóvel',
-      type: 'LOAN',
-      counterparty: 'Caixa Geral de Depósitos',
-      principal: 12000,
-      outstanding: 7840,
-      interestRate: 5.2,
-      frequency: 'MONTHLY',
-      nextPaymentDate: monthsAgo(0, 15),
-      startDate: monthsAgo(18, 1),
-      endDate: new Date(Date.UTC(new Date().getUTCFullYear() + 3, 0, 1)),
-      status: 'ACTIVE',
-      accountId: accMain.id,
-      notes: 'Citroën C3 — 48 month loan',
-    },
-  })
+  // ── Debts ────────────────────────────────────────────────────────────────────
+  const insDebt = db.prepare(`
+    INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes)
+    VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @frequency, @nextPaymentDate, @startDate, @endDate, @status, @accountId, @notes)
+  `)
+  const insPayment = db.prepare(`INSERT INTO "DebtPayment" (debtId, date, amount, principal, interest, notes) VALUES (@debtId, @date, @amount, @principal, @interest, @notes)`)
 
-  // Add 6 months of car loan payments
+  const carLoanId = insDebt.run({
+    name: 'Emprestimo Automovel', type: 'LOAN', counterparty: 'Caixa Geral de Depositos',
+    principal: 12000, outstanding: 7840, interestRate: 5.2, frequency: 'MONTHLY',
+    nextPaymentDate: monthsAgo(0, 15), startDate: monthsAgo(18, 1),
+    endDate: new Date(Date.UTC(new Date().getUTCFullYear() + 3, 0, 1)).toISOString(),
+    status: 'ACTIVE', accountId: accMainId, notes: 'Citroen C3 — 48 month loan',
+  }).lastInsertRowid
+
   let carOutstanding = 9200
   for (let mo = 6; mo >= 1; mo--) {
-    const interest = Math.round(carOutstanding * (0.052 / 12) * 100) / 100
+    const interest  = Math.round(carOutstanding * (0.052 / 12) * 100) / 100
     const principal = Math.round((250 - interest) * 100) / 100
-    carOutstanding = Math.max(0, carOutstanding - principal)
-    await prisma.debtPayment.create({
-      data: {
-        debtId: carLoan.id,
-        date: monthsAgo(mo, 15),
-        amount: 250,
-        principal,
-        interest,
-        notes: null,
-      },
-    })
+    carOutstanding  = Math.max(0, carOutstanding - principal)
+    insPayment.run({ debtId: carLoanId, date: monthsAgo(mo, 15), amount: 250, principal, interest, notes: null })
   }
 
-  await prisma.debt.create({
-    data: {
-      name: 'Empréstimo ao João',
-      type: 'RECEIVABLE',
-      counterparty: 'João Silva',
-      principal: 500,
-      outstanding: 200,
-      interestRate: null,
-      frequency: 'MONTHLY',
-      nextPaymentDate: monthsAgo(0, 20),
-      startDate: monthsAgo(5, 10),
-      endDate: null,
-      status: 'ACTIVE',
-      notes: 'Equipamento para projeto',
-    },
-  })
+  const joanId = insDebt.run({
+    name: 'Emprestimo ao Joao', type: 'RECEIVABLE', counterparty: 'Joao Silva',
+    principal: 500, outstanding: 200, interestRate: null, frequency: 'MONTHLY',
+    nextPaymentDate: monthsAgo(0, 20), startDate: monthsAgo(5, 10),
+    endDate: null, status: 'ACTIVE', accountId: null, notes: 'Equipamento para projeto',
+  }).lastInsertRowid
 
-  await prisma.debtPayment.create({
-    data: {
-      debtId: (await prisma.debt.findFirst({ where: { name: 'Empréstimo ao João' } })).id,
-      date: monthsAgo(3, 20),
-      amount: 300,
-      principal: 300,
-      interest: 0,
-      notes: 'Primeira prestação',
-    },
-  })
+  insPayment.run({ debtId: joanId, date: monthsAgo(3, 20), amount: 300, principal: 300, interest: 0, notes: 'Primeira prestacao' })
 
-  console.log('  ✓ 2 debts + payments')
+  console.log('  2 debts + payments')
+})()
 
-  // SQLite uses its own autoincrement tracking — no sequence reset needed.
-  console.log('  ✓ Sequences OK (SQLite manages autoincrement automatically)')
-
-  // Final summary
-  const counts = await Promise.all([
-    prisma.transaction.count(),
-    prisma.account.count(),
-    prisma.investment.count(),
-    prisma.savingsGoal.count(),
-    prisma.debt.count(),
-  ])
-  console.log(`\n✅ Done! ${counts[0]} transactions · ${counts[1]} accounts · ${counts[2]} investments · ${counts[3]} savings goals · ${counts[4]} debts`)
+const counts = {
+  transactions: db.prepare(`SELECT COUNT(*) as n FROM "Transaction"`).get().n,
+  accounts:     db.prepare(`SELECT COUNT(*) as n FROM "Account"`).get().n,
+  investments:  db.prepare(`SELECT COUNT(*) as n FROM "Investment"`).get().n,
+  goals:        db.prepare(`SELECT COUNT(*) as n FROM "SavingsGoal"`).get().n,
+  debts:        db.prepare(`SELECT COUNT(*) as n FROM "Debt"`).get().n,
 }
-
-main()
-  .catch(e => { console.error('❌ Seed failed:', e); process.exit(1) })
-  .finally(() => prisma.$disconnect())
+console.log(`\nDone! ${counts.transactions} transactions · ${counts.accounts} accounts · ${counts.investments} investments · ${counts.goals} savings goals · ${counts.debts} debts`)
+db.close()
