@@ -355,7 +355,7 @@ db.transaction(() => {
   console.log('  4 investments + price history')
 
   // ── Exchange rate ────────────────────────────────────────────────────────────
-  db.prepare(`INSERT INTO "ExchangeRate" (fromCurrency, rate) VALUES ('USD', 0.93)`).run()
+  db.prepare(`INSERT INTO "ExchangeRate" (fromCurrency, rate, updatedAt) VALUES ('USD', 0.93, '${now}')`).run()
 
   // ── Debts ────────────────────────────────────────────────────────────────────
   const insDebt = db.prepare(`
