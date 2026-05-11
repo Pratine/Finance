@@ -23,13 +23,35 @@ function resolveDbPath(): string {
   return path.join(app.getPath('userData'), 'finance.db')
 }
 
-export const dbPath = resolveDbPath()
+// Lazy: opening the DB requires Electron's `app` to be available, but several
+// modules import this file just for type/util re-exports (and for tests that
+// never touch the DB). Defer the actual open until the first access.
+let _db: Database.Database | null = null
+let _dbPath: string | null = null
 
-// Synchronous Database handle — better-sqlite3 has no async API.
-export const db = new Database(dbPath)
+function open(): Database.Database {
+  if (_db) return _db
+  _dbPath = resolveDbPath()
+  _db = new Database(_dbPath)
+  // WAL gives much better concurrency for a single-writer/multi-reader workload
+  // (we never block the renderer waiting on the DB), and foreign_keys must be
+  // turned on explicitly — SQLite ships with them off for backwards compat.
+  _db.pragma('journal_mode = WAL')
+  _db.pragma('foreign_keys = ON')
+  return _db
+}
 
-// WAL gives much better concurrency for a single-writer/multi-reader workload
-// (we never block the renderer waiting on the DB), and foreign_keys must be
-// turned on explicitly — SQLite ships with them off for backwards compat.
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
+// Proxy that opens the DB on first method access. Code can `import { db }` and
+// call `db.prepare(...)` exactly as if it were a real Database instance.
+export const db = new Proxy({} as Database.Database, {
+  get(_target, prop, receiver) {
+    const real = open() as any
+    const value = real[prop]
+    return typeof value === 'function' ? value.bind(real) : value
+  },
+})
+
+export function getDbPath(): string {
+  if (!_dbPath) open()
+  return _dbPath!
+}
