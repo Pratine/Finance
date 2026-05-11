@@ -256,8 +256,7 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(() => {
-  // Skip migrations in portable mode — the bundled demo.db is already fully migrated.
-  if (!isPortable) runMigrations()
+  runMigrations()
   setupIpcHandlers(ipcMain)
   createWindow()
 
