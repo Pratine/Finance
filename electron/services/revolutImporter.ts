@@ -145,8 +145,8 @@ export async function importRevolutCSV(
       hash,
       data: {
         accountId,
-        date: parseDate(row.completedDate || row.startedDate),
-        valueDate: row.startedDate ? parseDate(row.startedDate) : null,
+        date: parseDate(row.completedDate || row.startedDate).toISOString(),
+        valueDate: row.startedDate ? parseDate(row.startedDate).toISOString() : null,
         description: `${notesPrefix}${description}`,
         amount,
         type,
@@ -167,11 +167,12 @@ export async function importRevolutCSV(
   const existing = new Set<string>()
   const hashes = pending.map(p => p.hash)
   for (let i = 0; i < hashes.length; i += BATCH) {
-    const rows = await prisma.transaction.findMany({
-      where: { importHash: { in: hashes.slice(i, i + BATCH) } },
-      select: { importHash: true },
-    })
-    rows.forEach(r => existing.add(r.importHash!))
+    const slice = hashes.slice(i, i + BATCH)
+    const placeholders = slice.map(() => '?').join(',')
+    const rows = db
+      .prepare(`SELECT importHash FROM "Transaction" WHERE importHash IN (${placeholders})`)
+      .all(...slice) as Array<{ importHash: string | null }>
+    rows.forEach(r => { if (r.importHash) existing.add(r.importHash) })
   }
 
   const newRows = pending.filter(p => !existing.has(p.hash))
@@ -182,16 +183,25 @@ export async function importRevolutCSV(
   }
 
   // ── Atomic: insert all new rows + update balance in one transaction ──────────
-  await prisma.$transaction(async (tx) => {
-    await tx.transaction.createMany({ data: newRows.map(p => p.data) })
-    const latest = await tx.transaction.findFirst({
-      where: { accountId, runningBalance: { not: null } },
-      orderBy: { date: 'desc' },
-    })
+  const insertTx = db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, date, valueDate, description, amount, type, runningBalance, importHash)
+    VALUES (@accountId, @categoryId, @date, @valueDate, @description, @amount, @type, @runningBalance, @importHash)
+  `)
+  const findLatest = db.prepare(`
+    SELECT runningBalance FROM "Transaction"
+    WHERE accountId = ? AND runningBalance IS NOT NULL
+    ORDER BY date DESC LIMIT 1
+  `)
+  const updateBalance = db.prepare(`UPDATE "Account" SET balance = ?, updatedAt = ? WHERE id = ?`)
+
+  const apply = db.transaction((rows: PendingRow[]) => {
+    for (const p of rows) insertTx.run(p.data)
+    const latest = findLatest.get(accountId) as { runningBalance: number | null } | undefined
     if (latest?.runningBalance != null) {
-      await tx.account.update({ where: { id: accountId }, data: { balance: latest.runningBalance } })
+      updateBalance.run(latest.runningBalance, new Date().toISOString(), accountId)
     }
   })
+  apply(newRows)
 
   return { imported: newRows.length, skipped, errors: parseErrors }
 }
