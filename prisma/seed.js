@@ -319,8 +319,8 @@ db.transaction(() => {
 
   // ── Investments + price history ───────────────────────────────────────────────
   const insInv = db.prepare(`
-    INSERT INTO "Investment" (name, typeId, brokerId, isin, ticker, shares, amountIn, currentValue, lastPriceFetched, currency, priceUpdatedAt, notes)
-    VALUES (@name, @typeId, @brokerId, @isin, @ticker, @shares, @amountIn, @currentValue, @lastPriceFetched, @currency, @priceUpdatedAt, @notes)
+    INSERT INTO "Investment" (name, typeId, brokerId, isin, ticker, shares, amountIn, currentValue, lastPriceFetched, currency, priceUpdatedAt, notes, createdAt, updatedAt)
+    VALUES (@name, @typeId, @brokerId, @isin, @ticker, @shares, @amountIn, @currentValue, @lastPriceFetched, @currency, @priceUpdatedAt, @notes, @createdAt, @updatedAt)
   `)
   const insPrice = db.prepare(`INSERT INTO "PriceHistory" (investmentId, price, value, recordedAt) VALUES (@investmentId, @price, @value, @recordedAt)`)
 
