@@ -85,4 +85,13 @@ Exchange rates and investment prices are fetched from public APIs on a configura
 
 ## Releases
 
-Releases are published on [GitHub Releases](https://github.com/Pratine/Finance/releases). The app checks for updates automatically 5 seconds after launch and installs them on quit.
+Releases are published on [GitHub Releases](https://github.com/Pratine/Finance/releases) in two flavours:
+
+| Download | Description |
+|---|---|
+| `Finance Setup x.x.x.exe` | Standard installer — installs the app and starts with a blank database |
+| `Finance-Demo-x.x.x-portable.exe` | No installation required — run it directly and it launches with sample data pre-loaded |
+
+The portable demo is a good way to explore the app before committing to setting up your own data. It stores its data in your user profile so your demo session persists between runs.
+
+The installed version checks for updates automatically 5 seconds after launch and installs them on quit.
