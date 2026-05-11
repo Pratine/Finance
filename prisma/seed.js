@@ -386,9 +386,10 @@ db.transaction(() => {
     principal: 500, outstanding: 200, interestRate: null, frequency: 'MONTHLY',
     nextPaymentDate: monthsAgo(0, 20), startDate: monthsAgo(5, 10),
     endDate: null, status: 'ACTIVE', accountId: null, notes: 'Equipamento para projeto',
+    createdAt: now, updatedAt: now,
   }).lastInsertRowid
 
-  insPayment.run({ debtId: joanId, date: monthsAgo(3, 20), amount: 300, principal: 300, interest: 0, notes: 'Primeira prestacao' })
+  insPayment.run({ debtId: joanId, date: monthsAgo(3, 20), amount: 300, principal: 300, interest: 0, notes: 'Primeira prestacao', createdAt: now })
 
   console.log('  2 debts + payments')
 })()
