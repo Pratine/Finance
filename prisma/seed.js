@@ -295,6 +295,7 @@ db.transaction(() => {
     contributionFrequencyDays: 30,
     deadline: new Date(Date.UTC(new Date().getUTCFullYear() + 2, 5, 30)).toISOString(),
     notes: 'Emergency fund + long-term savings',
+    createdAt: now, updatedAt: now,
   }).lastInsertRowid
 
   const insSnap = db.prepare(`INSERT INTO "SavingsSnapshot" (goalId, date, amount, note) VALUES (@goalId, @date, @amount, @note)`)
