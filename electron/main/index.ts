@@ -278,3 +278,9 @@ app.on('window-all-closed', () => {
   stopScheduler()
   if (process.platform !== 'darwin') app.quit()
 })
+
+app.on('will-quit', async (e) => {
+  e.preventDefault()
+  await prisma.$disconnect()
+  app.exit(0)
+})
