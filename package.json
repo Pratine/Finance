@@ -47,7 +47,10 @@
   "build": {
     "appId": "com.finance.app",
     "productName": "Finance",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+    ],
     "directories": {
       "output": "release"
     },
