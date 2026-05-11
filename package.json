@@ -11,6 +11,7 @@
     "test:coverage": "vitest run --coverage",
     "build": "vitest run && vite build && tsc -p tsconfig.electron.json && electron-builder",
     "dist": "vitest run && prisma generate && vite build && tsc -p tsconfig.electron.json && electron-builder",
+    "dist:demo": "node scripts/build-demo.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
