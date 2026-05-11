@@ -5,8 +5,19 @@
 // Only COMPLETED rows are imported; PENDING and REVERTED are skipped.
 import fs from 'fs'
 import crypto from 'crypto'
-import { prisma } from '../db'
-import type { Prisma } from '@prisma/client'
+import { db } from '../db'
+
+interface TxInsert {
+  accountId: number
+  date: string
+  valueDate: string | null
+  description: string
+  amount: number
+  type: string
+  runningBalance: number | null
+  importHash: string
+  categoryId: number | null
+}
 
 export interface ImportResult {
   imported: number
