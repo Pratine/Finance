@@ -359,10 +359,10 @@ db.transaction(() => {
 
   // ── Debts ────────────────────────────────────────────────────────────────────
   const insDebt = db.prepare(`
-    INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes)
-    VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @frequency, @nextPaymentDate, @startDate, @endDate, @status, @accountId, @notes)
+    INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)
+    VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @frequency, @nextPaymentDate, @startDate, @endDate, @status, @accountId, @notes, @createdAt, @updatedAt)
   `)
-  const insPayment = db.prepare(`INSERT INTO "DebtPayment" (debtId, date, amount, principal, interest, notes) VALUES (@debtId, @date, @amount, @principal, @interest, @notes)`)
+  const insPayment = db.prepare(`INSERT INTO "DebtPayment" (debtId, date, amount, principal, interest, notes, createdAt) VALUES (@debtId, @date, @amount, @principal, @interest, @notes, @createdAt)`)
 
   const carLoanId = insDebt.run({
     name: 'Emprestimo Automovel', type: 'LOAN', counterparty: 'Caixa Geral de Depositos',
