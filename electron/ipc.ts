@@ -1043,9 +1043,9 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
     const current = db.prepare(`SELECT * FROM "Transaction" WHERE id = ?`).get(id) as any
     if (!current) throw new Error(`Transaction ${id} not found`)
     const updateData: Record<string, unknown> = {}
-    if (data.date !== undefined) updateData.date = requireIso(data.date)
+    if (data.date !== undefined)        updateData.date        = requireIso(data.date)
     if (data.description !== undefined) updateData.description = data.description.trim()
-    if (data.notes !== undefined) updateData.notes = data.notes || null
+    if (data.notes !== undefined)       updateData.notes       = data.notes || null
 
     if (data.amount !== undefined || data.type !== undefined) {
       const newType = (data.type ?? current.type) as 'CREDIT' | 'DEBIT'
@@ -1053,7 +1053,6 @@ export function setupIpcHandlers(ipcMain: IpcMain) {
       const balanceDelta = computeBalanceDelta(Number(current.amount), newType, newAbs)
       updateData.amount = toStoredAmount(newAbs, newType)
       updateData.type   = newType
-
       db.transaction(() => {
         const { sql, params } = buildUpdate(updateData)
         if (sql) db.prepare(`UPDATE "Transaction" SET ${sql} WHERE id = @__id`).run({ ...params, __id: id })
