@@ -171,7 +171,7 @@ db.transaction(() => {
 
   // ── Transactions — 18 months ─────────────────────────────────────────────────
   let mainBalance = 320.00
-  const insTx = db.prepare(`INSERT INTO "Transaction" (accountId, description, amount, type, date, valueDate, categoryId, runningBalance, notes, importHash) VALUES (@accountId, @description, @amount, @type, @date, @valueDate, @categoryId, @runningBalance, @notes, @importHash)`)
+  const insTx = db.prepare(`INSERT INTO "Transaction" (accountId, description, amount, type, date, valueDate, categoryId, runningBalance, notes, importHash, createdAt) VALUES (@accountId, @description, @amount, @type, @date, @valueDate, @categoryId, @runningBalance, @notes, @importHash, @createdAt)`)
 
   let txId = 1
   const now = new Date()
