@@ -6,44 +6,44 @@ import {
 } from './shared'
 import { computeBalanceDelta, toStoredAmount } from '../services/transactionCalcs'
 
-// Prepared statements (dynamic-WHERE queries stay inline).
-const stmtTxRaw         = db.prepare(`SELECT * FROM "Transaction" WHERE id = ?`)
-const stmtTxDelete      = db.prepare(`DELETE FROM "Transaction" WHERE id = ?`)
-const stmtAccBalanceAdd = db.prepare(`UPDATE "Account" SET balance = balance + ?, updatedAt = ? WHERE id = ?`)
-const stmtAccBalanceSub = db.prepare(`UPDATE "Account" SET balance = balance - ?, updatedAt = ? WHERE id = ?`)
-const stmtTxCategorise  = db.prepare(`UPDATE "Transaction" SET categoryId = ? WHERE id = ?`)
-const stmtTxInsertBasic = db.prepare(`
-  INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type, notes)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`)
-const stmtTxInsertTransferDebit = db.prepare(`
-  INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type)
-  VALUES (?, ?, ?, ?, ?, 'DEBIT')
-`)
-const stmtTxInsertTransferCredit = db.prepare(`
-  INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type)
-  VALUES (?, ?, ?, ?, ?, 'CREDIT')
-`)
-const stmtSplitsDelete  = db.prepare(`DELETE FROM "TransactionSplit" WHERE transactionId = ?`)
-const stmtSplitInsert   = db.prepare(`INSERT INTO "TransactionSplit" (transactionId, categoryId, amount, notes) VALUES (?, ?, ?, ?)`)
-const stmtSplitsList    = db.prepare(`
-  SELECT s.*, ${categoryJoinSelect}
-  FROM "TransactionSplit" s
-  LEFT JOIN "Category" c ON c.id = s.categoryId
-  WHERE s.transactionId = ?
-  ORDER BY s.id ASC
-`)
-
-// Tags
-const stmtTagsList   = db.prepare(`SELECT * FROM "Tag" ORDER BY name ASC`)
-const stmtTagByName  = db.prepare(`SELECT * FROM "Tag" WHERE name = ?`)
-const stmtTagInsert  = db.prepare(`INSERT INTO "Tag" (name, color) VALUES (?, ?)`)
-const stmtTagById    = db.prepare(`SELECT * FROM "Tag" WHERE id = ?`)
-const stmtTagDelete  = db.prepare(`DELETE FROM "Tag" WHERE id = ?`)
-const stmtTxTagInsert = db.prepare(`INSERT OR IGNORE INTO "TransactionTag" (transactionId, tagId) VALUES (?, ?)`)
-const stmtTxTagDelete = db.prepare(`DELETE FROM "TransactionTag" WHERE transactionId = ? AND tagId = ?`)
-
 export function registerTransactionsHandlers(ipcMain: IpcMain) {
+  // Prepared statements (dynamic-WHERE queries stay inline).
+  const stmtTxRaw         = db.prepare(`SELECT * FROM "Transaction" WHERE id = ?`)
+  const stmtTxDelete      = db.prepare(`DELETE FROM "Transaction" WHERE id = ?`)
+  const stmtAccBalanceAdd = db.prepare(`UPDATE "Account" SET balance = balance + ?, updatedAt = ? WHERE id = ?`)
+  const stmtAccBalanceSub = db.prepare(`UPDATE "Account" SET balance = balance - ?, updatedAt = ? WHERE id = ?`)
+  const stmtTxCategorise  = db.prepare(`UPDATE "Transaction" SET categoryId = ? WHERE id = ?`)
+  const stmtTxInsertBasic = db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  const stmtTxInsertTransferDebit = db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type)
+    VALUES (?, ?, ?, ?, ?, 'DEBIT')
+  `)
+  const stmtTxInsertTransferCredit = db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type)
+    VALUES (?, ?, ?, ?, ?, 'CREDIT')
+  `)
+  const stmtSplitsDelete  = db.prepare(`DELETE FROM "TransactionSplit" WHERE transactionId = ?`)
+  const stmtSplitInsert   = db.prepare(`INSERT INTO "TransactionSplit" (transactionId, categoryId, amount, notes) VALUES (?, ?, ?, ?)`)
+  const stmtSplitsList    = db.prepare(`
+    SELECT s.*, ${categoryJoinSelect}
+    FROM "TransactionSplit" s
+    LEFT JOIN "Category" c ON c.id = s.categoryId
+    WHERE s.transactionId = ?
+    ORDER BY s.id ASC
+  `)
+
+  // Tags
+  const stmtTagsList   = db.prepare(`SELECT * FROM "Tag" ORDER BY name ASC`)
+  const stmtTagByName  = db.prepare(`SELECT * FROM "Tag" WHERE name = ?`)
+  const stmtTagInsert  = db.prepare(`INSERT INTO "Tag" (name, color) VALUES (?, ?)`)
+  const stmtTagById    = db.prepare(`SELECT * FROM "Tag" WHERE id = ?`)
+  const stmtTagDelete  = db.prepare(`DELETE FROM "Tag" WHERE id = ?`)
+  const stmtTxTagInsert = db.prepare(`INSERT OR IGNORE INTO "TransactionTag" (transactionId, tagId) VALUES (?, ?)`)
+  const stmtTxTagDelete = db.prepare(`DELETE FROM "TransactionTag" WHERE transactionId = ? AND tagId = ?`)
+
   ipcMain.handle('transactions:list', (_e, accountId?: number) => {
     const where = accountId != null ? `WHERE t.accountId = ?` : ''
     const params = accountId != null ? [accountId] : []
