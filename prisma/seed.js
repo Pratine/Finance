@@ -92,7 +92,7 @@ db.transaction(() => {
   const accRevolutId = insAcc.run({ name: 'Revolut',            bankId: revId, typeId: typeWalletId,   accountNumber: null,                              balance: 324.55,  currency: 'EUR', createdAt: now, updatedAt: now }).lastInsertRowid
 
   // ── Categories ───────────────────────────────────────────────────────────────
-  const insCat = db.prepare(`INSERT INTO "Category" (name, type, color, icon) VALUES (@name, @type, @color, @icon)`)
+  const insCat = db.prepare(`INSERT INTO "Category" (name, type, color, icon, createdAt) VALUES (@name, @type, @color, @icon, @createdAt)`)
   const catDefs = [
     { name: 'Groceries',     type: 'EXPENSE', color: '#10b981', icon: 'shopping-cart' },
     { name: 'Rent',          type: 'EXPENSE', color: '#ef4444', icon: 'home' },
