@@ -39,11 +39,11 @@ try {
   console.log('\n> Copied seeded demo.db to resources/')
 
   // Build app
-  run('vite build')
-  run('tsc -p tsconfig.electron.json')
+  run('npx vite build')
+  run('npx tsc -p tsconfig.electron.json')
 
   // Build portable only
-  run('electron-builder --win portable --config.extraResources[0].from=resources/demo.db --config.extraResources[0].to=demo.db')
+  run('npx electron-builder --win portable --config.extraResources[0].from=resources/demo.db --config.extraResources[0].to=demo.db')
 
   console.log('\n✓ Demo portable build complete — see release/')
 } finally {
