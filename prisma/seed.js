@@ -41,6 +41,10 @@ function rnd(min, max) {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100
 }
 
+function rndInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 function date(year, month, day) {
   return new Date(Date.UTC(year, month - 1, day, 10, 0, 0)).toISOString()
 }
