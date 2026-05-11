@@ -4,44 +4,44 @@ import { buildUpdate, hydrateSavingsGoal, nowIso, toIso } from './shared'
 import { elapsedPeriods, applyPeriods } from '../services/interest'
 import type { InterestType } from '../domainTypes'
 
-const stmtSavingsList = db.prepare(`SELECT * FROM "SavingsGoal" ORDER BY createdAt ASC`)
-const stmtSavingsById = db.prepare(`SELECT * FROM "SavingsGoal" WHERE id = ?`)
-const stmtSavingsDelete = db.prepare(`DELETE FROM "SavingsGoal" WHERE id = ?`)
-const stmtAccountsSavings = db.prepare(`
-  SELECT a.* FROM "Account" a
-  JOIN "AccountType" t ON t.id = a.typeId
-  WHERE t.name = 'Savings'
-`)
-const stmtGoalForAccount = db.prepare(`SELECT id FROM "SavingsGoal" WHERE accountId = ?`)
-const stmtInterestGoals = db.prepare(`
-  SELECT * FROM "SavingsGoal"
-  WHERE interestType IS NOT NULL AND interestFrequencyDays IS NOT NULL
-`)
-const stmtSavingsInsertWithName = db.prepare(`
-  INSERT INTO "SavingsGoal" (name, accountId, targetAmount, currentAmount, createdAt, updatedAt)
-  VALUES (?, ?, 0, ?, ?, ?)
-`)
-const stmtSnapshotInsert = db.prepare(
-  `INSERT INTO "SavingsSnapshot" (goalId, amount, note, date) VALUES (?, ?, ?, ?)`,
-)
-const stmtSavingsInsert = db.prepare(`
-  INSERT INTO "SavingsGoal" (accountId, name, targetAmount, currentAmount, deadline, interestType, interestValue, interestFrequencyDays, lastInterestApplied, totalInterestEarned, contributionAmount, contributionFrequencyDays, notes, createdAt, updatedAt)
-  VALUES (@accountId, @name, @targetAmount, @currentAmount, @deadline, @interestType, @interestValue, @interestFrequencyDays, @lastInterestApplied, @totalInterestEarned, @contributionAmount, @contributionFrequencyDays, @notes, @createdAt, @updatedAt)
-`)
-const stmtSavingsApplyInterest = db.prepare(`
-  UPDATE "SavingsGoal"
-  SET currentAmount = ?, lastInterestApplied = ?, totalInterestEarned = ?, updatedAt = ?
-  WHERE id = ?
-`)
-const stmtAccountSetBalance = db.prepare(`UPDATE "Account" SET balance = ?, updatedAt = ? WHERE id = ?`)
-const stmtSnapshotsByGoal = db.prepare(`SELECT * FROM "SavingsSnapshot" WHERE goalId = ? ORDER BY date ASC`)
-const stmtTxBalanceByAccount = db.prepare(`
-  SELECT date, runningBalance FROM "Transaction"
-  WHERE accountId = ? AND runningBalance IS NOT NULL
-  ORDER BY date ASC
-`)
-
 export function registerSavingsHandlers(ipcMain: IpcMain) {
+  const stmtSavingsList = db.prepare(`SELECT * FROM "SavingsGoal" ORDER BY createdAt ASC`)
+  const stmtSavingsById = db.prepare(`SELECT * FROM "SavingsGoal" WHERE id = ?`)
+  const stmtSavingsDelete = db.prepare(`DELETE FROM "SavingsGoal" WHERE id = ?`)
+  const stmtAccountsSavings = db.prepare(`
+    SELECT a.* FROM "Account" a
+    JOIN "AccountType" t ON t.id = a.typeId
+    WHERE t.name = 'Savings'
+  `)
+  const stmtGoalForAccount = db.prepare(`SELECT id FROM "SavingsGoal" WHERE accountId = ?`)
+  const stmtInterestGoals = db.prepare(`
+    SELECT * FROM "SavingsGoal"
+    WHERE interestType IS NOT NULL AND interestFrequencyDays IS NOT NULL
+  `)
+  const stmtSavingsInsertWithName = db.prepare(`
+    INSERT INTO "SavingsGoal" (name, accountId, targetAmount, currentAmount, createdAt, updatedAt)
+    VALUES (?, ?, 0, ?, ?, ?)
+  `)
+  const stmtSnapshotInsert = db.prepare(
+    `INSERT INTO "SavingsSnapshot" (goalId, amount, note, date) VALUES (?, ?, ?, ?)`,
+  )
+  const stmtSavingsInsert = db.prepare(`
+    INSERT INTO "SavingsGoal" (accountId, name, targetAmount, currentAmount, deadline, interestType, interestValue, interestFrequencyDays, lastInterestApplied, totalInterestEarned, contributionAmount, contributionFrequencyDays, notes, createdAt, updatedAt)
+    VALUES (@accountId, @name, @targetAmount, @currentAmount, @deadline, @interestType, @interestValue, @interestFrequencyDays, @lastInterestApplied, @totalInterestEarned, @contributionAmount, @contributionFrequencyDays, @notes, @createdAt, @updatedAt)
+  `)
+  const stmtSavingsApplyInterest = db.prepare(`
+    UPDATE "SavingsGoal"
+    SET currentAmount = ?, lastInterestApplied = ?, totalInterestEarned = ?, updatedAt = ?
+    WHERE id = ?
+  `)
+  const stmtAccountSetBalance = db.prepare(`UPDATE "Account" SET balance = ?, updatedAt = ? WHERE id = ?`)
+  const stmtSnapshotsByGoal = db.prepare(`SELECT * FROM "SavingsSnapshot" WHERE goalId = ? ORDER BY date ASC`)
+  const stmtTxBalanceByAccount = db.prepare(`
+    SELECT date, runningBalance FROM "Transaction"
+    WHERE accountId = ? AND runningBalance IS NOT NULL
+    ORDER BY date ASC
+  `)
+
   ipcMain.handle('savings:list', () => {
     const rows = stmtSavingsList.all() as any[]
     return rows.map(hydrateSavingsGoal)
