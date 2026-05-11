@@ -159,14 +159,15 @@ db.transaction(() => {
   ]) insBudget.run({ categoryId: cats[b.name], amount: b.amount, createdAt: now, updatedAt: now })
 
   // ── Recurring bills ──────────────────────────────────────────────────────────
-  const insBill = db.prepare(`INSERT INTO "RecurringBill" (name, amount, frequency, nextDueDate, categoryId, accountId, isActive) VALUES (@name, @amount, @frequency, @nextDueDate, @categoryId, @accountId, @isActive)`)
-  insBill.run({ name: 'Renda Apartamento', amount: 850,          frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 1),  categoryId: cats['Rent'],          accountId: accMainId,    isActive: 1 })
-  insBill.run({ name: 'Netflix',           amount: 15.99,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 8),  categoryId: cats['Subscriptions'], accountId: accRevolutId, isActive: 1 })
-  insBill.run({ name: 'Spotify',           amount: 9.99,         frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 12), categoryId: cats['Subscriptions'], accountId: accRevolutId, isActive: 1 })
-  insBill.run({ name: 'Holmes Place Gym',  amount: 42.90,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 5),  categoryId: cats['Gym'],           accountId: accRevolutId, isActive: 1 })
-  insBill.run({ name: 'NOS Internet',      amount: 34.90,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 20), categoryId: cats['Utilities'],     accountId: accMainId,    isActive: 1 })
-  insBill.run({ name: 'EDP Electricidade', amount: rnd(55, 110), frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 15), categoryId: cats['Utilities'],     accountId: accMainId,    isActive: 1 })
-  insBill.run({ name: 'Trading 212 DCA',   amount: 200,          frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 3),  categoryId: cats['Investing'],     accountId: accMainId,    isActive: 1 })
+  const insBill = db.prepare(`INSERT INTO "RecurringBill" (name, amount, frequency, nextDueDate, categoryId, accountId, isActive, createdAt, updatedAt) VALUES (@name, @amount, @frequency, @nextDueDate, @categoryId, @accountId, @isActive, @createdAt, @updatedAt)`)
+  const bill = (o) => insBill.run({ ...o, createdAt: now, updatedAt: now })
+  bill({ name: 'Renda Apartamento', amount: 850,          frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 1),  categoryId: cats['Rent'],          accountId: accMainId,    isActive: 1 })
+  bill({ name: 'Netflix',           amount: 15.99,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 8),  categoryId: cats['Subscriptions'], accountId: accRevolutId, isActive: 1 })
+  bill({ name: 'Spotify',           amount: 9.99,         frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 12), categoryId: cats['Subscriptions'], accountId: accRevolutId, isActive: 1 })
+  bill({ name: 'Holmes Place Gym',  amount: 42.90,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 5),  categoryId: cats['Gym'],           accountId: accRevolutId, isActive: 1 })
+  bill({ name: 'NOS Internet',      amount: 34.90,        frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 20), categoryId: cats['Utilities'],     accountId: accMainId,    isActive: 1 })
+  bill({ name: 'EDP Electricidade', amount: rnd(55, 110), frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 15), categoryId: cats['Utilities'],     accountId: accMainId,    isActive: 1 })
+  bill({ name: 'Trading 212 DCA',   amount: 200,          frequency: 'MONTHLY', nextDueDate: monthsAgo(0, 3),  categoryId: cats['Investing'],     accountId: accMainId,    isActive: 1 })
 
   // ── Transactions — 18 months ─────────────────────────────────────────────────
   let mainBalance = 320.00
