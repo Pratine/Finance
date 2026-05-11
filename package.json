@@ -56,7 +56,11 @@
   "build": {
     "appId": "com.finance.app",
     "productName": "Finance",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/.prisma/client/query_engine-windows.dll.node",
+      "node_modules/@prisma/engines/query_engine-windows.dll.node"
+    ],
     "directories": {
       "output": "release"
     },
