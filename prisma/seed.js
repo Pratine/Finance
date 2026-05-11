@@ -190,6 +190,7 @@ db.transaction(() => {
       runningBalance: runningBal,
       notes: null,
       importHash: `seed-${id}-${txDate}`,
+      createdAt: now,
     })
   }
 
