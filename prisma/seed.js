@@ -378,7 +378,7 @@ db.transaction(() => {
     const interest  = Math.round(carOutstanding * (0.052 / 12) * 100) / 100
     const principal = Math.round((250 - interest) * 100) / 100
     carOutstanding  = Math.max(0, carOutstanding - principal)
-    insPayment.run({ debtId: carLoanId, date: monthsAgo(mo, 15), amount: 250, principal, interest, notes: null })
+    insPayment.run({ debtId: carLoanId, date: monthsAgo(mo, 15), amount: 250, principal, interest, notes: null, createdAt: now })
   }
 
   const joanId = insDebt.run({
