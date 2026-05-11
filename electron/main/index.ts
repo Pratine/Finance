@@ -260,6 +260,9 @@ app.on('second-instance', () => {
 app.whenReady().then(() => {
   // Skip migrations in portable mode — the bundled demo.db is already fully migrated.
   if (!isPortable) runMigrations()
+  // Require ipc AFTER migrations so module-level db.prepare() calls see the latest schema.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { setupIpcHandlers } = require('../ipc') as typeof import('../ipc')
   setupIpcHandlers(ipcMain)
   createWindow()
 
