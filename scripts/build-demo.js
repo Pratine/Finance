@@ -29,6 +29,11 @@ async function main() {
   try {
     run('npx vitest run')
 
+    // Rebuild better-sqlite3 BEFORE seeding so the seed uses the same binary
+    // that will be packaged. If the ABI changes between runs, an old binary
+    // would be used for seeding and a new one for the app — mismatched output.
+    run('npx electron-rebuild -f -w better-sqlite3')
+
     // Seed via Electron's Node runtime — better-sqlite3 is built for Electron's ABI,
     // not the system Node, so we must use the Electron binary as the runner.
     const electronBin = path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe')
@@ -44,7 +49,6 @@ async function main() {
     // Build app
     run('npx vite build')
     run('npx tsc -p tsconfig.electron.json')
-    run('npx electron-rebuild -f -w better-sqlite3')
 
     // Build portable with demo.db as extra resource
     await build({
