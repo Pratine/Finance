@@ -3,9 +3,9 @@
  *
  * Steps:
  *   1. Run tests
- *   2. Generate Prisma client
- *   3. Reset + seed a fresh demo database
- *   4. Copy the seeded db to resources/demo.db (bundled into the portable exe)
+ *   2. Seed a fresh demo database using better-sqlite3 + seed.js
+ *   3. Copy the seeded db to resources/demo.db (bundled into the portable exe)
+ *   4. Rebuild better-sqlite3 for Electron's ABI
  *   5. Build the app (Vite + TypeScript)
  *   6. Run electron-builder with the portable target
  *   7. Clean up resources/demo.db
@@ -18,7 +18,7 @@ const path = require('path')
 
 const root = path.join(__dirname, '..')
 const demoDB = path.join(root, 'resources', 'demo.db')
-const sourceDB = path.join(root, 'prisma', 'prisma', 'dev.db')
+const sourceDB = path.join(root, 'prisma', 'dev.db')
 
 function run(cmd) {
   console.log(`\n> ${cmd}`)
@@ -28,11 +28,8 @@ function run(cmd) {
 async function main() {
   try {
     run('npx vitest run')
-    run('npx prisma generate')
 
-    // Reset + seed a fresh demo database
-    run('npx prisma migrate reset --force --skip-seed')
-    run('npx prisma migrate deploy')
+    // Seed a fresh demo database
     run('node prisma/seed.js')
 
     // Bundle the seeded db
@@ -43,6 +40,7 @@ async function main() {
     // Build app
     run('npx vite build')
     run('npx tsc -p tsconfig.electron.json')
+    run('npx electron-rebuild -f -w better-sqlite3')
 
     // Build portable with demo.db as extra resource
     await build({
