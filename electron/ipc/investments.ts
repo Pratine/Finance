@@ -5,8 +5,7 @@ import {
   getInvestmentFull, nowIso, toIso, requireIso,
 } from './shared'
 import { calcInvestmentTotals } from '../services/lotCalcs'
-import { fetchPrice, fetchExchangeRate } from '../services/priceFetcher'
-import { lookupISIN } from '../services/isinLookup'
+// refreshPrice/lookupISIN handlers live in settings.ts (per refactor spec).
 
 // ── Brokers ──────────────────────────────────────────────────────────────────
 const stmtBrokersList  = db.prepare(`SELECT * FROM "Broker" ORDER BY name ASC`)
