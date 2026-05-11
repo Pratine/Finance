@@ -10,24 +10,14 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "vitest run && vite build && tsc -p tsconfig.electron.json && electron-builder",
-    "dist": "vitest run && prisma generate && vite build && tsc -p tsconfig.electron.json && electron-builder",
-    "dist:demo": "node scripts/build-demo.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:status": "prisma migrate status",
-    "prisma:studio": "prisma studio",
-    "prisma:seed": "node prisma/seed.js"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
+    "dist": "vitest run && vite build && tsc -p tsconfig.electron.json && electron-builder",
+    "dist:demo": "node scripts/build-demo.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.14.0",
     "@tanstack/react-virtual": "^3.13.24",
+    "better-sqlite3": "^11.3.0",
     "electron-updater": "^6.8.3",
     "lucide-react": "^1.14.0",
-    "prisma": "^5.14.0",
     "react-router-dom": "^7.14.2",
     "recharts": "^3.8.1"
   },
@@ -35,6 +25,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
@@ -65,8 +56,6 @@
       "dist-electron/**/*",
       "node_modules/**/*",
       "prisma/migrations/**/*",
-      "prisma/schema.prisma",
-      "prisma/**/*",
       "package.json"
     ],
     "win": {
