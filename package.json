@@ -1,6 +1,6 @@
 {
   "name": "finance-app",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "Finance desktop app",
   "author": "Pratine",
   "main": "dist-electron/main/index.js",
