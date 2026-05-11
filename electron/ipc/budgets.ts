@@ -4,59 +4,59 @@ import {
   categoryJoinSelect, buildUpdate, hydrateCategory, nowIso,
 } from './shared'
 
-// Budgets
-const stmtBudgetsList = db.prepare(`
-  SELECT b.*, ${categoryJoinSelect}
-  FROM "Budget" b
-  JOIN "Category" c ON c.id = b.categoryId
-  ORDER BY c.name ASC
-`)
-const stmtBudgetUpsert = db.prepare(`
-  INSERT INTO "Budget" (categoryId, amount, createdAt, updatedAt)
-  VALUES (?, ?, ?, ?)
-  ON CONFLICT(categoryId) DO UPDATE SET amount = excluded.amount, updatedAt = excluded.updatedAt
-`)
-const stmtBudgetByCategory = db.prepare(`
-  SELECT b.*, ${categoryJoinSelect}
-  FROM "Budget" b
-  JOIN "Category" c ON c.id = b.categoryId
-  WHERE b.categoryId = ?
-`)
-const stmtBudgetById = db.prepare(`SELECT * FROM "Budget" WHERE id = ?`)
-const stmtBudgetDelete = db.prepare(`DELETE FROM "Budget" WHERE id = ?`)
-
-// Categories
-const stmtCatList = db.prepare(`SELECT * FROM "Category" ORDER BY name ASC`)
-const stmtCatInsert = db.prepare(`
-  INSERT INTO "Category" (name, type, color, icon, createdAt) VALUES (?, ?, ?, ?, ?)
-`)
-const stmtCatById = db.prepare(`SELECT * FROM "Category" WHERE id = ?`)
-const stmtCatDelete = db.prepare(`DELETE FROM "Category" WHERE id = ?`)
-
-// Rules
-const stmtRulesList = db.prepare(`
-  SELECT cr.*, ${categoryJoinSelect}
-  FROM "CategoryRule" cr
-  JOIN "Category" c ON c.id = cr.categoryId
-  ORDER BY cr.createdAt ASC
-`)
-const stmtRuleInsert = db.prepare(
-  `INSERT INTO "CategoryRule" (pattern, categoryId, createdAt) VALUES (?, ?, ?)`,
-)
-const stmtRuleByIdJoined = db.prepare(`
-  SELECT cr.*, ${categoryJoinSelect}
-  FROM "CategoryRule" cr
-  JOIN "Category" c ON c.id = cr.categoryId
-  WHERE cr.id = ?
-`)
-const stmtRuleByIdRaw = db.prepare(`SELECT * FROM "CategoryRule" WHERE id = ?`)
-const stmtRuleDelete = db.prepare(`DELETE FROM "CategoryRule" WHERE id = ?`)
-const stmtRulesAll = db.prepare(`SELECT id, pattern, categoryId FROM "CategoryRule"`)
-const stmtUncategorisedTxs = db.prepare(
-  `SELECT id, description FROM "Transaction" WHERE categoryId IS NULL`,
-)
-
 export function registerBudgetsHandlers(ipcMain: IpcMain) {
+  // Budgets
+  const stmtBudgetsList = db.prepare(`
+    SELECT b.*, ${categoryJoinSelect}
+    FROM "Budget" b
+    JOIN "Category" c ON c.id = b.categoryId
+    ORDER BY c.name ASC
+  `)
+  const stmtBudgetUpsert = db.prepare(`
+    INSERT INTO "Budget" (categoryId, amount, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(categoryId) DO UPDATE SET amount = excluded.amount, updatedAt = excluded.updatedAt
+  `)
+  const stmtBudgetByCategory = db.prepare(`
+    SELECT b.*, ${categoryJoinSelect}
+    FROM "Budget" b
+    JOIN "Category" c ON c.id = b.categoryId
+    WHERE b.categoryId = ?
+  `)
+  const stmtBudgetById = db.prepare(`SELECT * FROM "Budget" WHERE id = ?`)
+  const stmtBudgetDelete = db.prepare(`DELETE FROM "Budget" WHERE id = ?`)
+
+  // Categories
+  const stmtCatList = db.prepare(`SELECT * FROM "Category" ORDER BY name ASC`)
+  const stmtCatInsert = db.prepare(`
+    INSERT INTO "Category" (name, type, color, icon, createdAt) VALUES (?, ?, ?, ?, ?)
+  `)
+  const stmtCatById = db.prepare(`SELECT * FROM "Category" WHERE id = ?`)
+  const stmtCatDelete = db.prepare(`DELETE FROM "Category" WHERE id = ?`)
+
+  // Rules
+  const stmtRulesList = db.prepare(`
+    SELECT cr.*, ${categoryJoinSelect}
+    FROM "CategoryRule" cr
+    JOIN "Category" c ON c.id = cr.categoryId
+    ORDER BY cr.createdAt ASC
+  `)
+  const stmtRuleInsert = db.prepare(
+    `INSERT INTO "CategoryRule" (pattern, categoryId, createdAt) VALUES (?, ?, ?)`,
+  )
+  const stmtRuleByIdJoined = db.prepare(`
+    SELECT cr.*, ${categoryJoinSelect}
+    FROM "CategoryRule" cr
+    JOIN "Category" c ON c.id = cr.categoryId
+    WHERE cr.id = ?
+  `)
+  const stmtRuleByIdRaw = db.prepare(`SELECT * FROM "CategoryRule" WHERE id = ?`)
+  const stmtRuleDelete = db.prepare(`DELETE FROM "CategoryRule" WHERE id = ?`)
+  const stmtRulesAll = db.prepare(`SELECT id, pattern, categoryId FROM "CategoryRule"`)
+  const stmtUncategorisedTxs = db.prepare(
+    `SELECT id, description FROM "Transaction" WHERE categoryId IS NULL`,
+  )
+
   // ── Budgets ────────────────────────────────────────────────────────────────
   ipcMain.handle('budgets:list', () => {
     const rows = stmtBudgetsList.all() as any[]
