@@ -2,7 +2,10 @@ import { app, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { autoUpdater } from 'electron-updater'
-import { setupIpcHandlers } from '../ipc'
+// ipc modules are loaded lazily (after runMigrations) so that module-level
+// db.prepare() calls don't execute against a schema that's missing new columns.
+// Do NOT convert back to a static import.
+let setupIpcHandlers: (ipcMain: Electron.IpcMain) => void
 import { db } from '../db'
 import { runMigrations as applyMigrations } from '../migrations'
 import { startScheduler, stopScheduler } from '../services/priceScheduler'
