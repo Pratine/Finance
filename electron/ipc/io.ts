@@ -10,45 +10,45 @@ import {
 import { importMillenniumCSV } from '../services/csvImporter'
 import { importRevolutCSV } from '../services/revolutImporter'
 
-const stmtCategoryRules = db.prepare(`SELECT id, pattern, categoryId FROM "CategoryRule"`)
-const stmtImportInsert = db.prepare(`
-  INSERT INTO "ImportHistory" (filename, format, accountId, imported, skipped, errors, importedAt)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`)
-const stmtImportList = db.prepare(`
-  SELECT ih.*, ${accountSelect}
-  FROM "ImportHistory" ih
-  LEFT JOIN "Account" a ON a.id = ih.accountId
-  ${accountJoins}
-  ORDER BY ih.importedAt DESC
-  LIMIT 50
-`)
-const stmtImportById = db.prepare(`SELECT * FROM "ImportHistory" WHERE id = ?`)
-const stmtImportDelete = db.prepare(`DELETE FROM "ImportHistory" WHERE id = ?`)
-const stmtPing = db.prepare(`SELECT COUNT(*) AS c FROM "Account"`)
-
-function logImport(
-  filePath: string,
-  format: string,
-  accountId: number,
-  result: { imported: number; skipped: number; errors: string[] },
-) {
-  try {
-    stmtImportInsert.run(
-      filePath.split(/[/\\]/).pop() ?? filePath,
-      format,
-      accountId,
-      result.imported,
-      result.skipped,
-      result.errors.length,
-      nowIso(),
-    )
-  } catch (e) {
-    console.error('Failed to log import history:', e)
-  }
-}
-
 export function registerIoHandlers(ipcMain: IpcMain) {
+  const stmtCategoryRules = db.prepare(`SELECT id, pattern, categoryId FROM "CategoryRule"`)
+  const stmtImportInsert = db.prepare(`
+    INSERT INTO "ImportHistory" (filename, format, accountId, imported, skipped, errors, importedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  const stmtImportList = db.prepare(`
+    SELECT ih.*, ${accountSelect}
+    FROM "ImportHistory" ih
+    LEFT JOIN "Account" a ON a.id = ih.accountId
+    ${accountJoins}
+    ORDER BY ih.importedAt DESC
+    LIMIT 50
+  `)
+  const stmtImportById = db.prepare(`SELECT * FROM "ImportHistory" WHERE id = ?`)
+  const stmtImportDelete = db.prepare(`DELETE FROM "ImportHistory" WHERE id = ?`)
+  const stmtPing = db.prepare(`SELECT COUNT(*) AS c FROM "Account"`)
+
+  function logImport(
+    filePath: string,
+    format: string,
+    accountId: number,
+    result: { imported: number; skipped: number; errors: string[] },
+  ) {
+    try {
+      stmtImportInsert.run(
+        filePath.split(/[/\\]/).pop() ?? filePath,
+        format,
+        accountId,
+        result.imported,
+        result.skipped,
+        result.errors.length,
+        nowIso(),
+      )
+    } catch (e) {
+      console.error('Failed to log import history:', e)
+    }
+  }
+
   // ── Export ─────────────────────────────────────────────────────────────────
   ipcMain.handle('export:savePath', async (_e, defaultName: string, filters: Electron.FileFilter[]) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
