@@ -56,7 +56,12 @@
   "build": {
     "appId": "com.finance.app",
     "productName": "Finance",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/.prisma/**",
+      "node_modules/@prisma/engines/**",
+      "node_modules/prisma/query_engine-windows.dll.node"
+    ],
     "directories": {
       "output": "release"
     },
@@ -68,13 +73,6 @@
       "prisma/schema.prisma",
       "prisma/**/*",
       "package.json"
-    ],
-    "extraFiles": [
-      {
-        "from": "node_modules/.prisma",
-        "to": "resources/app/node_modules/.prisma",
-        "filter": ["**/*"]
-      }
     ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }]
