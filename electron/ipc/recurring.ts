@@ -19,6 +19,44 @@ function advance(date: string, freq: Frequency): Date {
 }
 
 export function registerRecurringHandlers(ipcMain: IpcMain) {
+  // Income
+  const stmtIncomeListOrdered = db.prepare(`${incomeSelectJoin} ORDER BY ri.nextExpectedDate ASC`)
+  const stmtIncomeInsert = db.prepare(`
+    INSERT INTO "RecurringIncome" (name, amount, frequency, nextExpectedDate, categoryId, accountId, notes, isActive, createdAt, updatedAt)
+    VALUES (@name, @amount, @frequency, @nextExpectedDate, @categoryId, @accountId, @notes, @isActive, @createdAt, @updatedAt)
+  `)
+  const stmtIncomeByIdJoined = db.prepare(`${incomeSelectJoin} WHERE ri.id = ?`)
+  const stmtIncomeByIdRaw = db.prepare(`SELECT * FROM "RecurringIncome" WHERE id = ?`)
+  const stmtIncomeDelete = db.prepare(`DELETE FROM "RecurringIncome" WHERE id = ?`)
+  const stmtIncomeSetNext = db.prepare(
+    `UPDATE "RecurringIncome" SET nextExpectedDate = ?, updatedAt = ? WHERE id = ?`,
+  )
+
+  // Bills
+  const stmtBillsListOrdered = db.prepare(`${billSelectJoin} ORDER BY rb.nextDueDate ASC`)
+  const stmtBillInsert = db.prepare(`
+    INSERT INTO "RecurringBill" (name, amount, frequency, nextDueDate, categoryId, accountId, notes, isActive, createdAt, updatedAt)
+    VALUES (@name, @amount, @frequency, @nextDueDate, @categoryId, @accountId, @notes, @isActive, @createdAt, @updatedAt)
+  `)
+  const stmtBillByIdJoined = db.prepare(`${billSelectJoin} WHERE rb.id = ?`)
+  const stmtBillByIdRaw = db.prepare(`SELECT * FROM "RecurringBill" WHERE id = ?`)
+  const stmtBillDelete = db.prepare(`DELETE FROM "RecurringBill" WHERE id = ?`)
+  const stmtBillSetNext = db.prepare(
+    `UPDATE "RecurringBill" SET nextDueDate = ?, updatedAt = ? WHERE id = ?`,
+  )
+
+  // Shared
+  const stmtTxInsertIncome = db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, date, description, amount, type)
+    VALUES (?, ?, ?, ?, ?, 'CREDIT')
+  `)
+  const stmtTxInsertBill = db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, recurringBillId, date, description, amount, type)
+    VALUES (?, ?, ?, ?, ?, ?, 'DEBIT')
+  `)
+  const stmtAccBalanceAdd = db.prepare(`UPDATE "Account" SET balance = balance + ?, updatedAt = ? WHERE id = ?`)
+  const stmtAccBalanceSub = db.prepare(`UPDATE "Account" SET balance = balance - ?, updatedAt = ? WHERE id = ?`)
+
   // ── Recurring income ───────────────────────────────────────────────────────
   ipcMain.handle('income:list', () => {
     const rows = stmtIncomeListOrdered.all() as any[]
