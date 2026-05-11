@@ -237,47 +237,5 @@ export function registerInvestmentsHandlers(ipcMain: IpcMain) {
     return row
   })
 
-  ipcMain.handle('investments:lookupISIN', async (_e, isin: string) => lookupISIN(isin))
-
-  ipcMain.handle('investments:refreshPrice', async (_e, id: number) => {
-    const inv = stmtInvRaw.get(id) as any
-    if (!inv) throw new Error(`Investment ${id} not found`)
-    if (!inv.ticker) throw new Error('No ticker symbol set for this investment')
-    if (inv.shares === null) {
-      throw new Error(`${inv.ticker}: shares not set — add a buy lot before refreshing the price`)
-    }
-    const result = await fetchPrice(inv.ticker)
-
-    let rate: number
-    if (result.currency === 'EUR') {
-      rate = 1
-    } else {
-      try {
-        rate = await fetchExchangeRate(result.currency)
-      } catch (rateErr) {
-        const cached = stmtRateGet.get(result.currency) as { rate: number } | undefined
-        if (cached) rate = Number(cached.rate)
-        else throw new Error(`Cannot convert ${result.currency} to EUR: ${(rateErr as Error).message}`)
-      }
-    }
-
-    const priceInEUR = result.price * rate
-    const shares = Number(inv.shares)
-    const newValue = priceInEUR * shares
-    const today = new Date(); today.setUTCHours(0, 0, 0, 0)
-    const todayIso = today.toISOString()
-    const now = nowIso()
-
-    db.transaction(() => {
-      if (result.currency !== 'EUR') {
-        stmtRateUpsert.run(result.currency, rate, now)
-      }
-      stmtPriceHistUpsert.run(id, priceInEUR, newValue, todayIso)
-      stmtInvSyncPrice.run(newValue, priceInEUR, now, now, id)
-    })()
-
-    return getInvestmentFull(id)
-  })
-
   ipcMain.handle('exchangeRates:list', () => stmtRatesList.all())
 }
