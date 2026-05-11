@@ -241,7 +241,7 @@ db.transaction(() => {
     }
 
     const restNames = ["Tasca da Esquina", "Time Out Market", "McDonald's", "Nando's", "Pizza Hut", "Sushi Place", "Taberna Moderna", "O Corvo"]
-    for (let r = 0; r < Math.floor(rnd(2, 6)); r++) {
+    for (let r = 0; r < rndInt(2, 6); r++) {
       tx(accRevolutId, pick(restNames).toUpperCase(), rnd(12, 55), 'DEBIT', date(y, m, Math.floor(rnd(1, 28))), cats['Restaurants'])
     }
 
