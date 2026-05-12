@@ -14,6 +14,27 @@ export interface RefreshResult {
 // the underlying connection on first access). Columns referenced here have
 // always existed, so a single prepared statement is safe to reuse.
 let _stmtSavePriceSnapshot: import('better-sqlite3').Statement | null = null
+let _stmtUpsertRate: import('better-sqlite3').Statement | null = null
+let _stmtGetCachedRate: import('better-sqlite3').Statement | null = null
+let _stmtUpdateInvestment: import('better-sqlite3').Statement | null = null
+
+function stmtUpsertRate(): import('better-sqlite3').Statement {
+  return _stmtUpsertRate ??= db.prepare(`
+    INSERT INTO "ExchangeRate" (fromCurrency, rate, updatedAt)
+    VALUES (@fromCurrency, @rate, @updatedAt)
+    ON CONFLICT(fromCurrency) DO UPDATE SET rate = excluded.rate, updatedAt = excluded.updatedAt
+  `)
+}
+function stmtGetCachedRate(): import('better-sqlite3').Statement {
+  return _stmtGetCachedRate ??= db.prepare(`SELECT rate FROM "ExchangeRate" WHERE fromCurrency = ?`)
+}
+function stmtUpdateInvestment(): import('better-sqlite3').Statement {
+  return _stmtUpdateInvestment ??= db.prepare(`
+    UPDATE "Investment"
+    SET currentValue = @currentValue, lastPriceFetched = @lastPriceFetched, priceUpdatedAt = @priceUpdatedAt, updatedAt = @updatedAt
+    WHERE id = @id
+  `)
+}
 
 export function savePriceSnapshot(investmentId: number, price: number, shares: number) {
   const value = price * shares
