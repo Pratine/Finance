@@ -2,6 +2,7 @@ import type { IpcMain } from 'electron'
 import { db } from '../db'
 import {
   buildUpdate, hydrateDebt, nowIso, toIso, requireIso, advanceByFrequency,
+  stmtPaymentsForDebt,
 } from './shared'
 import type { Frequency, DebtType, DebtStatus } from '../domainTypes'
 
@@ -89,7 +90,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
       createdAt: now,
       updatedAt: now,
     })
-    return hydrateDebt(stmtDebtById.get(info.lastInsertRowid))
+    const debtRow = stmtDebtById.get(info.lastInsertRowid) as any
+    return hydrateDebt(debtRow, debtRow ? stmtPaymentsForDebt().all(debtRow.id) as any[] : [])
   })
 
   ipcMain.handle('debts:update', (_e, id: number, data: {
@@ -113,7 +115,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
     }
     const { sql, params } = buildUpdate(fields, { updatedAt: nowIso() })
     db.prepare(`UPDATE "Debt" SET ${sql} WHERE id = @__id`).run({ ...params, __id: id })
-    return hydrateDebt(stmtDebtById.get(id))
+    const debtRow = stmtDebtById.get(id) as any
+    return hydrateDebt(debtRow, debtRow ? stmtPaymentsForDebt().all(id) as any[] : [])
   })
 
   ipcMain.handle('debts:delete', (_e, id: number) => {
@@ -158,7 +161,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
       }
     })()
 
-    return hydrateDebt(stmtDebtById.get(data.debtId))
+    const debtRow = stmtDebtById.get(data.debtId) as any
+    return hydrateDebt(debtRow, debtRow ? stmtPaymentsForDebt().all(data.debtId) as any[] : [])
   })
 
   ipcMain.handle('debts:deletePayment', (_e, paymentId: number) => {
@@ -181,6 +185,7 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
       }
     })()
 
-    return hydrateDebt(stmtDebtById.get(debt.id))
+    const debtRow = stmtDebtById.get(debt.id) as any
+    return hydrateDebt(debtRow, debtRow ? stmtPaymentsForDebt().all(debt.id) as any[] : [])
   })
 }

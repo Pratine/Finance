@@ -1,6 +1,7 @@
 // Shared helpers, SQL fragments and row hydrators used by the IPC domain modules.
 // Kept in one place to avoid duplication across modules and to make changes to
 // the canonical hydration shape (booleans, nested relations) atomic.
+import type Database from 'better-sqlite3'
 import { db } from '../db'
 import type { Frequency } from '../domainTypes'
 
@@ -111,22 +112,33 @@ export function hydrateCategory(prefix: string, row: any): any | null {
   }
 }
 
-// Prepared statements used by getters below. Module-level prepare against the
-// lazy db proxy is fine: it only resolves on first property access at runtime.
-const stmtAccountFull = db.prepare(
-  `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id = ?`,
-)
-
-export function getAccountFull(id: number): any {
-  return hydrateAccount(stmtAccountFull.get(id))
+// Prepared statements are lazy-initialised on first use. This matters because
+// `shared.ts` is imported by IPC modules that load *before* runMigrations()
+// runs in app.whenReady() — preparing at import time would compile SQL
+// against a schema that doesn't yet have the migration-added columns.
+let _stmtAccountFull: Database.Statement | null = null
+function stmtAccountFull(): Database.Statement {
+  return _stmtAccountFull ??= db.prepare(
+    `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id = ?`,
+  )
 }
 
-const stmtInvestmentFull = db.prepare(
-  `SELECT ${investmentSelect} FROM "Investment" i ${investmentJoins} WHERE i.id = ?`,
-)
-const stmtLotsForInvestment = db.prepare(
-  `SELECT * FROM "InvestmentLot" WHERE investmentId = ? ORDER BY date ASC`,
-)
+export function getAccountFull(id: number): any {
+  return hydrateAccount(stmtAccountFull().get(id))
+}
+
+let _stmtInvestmentFull: Database.Statement | null = null
+function stmtInvestmentFull(): Database.Statement {
+  return _stmtInvestmentFull ??= db.prepare(
+    `SELECT ${investmentSelect} FROM "Investment" i ${investmentJoins} WHERE i.id = ?`,
+  )
+}
+let _stmtLotsForInvestment: Database.Statement | null = null
+function stmtLotsForInvestment(): Database.Statement {
+  return _stmtLotsForInvestment ??= db.prepare(
+    `SELECT * FROM "InvestmentLot" WHERE investmentId = ? ORDER BY date ASC`,
+  )
+}
 
 export function hydrateInvestment(row: any): any {
   if (!row) return row
@@ -139,29 +151,35 @@ export function hydrateInvestment(row: any): any {
     type:   row.invtype_id == null ? null : { id: row.invtype_id, name: row.invtype_name, color: row.invtype_color, icon: row.invtype_icon },
     broker: row.broker_id  == null ? null : { id: row.broker_id,  name: row.broker_name,  color: row.broker_color,  icon: row.broker_icon  },
   }
-  out.lots = stmtLotsForInvestment.all(row.id)
+  out.lots = stmtLotsForInvestment().all(row.id)
   return out
 }
 
 export function getInvestmentFull(id: number): any | null {
-  return hydrateInvestment(stmtInvestmentFull.get(id))
+  return hydrateInvestment(stmtInvestmentFull().get(id))
 }
 
-const stmtTagsForTx = db.prepare(`
-  SELECT tt.transactionId, tt.tagId,
-         tg.id AS tag_id, tg.name AS tag_name, tg.color AS tag_color
-  FROM "TransactionTag" tt
-  JOIN "Tag" tg ON tg.id = tt.tagId
-  WHERE tt.transactionId = ?
-`)
+let _stmtTagsForTx: Database.Statement | null = null
+function stmtTagsForTx(): Database.Statement {
+  return _stmtTagsForTx ??= db.prepare(`
+    SELECT tt.transactionId, tt.tagId,
+           tg.id AS tag_id, tg.name AS tag_name, tg.color AS tag_color
+    FROM "TransactionTag" tt
+    JOIN "Tag" tg ON tg.id = tt.tagId
+    WHERE tt.transactionId = ?
+  `)
+}
 
-const stmtSplitsForTx = db.prepare(`
-  SELECT s.*, ${categoryJoinSelect}
-  FROM "TransactionSplit" s
-  LEFT JOIN "Category" c ON c.id = s.categoryId
-  WHERE s.transactionId = ?
-  ORDER BY s.id ASC
-`)
+let _stmtSplitsForTx: Database.Statement | null = null
+function stmtSplitsForTx(): Database.Statement {
+  return _stmtSplitsForTx ??= db.prepare(`
+    SELECT s.*, ${categoryJoinSelect}
+    FROM "TransactionSplit" s
+    LEFT JOIN "Category" c ON c.id = s.categoryId
+    WHERE s.transactionId = ?
+    ORDER BY s.id ASC
+  `)
+}
 
 export function hydrateTransaction(row: any, opts: { includeTagsAndSplits?: boolean } = {}): any {
   const out: any = {
@@ -173,12 +191,12 @@ export function hydrateTransaction(row: any, opts: { includeTagsAndSplits?: bool
     category: hydrateCategory('cat', row),
   }
   if (opts.includeTagsAndSplits) {
-    const tags = stmtTagsForTx.all(row.id) as any[]
+    const tags = stmtTagsForTx().all(row.id) as any[]
     out.tags = tags.map(t => ({
       transactionId: t.transactionId, tagId: t.tagId,
       tag: { id: t.tag_id, name: t.tag_name, color: t.tag_color },
     }))
-    const splits = stmtSplitsForTx.all(row.id) as any[]
+    const splits = stmtSplitsForTx().all(row.id) as any[]
     out.splits = splits.map(s => ({
       id: s.id, transactionId: s.transactionId, categoryId: s.categoryId,
       amount: s.amount, notes: s.notes, category: hydrateCategory('cat', s),
@@ -187,15 +205,18 @@ export function hydrateTransaction(row: any, opts: { includeTagsAndSplits?: bool
   return out
 }
 
-const stmtTransactionFull = db.prepare(`
-  SELECT t.*, ${categoryJoinSelect}
-  FROM "Transaction" t
-  LEFT JOIN "Category" c ON c.id = t.categoryId
-  WHERE t.id = ?
-`)
+let _stmtTransactionFull: Database.Statement | null = null
+function stmtTransactionFull(): Database.Statement {
+  return _stmtTransactionFull ??= db.prepare(`
+    SELECT t.*, ${categoryJoinSelect}
+    FROM "Transaction" t
+    LEFT JOIN "Category" c ON c.id = t.categoryId
+    WHERE t.id = ?
+  `)
+}
 
 export function getTransactionFull(id: number): any | null {
-  const tx = stmtTransactionFull.get(id) as any
+  const tx = stmtTransactionFull().get(id) as any
   if (!tx) return null
   return hydrateTransaction(tx, { includeTagsAndSplits: true })
 }
@@ -263,28 +284,35 @@ export function hydrateSavingsGoal(row: any): any {
   }
 }
 
-const stmtAccountById = db.prepare(`SELECT * FROM "Account" WHERE id = ?`)
-const stmtPaymentsForDebt = db.prepare(
-  `SELECT * FROM "DebtPayment" WHERE debtId = ? ORDER BY date DESC`,
-)
+let _stmtAccountById: Database.Statement | null = null
+function stmtAccountById(): Database.Statement {
+  return _stmtAccountById ??= db.prepare(`SELECT * FROM "Account" WHERE id = ?`)
+}
+
+let _stmtPaymentsForDebt: Database.Statement | null = null
+export function stmtPaymentsForDebt(): Database.Statement {
+  return _stmtPaymentsForDebt ??= db.prepare(
+    `SELECT * FROM "DebtPayment" WHERE debtId = ? ORDER BY date DESC`,
+  )
+}
 
 /**
  * Hydrate a Debt row.
  *
- * `payments` may be passed in by the caller (e.g. the list handler batches the
- * lookup to avoid N+1). When omitted, fall back to a per-row query — handy for
- * single-debt fetches (create/update/recordPayment/deletePayment).
+ * `payments` must be provided by the caller — fetch them inline before
+ * calling this (or batch-fetch + group, as the list handler does). Keeping
+ * hydration pure makes call paths explicit and avoids hidden DB hits inside
+ * the hydrator.
  */
-export function hydrateDebt(row: any, payments?: any[]): any {
+export function hydrateDebt(row: any, payments: any[]): any {
   if (!row) return row
-  const payList = payments ?? (stmtPaymentsForDebt.all(row.id) as any[])
   return {
     id: row.id, name: row.name, type: row.type, counterparty: row.counterparty,
     principal: row.principal, outstanding: row.outstanding, interestRate: row.interestRate,
     frequency: row.frequency, nextPaymentDate: row.nextPaymentDate, startDate: row.startDate,
     endDate: row.endDate, status: row.status, accountId: row.accountId, notes: row.notes,
     createdAt: row.createdAt, updatedAt: row.updatedAt,
-    account: row.accountId == null ? null : stmtAccountById.get(row.accountId),
-    payments: payList,
+    account: row.accountId == null ? null : stmtAccountById().get(row.accountId),
+    payments,
   }
 }

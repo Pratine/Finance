@@ -29,11 +29,11 @@ export function calcMonthlyBreakdown(
 
     const income = inMonth
       .filter(t => t.type === 'CREDIT')
-      .reduce((s, t) => s + parseFloat(t.amount), 0)
+      .reduce((s, t) => s + Number(t.amount), 0)
 
     const expenses = inMonth
       .filter(t => t.type === 'DEBIT')
-      .reduce((s, t) => s + Math.abs(parseFloat(t.amount)), 0)
+      .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
 
     result.push({
       label: d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
@@ -107,7 +107,7 @@ export function calcCategoryTrends(
     if (!catMonthTotals.has(name)) {
       catMonthTotals.set(name, { color: t.category.color ?? '#64748b', byMonth: new Array(months).fill(0) })
     }
-    catMonthTotals.get(name)!.byMonth[mi] += Math.abs(parseFloat(t.amount))
+    catMonthTotals.get(name)!.byMonth[mi] += Math.abs(Number(t.amount))
   }
 
   // Pick top N categories by total spend across the period
@@ -145,7 +145,7 @@ export function calcCategoryBreakdown(
     if (new Date(t.date) < cutoff) continue
     const key = t.category.name
     const prev = map.get(key) ?? { color: t.category.color ?? '#64748b', total: 0 }
-    map.set(key, { ...prev, total: prev.total + Math.abs(parseFloat(t.amount)) })
+    map.set(key, { ...prev, total: prev.total + Math.abs(Number(t.amount)) })
   }
 
   const total = [...map.values()].reduce((s, v) => s + v.total, 0)

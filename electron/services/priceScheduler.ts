@@ -92,14 +92,20 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
     }
     const shares = Number(inv.shares)
     const now = new Date().toISOString()
-    updateInvestment.run({
-      id: inv.id,
-      currentValue: priceInEUR * shares,
-      lastPriceFetched: priceInEUR,
-      priceUpdatedAt: now,
-      updatedAt: now,
+    // Atomically write both the Investment row and the daily PriceHistory
+    // snapshot — otherwise a crash between the two leaves the snapshot
+    // disagreeing with currentValue.
+    const persist = db.transaction(() => {
+      updateInvestment.run({
+        id: inv.id,
+        currentValue: priceInEUR * shares,
+        lastPriceFetched: priceInEUR,
+        priceUpdatedAt: now,
+        updatedAt: now,
+      })
+      savePriceSnapshot(inv.id, priceInEUR, shares)
     })
-    savePriceSnapshot(inv.id, priceInEUR, shares)
+    persist()
     return { id: inv.id, ticker: inv.ticker, price: priceInEUR }
   })
   return {

@@ -28,9 +28,6 @@ export function registerAccountsHandlers(ipcMain: IpcMain) {
     INSERT INTO "BalanceCorrection" (accountId, oldBalance, newBalance, note, createdAt)
     VALUES (?, ?, ?, ?, ?)
   `)
-  const stmtSavingsRenameForAccount = db.prepare(
-    `UPDATE "SavingsGoal" SET name = ?, updatedAt = ? WHERE accountId = ?`,
-  )
   const stmtCorrectionsForAccount = db.prepare(`
     SELECT * FROM "BalanceCorrection"
     WHERE accountId = ?
@@ -117,9 +114,10 @@ export function registerAccountsHandlers(ipcMain: IpcMain) {
       const { sql, params } = buildUpdate(fields, { updatedAt: nowIso() })
       db.prepare(`UPDATE "Account" SET ${sql} WHERE id = @__id`).run({ ...params, __id: id })
 
-      if (rest.name) {
-        stmtSavingsRenameForAccount.run(rest.name, nowIso(), id)
-      }
+      // Note: SavingsGoal.name is intentionally NOT synced to the account
+      // name. A user can rename an account ("BPI Current") without renaming
+      // the linked savings goal ("Emergency Fund"). They diverge after
+      // creation and the savings goal owns its own label.
       return getAccountFull(id)
     })()
   })

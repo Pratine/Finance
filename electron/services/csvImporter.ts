@@ -3,21 +3,11 @@
 // by hashing each row and storing the hash in the `importHash` column.
 import fs from 'fs'
 import crypto from 'crypto'
-import { db } from '../db'
+import { applyPendingRows, type PendingRow, type ImportResult } from './importCore'
+
+export type { PendingRow, ImportResult } from './importCore'
 
 interface Rule { id: number; pattern: string; categoryId: number }
-
-interface TxInsert {
-  accountId: number
-  date: string
-  valueDate: string | null
-  description: string
-  amount: number
-  type: string
-  runningBalance: number | null
-  importHash: string
-  categoryId: number | null
-}
 
 export interface RawRow {
   dataLancamento: string
@@ -26,12 +16,6 @@ export interface RawRow {
   montante: string
   tipo: string
   saldo: string
-}
-
-export interface ImportResult {
-  imported: number
-  skipped: number
-  errors: string[]
 }
 
 // Reads the file and auto-detects encoding.
@@ -103,7 +87,6 @@ export async function importMillenniumCSV(
   }
 
   // ── Parse all valid rows upfront ────────────────────────────────────────────
-  type PendingRow = { hash: string; data: TxInsert }
   const pending: PendingRow[] = []
   const errors: string[] = []
 
@@ -151,47 +134,5 @@ export async function importMillenniumCSV(
     })
   }
 
-  if (pending.length === 0) return { imported: 0, skipped: 0, errors }
-
-  // ── Deduplicate against existing imports ────────────────────────────────────
-  // Batch the IN-clause to stay under SQLite's SQLITE_LIMIT_VARIABLE_NUMBER (999).
-  const BATCH = 500
-  const existing = new Set<string>()
-  const hashes = pending.map(p => p.hash)
-  for (let i = 0; i < hashes.length; i += BATCH) {
-    const slice = hashes.slice(i, i + BATCH)
-    const placeholders = slice.map(() => '?').join(',')
-    const rows = db
-      .prepare(`SELECT importHash FROM "Transaction" WHERE importHash IN (${placeholders})`)
-      .all(...slice) as Array<{ importHash: string | null }>
-    rows.forEach(r => { if (r.importHash) existing.add(r.importHash) })
-  }
-
-  const newRows = pending.filter(p => !existing.has(p.hash))
-  const skipped = pending.length - newRows.length
-
-  if (newRows.length === 0) return { imported: 0, skipped, errors }
-
-  // ── Atomic: insert all new rows + update balance in one transaction ──────────
-  const insertTx = db.prepare(`
-    INSERT INTO "Transaction" (accountId, categoryId, date, valueDate, description, amount, type, runningBalance, importHash)
-    VALUES (@accountId, @categoryId, @date, @valueDate, @description, @amount, @type, @runningBalance, @importHash)
-  `)
-  const findLatest = db.prepare(`
-    SELECT runningBalance FROM "Transaction"
-    WHERE accountId = ? AND runningBalance IS NOT NULL
-    ORDER BY date DESC LIMIT 1
-  `)
-  const updateBalance = db.prepare(`UPDATE "Account" SET balance = ?, updatedAt = ? WHERE id = ?`)
-
-  const apply = db.transaction((rows: PendingRow[]) => {
-    for (const p of rows) insertTx.run(p.data)
-    const latest = findLatest.get(accountId) as { runningBalance: number | null } | undefined
-    if (latest?.runningBalance != null) {
-      updateBalance.run(latest.runningBalance, new Date().toISOString(), accountId)
-    }
-  })
-  apply(newRows)
-
-  return { imported: newRows.length, skipped, errors }
+  return applyPendingRows(pending, accountId, errors)
 }

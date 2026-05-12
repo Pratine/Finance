@@ -56,7 +56,12 @@ export function runMigrations(): void {
     } catch (e: any) {
       // "already exists" means Prisma already created this table — mark applied and move on.
       // Any other error (e.g. bad SQL, missing column reference) is a real failure.
-      if (e?.message?.includes('already exists')) {
+      // SQLite raises an "already exists" error as either SQLITE_ERROR
+      // (CREATE TABLE/INDEX already present) or SQLITE_CONSTRAINT (when a
+      // UNIQUE/PRIMARY KEY collision masks the duplicate-name). Matching on
+      // the code first guards against false positives from unrelated errors
+      // that happen to contain the string "already exists" in user data.
+      if ((e?.code === 'SQLITE_ERROR' || e?.code === 'SQLITE_CONSTRAINT') && e?.message?.includes('already exists')) {
         db.prepare('INSERT OR IGNORE INTO _migrations (name) VALUES (?)').run(name)
       } else {
         console.error(`Migration ${name} failed:`, e)
