@@ -80,18 +80,6 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
     .prepare(`SELECT id, ticker, shares FROM "Investment" WHERE ticker IS NOT NULL`)
     .all() as InvestmentRow[]
 
-  const upsertRate = db.prepare(`
-    INSERT INTO "ExchangeRate" (fromCurrency, rate, updatedAt)
-    VALUES (@fromCurrency, @rate, @updatedAt)
-    ON CONFLICT(fromCurrency) DO UPDATE SET rate = excluded.rate, updatedAt = excluded.updatedAt
-  `)
-  const getCachedRate = db.prepare(`SELECT rate FROM "ExchangeRate" WHERE fromCurrency = ?`)
-  const updateInvestment = db.prepare(`
-    UPDATE "Investment"
-    SET currentValue = @currentValue, lastPriceFetched = @lastPriceFetched, priceUpdatedAt = @priceUpdatedAt, updatedAt = @updatedAt
-    WHERE id = @id
-  `)
-
   const results = await withConcurrencyLimit(investments, PRICE_FETCH_CONCURRENCY, async (inv) => {
     const result = await fetchPrice(inv.ticker!)
     // fetchExchangeRate throws on failure — use a cached rate if we have one,
