@@ -21,7 +21,7 @@ app.commandLine.appendSwitch('lang', 'pt-PT')
 
 // Windows notification title comes from the AppUserModelId — set it explicitly
 // so it shows "Finance" instead of "electron.app.Finance".
-if (process.platform === 'win32') app.setAppUserModelId('Finance')
+app.setAppUserModelId('Finance')
 
 // Runs pending DB migrations at startup — safe to call repeatedly.
 // Migrations are applied via better-sqlite3 directly (see ../migrations.ts);
