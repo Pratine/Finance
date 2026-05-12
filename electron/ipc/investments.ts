@@ -224,4 +224,8 @@ export function registerInvestmentsHandlers(ipcMain: IpcMain) {
   })
 
   ipcMain.handle('exchangeRates:list', () => stmtRatesList.all())
+
+  ipcMain.handle('import:trading212', async (_e, filePath: string) => {
+    return importTrading212CSV(filePath)
+  })
 }
