@@ -9,7 +9,6 @@ import {
 } from './shared'
 import { importMillenniumCSV } from '../services/csvImporter'
 import { importRevolutCSV } from '../services/revolutImporter'
-import { importTrading212CSV } from '../services/trading212Importer'
 
 export function registerIoHandlers(ipcMain: IpcMain) {
   const stmtCategoryRules = db.prepare(`SELECT id, pattern, categoryId FROM "CategoryRule"`)
@@ -333,12 +332,6 @@ export function registerIoHandlers(ipcMain: IpcMain) {
     const rules = stmtCategoryRules.all() as Array<{ id: number; pattern: string; categoryId: number }>
     const result = await importRevolutCSV(filePath, accountId, rules)
     logImport(filePath, 'revolut', accountId, result)
-    return result
-  })
-
-  ipcMain.handle('import:trading212', async (_e, filePath: string) => {
-    const result = await importTrading212CSV(filePath)
-    logImport(filePath, 'trading212', 0, { ...result, errors: result.errors })
     return result
   })
 
