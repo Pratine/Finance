@@ -77,7 +77,7 @@ export function avgMonthlyIncome(transactions: Transaction[], lookbackMonths = 3
   const now = new Date()
   const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - lookbackMonths, 1))
   const credits = transactions.filter(t => t.type === 'CREDIT' && new Date(t.date) >= cutoff)
-  const total = credits.reduce((s, t) => s + parseFloat(t.amount), 0)
+  const total = credits.reduce((s, t) => s + Number(t.amount), 0)
   return total / Math.max(lookbackMonths, 1)
 }
 
