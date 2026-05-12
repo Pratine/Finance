@@ -19,7 +19,7 @@ function get(url: string): Promise<string> {
       res.on('data', (chunk) => { data += chunk })
       res.on('end', () => {
         if ((res.statusCode ?? 0) < 200 || (res.statusCode ?? 0) >= 300) {
-          reject(new Error(`HTTP ${res.statusCode} from ${url}`))
+          reject(new Error(`HTTP_${res.statusCode}`))
         } else {
           resolve(data)
         }
