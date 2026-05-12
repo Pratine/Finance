@@ -155,7 +155,7 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
     VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?)
   `)
   const updateInvTotals = db.prepare(
-    `UPDATE "Investment" SET shares = ?, amountIn = ?, updatedAt = ? WHERE id = ?`,
+    `UPDATE "Investment" SET shares = ?, amountIn = ?, currentValue = CASE WHEN currentValue = 0 THEN ? ELSE currentValue END, updatedAt = ? WHERE id = ?`,
   )
 
   const newInvestments: string[] = []
