@@ -93,6 +93,9 @@ export default function Sidebar() {
         <div className="px-6 py-4 border-t border-slate-700 text-xs text-slate-500">
           EUR · Local
         </div>
+        <div className="px-6 py-4 border-t border-slate-700 text-xs text-slate-500">
+          By Pratine
+        </div>
       </aside>
     </>
   )
