@@ -293,9 +293,9 @@ export default function InvestmentsPage() {
       </div>
 
       {refreshMsg && (
-        <div className="mb-4 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 flex justify-between">
-          {refreshMsg}
-          <button onClick={() => setRefreshMsg(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 ml-4">✕</button>
+        <div className={`mb-4 text-sm bg-slate-50 dark:bg-slate-900 border rounded-xl px-4 py-2.5 flex justify-between gap-4 ${refreshMsg.includes('failed') ? 'border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
+          <span className="break-all">{refreshMsg}</span>
+          <button onClick={() => setRefreshMsg(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 shrink-0">✕</button>
         </div>
       )}
 
