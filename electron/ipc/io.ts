@@ -181,8 +181,14 @@ export function registerIoHandlers(ipcMain: IpcMain) {
 
     const dIso = (v: string | null | undefined) => v ? new Date(v).toISOString() : null
 
-    function insertAll(table: string, rows: any[], cols: string[]) {
+    function insertAll(table: string, rows: any[]) {
       if (!rows.length) return
+      // Get actual table columns from SQLite schema
+      const tableInfo = db.prepare(`PRAGMA table_info("${table}")`).all() as Array<{ name: string }>
+      const tableColumns = new Set(tableInfo.map(c => c.name))
+      // Use columns that exist in both the backup row and the table schema
+      const cols = Object.keys(rows[0]).filter(k => tableColumns.has(k))
+      if (cols.length === 0) return
       const placeholders = cols.map(c => `@${c}`).join(', ')
       const colList = cols.map(c => `"${c}"`).join(', ')
       const stmt = db.prepare(`INSERT INTO "${table}" (${colList}) VALUES (${placeholders})`)
