@@ -1,11 +1,14 @@
 import type { IpcMain } from 'electron'
 import { db } from '../db'
-import { buildUpdate, hydrateSavingsGoal, nowIso, toIso } from './shared'
+import { accountJoins, accountSelect, buildUpdate, hydrateAccount, hydrateSavingsGoal, nowIso, toIso } from './shared'
 import { elapsedPeriods, applyPeriods } from '../services/interest'
 import type { InterestType } from '../domainTypes'
 
 export function registerSavingsHandlers(ipcMain: IpcMain) {
   const stmtSavingsList = db.prepare(`SELECT * FROM "SavingsGoal" ORDER BY createdAt ASC`)
+  const buildAccountsByIdStmt = (n: number) => db.prepare(
+    `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id IN (${Array(n).fill('?').join(',')})`,
+  )
   const stmtSavingsById = db.prepare(`SELECT * FROM "SavingsGoal" WHERE id = ?`)
   const stmtSavingsDelete = db.prepare(`DELETE FROM "SavingsGoal" WHERE id = ?`)
   const stmtAccountsSavings = db.prepare(`
@@ -44,53 +47,66 @@ export function registerSavingsHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('savings:list', () => {
     const rows = stmtSavingsList.all() as any[]
-    return rows.map(hydrateSavingsGoal)
+    if (rows.length === 0) return []
+    // Batch-fetch every linked Account in a single query and build a lookup
+    // map — avoids a per-row getAccountFull() call (was N+1).
+    const accountIds = Array.from(new Set(rows.map(r => r.accountId).filter((x): x is number => x != null)))
+    const accountsById = new Map<number, any>()
+    if (accountIds.length > 0) {
+      const accRows = buildAccountsByIdStmt(accountIds.length).all(...accountIds) as any[]
+      for (const a of accRows) accountsById.set(a.id, hydrateAccount(a))
+    }
+    return rows.map(r => hydrateSavingsGoal(
+      r,
+      r.accountId == null ? null : (accountsById.get(r.accountId) ?? null),
+    ))
   })
 
   ipcMain.handle('savings:sync', () => {
-    const savingsAccounts = stmtAccountsSavings.all() as any[]
+    // Wrap the entire sync in a single transaction. Previously we opened one
+    // transaction per savings account and one per interest goal, which means
+    // dozens of fsyncs for what is logically a single bulk update.
+    db.transaction(() => {
+      const savingsAccounts = stmtAccountsSavings.all() as any[]
 
-    for (const acc of savingsAccounts) {
-      db.transaction(() => {
+      for (const acc of savingsAccounts) {
         const existing = stmtGoalForAccount.get(acc.id)
-        if (existing) return
+        if (existing) continue
         const currentAmount = Number(acc.balance)
         const now = nowIso()
         const info = stmtSavingsInsertWithName.run(acc.name, acc.id, currentAmount, now, now)
         if (currentAmount > 0) {
           stmtSnapshotInsert.run(info.lastInsertRowid, currentAmount, 'initial', now)
         }
-      })()
-    }
+      }
 
-    const interestGoals = stmtInterestGoals.all() as any[]
+      const interestGoals = stmtInterestGoals.all() as any[]
 
-    for (const goal of interestGoals) {
-      if (!goal.interestFrequencyDays || !goal.interestValue || !goal.interestType) continue
-      const periods = elapsedPeriods({
-        lastInterestApplied: goal.lastInterestApplied ? new Date(goal.lastInterestApplied) : null,
-        interestFrequencyDays: goal.interestFrequencyDays,
-        createdAt: new Date(goal.createdAt),
-      })
-      if (periods <= 0) continue
-      const base = goal.lastInterestApplied ? new Date(goal.lastInterestApplied) : new Date(goal.createdAt)
-      const newAmount = applyPeriods(
-        Number(goal.currentAmount),
-        goal.interestType as InterestType,
-        Number(goal.interestValue),
-        periods,
-      )
-      const newLastApplied = new Date(base.getTime() + periods * goal.interestFrequencyDays * 86_400_000)
-      const earned = newAmount - Number(goal.currentAmount)
-      db.transaction(() => {
+      for (const goal of interestGoals) {
+        if (!goal.interestFrequencyDays || !goal.interestValue || !goal.interestType) continue
+        const periods = elapsedPeriods({
+          lastInterestApplied: goal.lastInterestApplied ? new Date(goal.lastInterestApplied) : null,
+          interestFrequencyDays: goal.interestFrequencyDays,
+          createdAt: new Date(goal.createdAt),
+        })
+        if (periods <= 0) continue
+        const base = goal.lastInterestApplied ? new Date(goal.lastInterestApplied) : new Date(goal.createdAt)
+        const newAmount = applyPeriods(
+          Number(goal.currentAmount),
+          goal.interestType as InterestType,
+          Number(goal.interestValue),
+          periods,
+        )
+        const newLastApplied = new Date(base.getTime() + periods * goal.interestFrequencyDays * 86_400_000)
+        const earned = newAmount - Number(goal.currentAmount)
         const now = nowIso()
         stmtSavingsApplyInterest.run(newAmount, newLastApplied.toISOString(), Number(goal.totalInterestEarned) + earned, now, goal.id)
         if (goal.accountId) {
           stmtAccountSetBalance.run(newAmount, now, goal.accountId)
         }
         stmtSnapshotInsert.run(goal.id, newAmount, 'interest', now)
-      })()
-    }
+      }
+    })()
   })
 
   ipcMain.handle('savings:create', (_e, data: any) => {

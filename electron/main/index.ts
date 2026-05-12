@@ -184,13 +184,39 @@ function notify(title: string, body: string) {
   new Notification({ title, body }).show()
 }
 
+// Prepared statements used by checkNotifications. These reference columns
+// that have always existed, so it's safe to prepare them once at startup
+// (after migrations) and reuse on every timer tick. We lazy-init on first
+// call because `db` is imported at module load — preparing statements at
+// module scope would run before runMigrations() in app.whenReady().
+let _stmtNotifBills: import('better-sqlite3').Statement | null = null
+let _stmtNotifBudgets: import('better-sqlite3').Statement | null = null
+let _stmtNotifMonthSpentByCat: import('better-sqlite3').Statement | null = null
+let _stmtNotifIncome: import('better-sqlite3').Statement | null = null
+let _stmtNotifGoals: import('better-sqlite3').Statement | null = null
+
 function checkNotifications() {
   try {
+    _stmtNotifBills ??= db.prepare(`SELECT name, nextDueDate FROM "RecurringBill" WHERE isActive = 1`)
+    _stmtNotifBudgets ??= db.prepare(`
+      SELECT b.id, b.categoryId, b.amount, c.name AS categoryName
+      FROM "Budget" b
+      JOIN "Category" c ON c.id = b.categoryId
+    `)
+    _stmtNotifMonthSpentByCat ??= db.prepare(`
+      SELECT categoryId, SUM(ABS(amount)) AS spent
+      FROM "Transaction"
+      WHERE type = 'DEBIT' AND date >= ? AND date < ?
+      GROUP BY categoryId
+    `)
+    _stmtNotifIncome ??= db.prepare(`SELECT name, nextExpectedDate FROM "RecurringIncome" WHERE isActive = 1`)
+    _stmtNotifGoals ??= db.prepare(`SELECT name, targetAmount, currentAmount FROM "SavingsGoal"`)
+
     const now = new Date()
     const today = new Date(now); today.setUTCHours(0, 0, 0, 0)
 
     // ── Bills ──────────────────────────────────────────────────────────────────
-    const bills = db.prepare(`SELECT name, nextDueDate FROM "RecurringBill" WHERE isActive = 1`).all() as Array<{ name: string; nextDueDate: string }>
+    const bills = _stmtNotifBills.all() as Array<{ name: string; nextDueDate: string }>
     const overdue: string[] = []
     const dueSoon: string[] = []
     for (const bill of bills) {
@@ -203,25 +229,18 @@ function checkNotifications() {
     if (dueSoon.length > 0) notify(`Bill${dueSoon.length > 1 ? 's' : ''} due soon`, dueSoon.join(', '))
 
     // ── Budgets ────────────────────────────────────────────────────────────────
-    const budgets = db.prepare(`
-      SELECT b.id, b.categoryId, b.amount, c.name AS categoryName
-      FROM "Budget" b
-      JOIN "Category" c ON c.id = b.categoryId
-    `).all() as Array<{ id: number; categoryId: number; amount: number; categoryName: string }>
+    const budgets = _stmtNotifBudgets.all() as Array<{ id: number; categoryId: number; amount: number; categoryName: string }>
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
     const monthEnd   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString()
-    const monthTxns = db.prepare(`
-      SELECT categoryId, amount FROM "Transaction"
-      WHERE type = 'DEBIT' AND date >= ? AND date < ?
-    `).all(monthStart, monthEnd) as Array<{ categoryId: number | null; amount: number }>
+    const spentRows = _stmtNotifMonthSpentByCat.all(monthStart, monthEnd) as Array<{ categoryId: number | null; spent: number }>
+    const spentByCat = new Map<number | null, number>()
+    for (const r of spentRows) spentByCat.set(r.categoryId, Number(r.spent))
     const exceededBudgets: string[] = []
     const warningBudgets: string[] = []
     for (const budget of budgets) {
       const limit = Number(budget.amount)
       if (!limit) continue
-      const spent = monthTxns
-        .filter(t => t.categoryId === budget.categoryId)
-        .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
+      const spent = spentByCat.get(budget.categoryId) ?? 0
       const pct = (spent / limit) * 100
       if (pct >= 100) exceededBudgets.push(`${budget.categoryName} (${Math.round(pct)}%)`)
       else if (pct >= 80) warningBudgets.push(`${budget.categoryName} (${Math.round(pct)}%)`)
@@ -230,7 +249,7 @@ function checkNotifications() {
     if (warningBudgets.length > 0) notify(`${warningBudgets.length} budget${warningBudgets.length > 1 ? 's' : ''} near limit`, warningBudgets.join(', '))
 
     // ── Recurring income (late) ────────────────────────────────────────────────
-    const incomeItems = db.prepare(`SELECT name, nextExpectedDate FROM "RecurringIncome" WHERE isActive = 1`).all() as Array<{ name: string; nextExpectedDate: string }>
+    const incomeItems = _stmtNotifIncome.all() as Array<{ name: string; nextExpectedDate: string }>
     const lateIncome: string[] = []
     for (const inc of incomeItems) {
       const due = new Date(inc.nextExpectedDate); due.setUTCHours(0, 0, 0, 0)
@@ -240,7 +259,7 @@ function checkNotifications() {
     if (lateIncome.length > 0) notify('Expected income not yet received', lateIncome.join(', '))
 
     // ── Savings goals ──────────────────────────────────────────────────────────
-    const goals = db.prepare(`SELECT name, targetAmount, currentAmount FROM "SavingsGoal"`).all() as Array<{ name: string; targetAmount: number; currentAmount: number }>
+    const goals = _stmtNotifGoals.all() as Array<{ name: string; targetAmount: number; currentAmount: number }>
     const reachedGoals: string[] = []
     for (const goal of goals) {
       const pct = Number(goal.targetAmount) > 0

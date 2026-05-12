@@ -47,7 +47,7 @@ export function buildUpdate(
     params[k] = v
   }
   for (const [k, v] of Object.entries(alwaysSet)) {
-    if (!params[k]) cols.push(`"${k}" = @${k}`)
+    if (!(k in params)) cols.push(`"${k}" = @${k}`)
     params[k] = v
   }
   return { sql: cols.join(', '), params }
@@ -268,7 +268,8 @@ export function hydrateIncome(row: any): any {
 }
 
 // ── Savings / Debt hydrators ─────────────────────────────────────────────────
-export function hydrateSavingsGoal(row: any): any {
+
+export function hydrateSavingsGoal(row: any, account?: any): any {
   if (!row) return row
   return {
     id: row.id, accountId: row.accountId, name: row.name,
@@ -280,7 +281,12 @@ export function hydrateSavingsGoal(row: any): any {
     contributionAmount: row.contributionAmount,
     contributionFrequencyDays: row.contributionFrequencyDays,
     notes: row.notes, createdAt: row.createdAt, updatedAt: row.updatedAt,
-    account: row.accountId == null ? null : getAccountFull(row.accountId),
+    // List callers pre-fetch all accounts in one batch query and pass the
+    // matching one here; single-goal callers (create/update/applyInterest)
+    // can pass undefined and fall back to the per-row lookup.
+    account: row.accountId == null
+      ? null
+      : (account !== undefined ? account : getAccountFull(row.accountId)),
   }
 }
 
@@ -304,7 +310,12 @@ export function stmtPaymentsForDebt(): Database.Statement {
  * hydration pure makes call paths explicit and avoids hidden DB hits inside
  * the hydrator.
  */
-export function hydrateDebt(row: any, payments: any[]): any {
+// Joined SELECT for debt list — JOINs Account (+ Bank, AccountType) so
+// hydrateDebt can build the nested account inline. Single-debt callers
+// (create/update/recordPayment/deletePayment) still use the plain
+// `SELECT * FROM Debt` form; hydrateDebt falls back to stmtAccountById in
+// that case.
+export function hydrateDebt(row: any, payments: any[], account?: any): any {
   if (!row) return row
   return {
     id: row.id, name: row.name, type: row.type, counterparty: row.counterparty,
@@ -312,7 +323,11 @@ export function hydrateDebt(row: any, payments: any[]): any {
     frequency: row.frequency, nextPaymentDate: row.nextPaymentDate, startDate: row.startDate,
     endDate: row.endDate, status: row.status, accountId: row.accountId, notes: row.notes,
     createdAt: row.createdAt, updatedAt: row.updatedAt,
-    account: row.accountId == null ? null : stmtAccountById().get(row.accountId),
+    // If the caller pre-fetched the account (list path uses a batch query), use
+    // it directly. Otherwise fall back to a per-row lookup (single-debt paths).
+    account: row.accountId == null
+      ? null
+      : (account !== undefined ? account : stmtAccountById().get(row.accountId)),
     payments,
   }
 }

@@ -10,15 +10,21 @@ export interface RefreshResult {
   timestamp: Date
 }
 
+// Lazy-init so module-load order doesn't matter (db is a Proxy that opens
+// the underlying connection on first access). Columns referenced here have
+// always existed, so a single prepared statement is safe to reuse.
+let _stmtSavePriceSnapshot: import('better-sqlite3').Statement | null = null
+
 export function savePriceSnapshot(investmentId: number, price: number, shares: number) {
   const value = price * shares
   const today = new Date(); today.setUTCHours(0, 0, 0, 0)
   const recordedAt = today.toISOString()
-  db.prepare(`
+  _stmtSavePriceSnapshot ??= db.prepare(`
     INSERT INTO "PriceHistory" (investmentId, price, value, recordedAt)
     VALUES (@investmentId, @price, @value, @recordedAt)
     ON CONFLICT(investmentId, recordedAt) DO UPDATE SET price = excluded.price, value = excluded.value
-  `).run({ investmentId, price, value, recordedAt })
+  `)
+  _stmtSavePriceSnapshot.run({ investmentId, price, value, recordedAt })
 }
 
 // Processes tasks in sequential fixed-size batches, with at most `limit` running

@@ -4,6 +4,7 @@ import {
   buildUpdate, hydrateDebt, nowIso, toIso, requireIso, advanceByFrequency,
   stmtPaymentsForDebt,
 } from './shared'
+import { accountSelect, accountJoins, hydrateAccount } from './shared'
 import type { Frequency, DebtType, DebtStatus } from '../domainTypes'
 
 export function registerDebtsHandlers(ipcMain: IpcMain) {
@@ -11,6 +12,10 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
   // module level because module imports execute before runMigrations() in
   // app.whenReady() — referencing migration-added columns at module scope crashes.
   const stmtDebtsList     = db.prepare(`SELECT * FROM "Debt" ORDER BY createdAt ASC`)
+  // Batch account fetch for the list — avoids one stmtAccountById call per debt.
+  const buildAccountsByIdStmt = (n: number) => db.prepare(
+    `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id IN (${Array(n).fill('?').join(',')})`,
+  )
   const stmtDebtById      = db.prepare(`SELECT * FROM "Debt" WHERE id = ?`)
   const stmtDebtInsert    = db.prepare(`
     INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)
@@ -41,8 +46,9 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
   const stmtAccBalanceAdd = db.prepare(`UPDATE "Account" SET balance = balance + ?, updatedAt = ? WHERE id = ?`)
   const stmtAccBalanceSub = db.prepare(`UPDATE "Account" SET balance = balance - ?, updatedAt = ? WHERE id = ?`)
   // ── List ───────────────────────────────────────────────────────────────────
-  // Batch-fetch payments for every debt in a single query, group by debtId,
-  // then hand the pre-grouped lists to hydrateDebt (avoids N+1).
+  // Batch-fetch payments and accounts for every debt in single queries,
+  // group by debtId / accountId, then hand the pre-grouped data to
+  // hydrateDebt. Avoids both N+1 payments and N+1 account lookups.
   ipcMain.handle('debts:list', () => {
     const rows = stmtDebtsList.all() as any[]
     if (rows.length === 0) return []
@@ -57,7 +63,19 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
       arr.push(p)
       paymentsByDebt.set(p.debtId, arr)
     }
-    return rows.map(r => hydrateDebt(r, paymentsByDebt.get(r.id) ?? []))
+
+    const accountIds = Array.from(new Set(rows.map(r => r.accountId).filter((x): x is number => x != null)))
+    const accountsById = new Map<number, any>()
+    if (accountIds.length > 0) {
+      const accRows = buildAccountsByIdStmt(accountIds.length).all(...accountIds) as any[]
+      for (const a of accRows) accountsById.set(a.id, hydrateAccount(a))
+    }
+
+    return rows.map(r => hydrateDebt(
+      r,
+      paymentsByDebt.get(r.id) ?? [],
+      r.accountId == null ? null : (accountsById.get(r.accountId) ?? null),
+    ))
   })
 
   ipcMain.handle('debts:create', (_e, data: {

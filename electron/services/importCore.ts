@@ -27,6 +27,30 @@ export interface ImportResult {
 // Batch the IN-clause to stay under SQLite's SQLITE_LIMIT_VARIABLE_NUMBER (999).
 const BATCH = 500
 
+// Prepared statements used by applyPendingRows. Lazy-initialised on first use:
+// `db` is a Proxy that opens the DB on first access, and these statements
+// reference columns (accountId, categoryId, valueDate, importHash, ...) that
+// have always existed — so once prepared they can be reused for every import.
+let _insertTx: import('better-sqlite3').Statement | null = null
+let _findLatest: import('better-sqlite3').Statement | null = null
+let _updateBalance: import('better-sqlite3').Statement | null = null
+function insertTxStmt() {
+  return _insertTx ??= db.prepare(`
+    INSERT INTO "Transaction" (accountId, categoryId, date, valueDate, description, amount, type, runningBalance, importHash)
+    VALUES (@accountId, @categoryId, @date, @valueDate, @description, @amount, @type, @runningBalance, @importHash)
+  `)
+}
+function findLatestStmt() {
+  return _findLatest ??= db.prepare(`
+    SELECT runningBalance FROM "Transaction"
+    WHERE accountId = ? AND runningBalance IS NOT NULL
+    ORDER BY date DESC LIMIT 1
+  `)
+}
+function updateBalanceStmt() {
+  return _updateBalance ??= db.prepare(`UPDATE "Account" SET balance = ?, updatedAt = ? WHERE id = ?`)
+}
+
 /** Returns the set of importHashes already present in the Transaction table. */
 function findExistingHashes(hashes: string[]): Set<string> {
   const existing = new Set<string>()
@@ -66,16 +90,9 @@ export function applyPendingRows(
     return { imported: 0, skipped, errors }
   }
 
-  const insertTx = db.prepare(`
-    INSERT INTO "Transaction" (accountId, categoryId, date, valueDate, description, amount, type, runningBalance, importHash)
-    VALUES (@accountId, @categoryId, @date, @valueDate, @description, @amount, @type, @runningBalance, @importHash)
-  `)
-  const findLatest = db.prepare(`
-    SELECT runningBalance FROM "Transaction"
-    WHERE accountId = ? AND runningBalance IS NOT NULL
-    ORDER BY date DESC LIMIT 1
-  `)
-  const updateBalance = db.prepare(`UPDATE "Account" SET balance = ?, updatedAt = ? WHERE id = ?`)
+  const insertTx = insertTxStmt()
+  const findLatest = findLatestStmt()
+  const updateBalance = updateBalanceStmt()
 
   const apply = db.transaction((rows: PendingRow[]) => {
     for (const p of rows) insertTx.run(p.data)
