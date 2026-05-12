@@ -17,7 +17,13 @@ function get(url: string): Promise<string> {
     const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
       let data = ''
       res.on('data', (chunk) => { data += chunk })
-      res.on('end', () => resolve(data))
+      res.on('end', () => {
+        if ((res.statusCode ?? 0) < 200 || (res.statusCode ?? 0) >= 300) {
+          reject(new Error(`HTTP ${res.statusCode} from ${url}`))
+        } else {
+          resolve(data)
+        }
+      })
       res.on('error', reject)
     })
     req.setTimeout(TIMEOUT_MS, () => {
