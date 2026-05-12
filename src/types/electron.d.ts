@@ -25,6 +25,7 @@ declare global {
       // Import
       importCSV: (filePath: string, accountId: number) => Promise<{ imported: number; skipped: number; errors: string[] }>
       importRevolut: (filePath: string, accountId: number) => Promise<{ imported: number; skipped: number; errors: string[] }>
+      importTrading212: (filePath: string) => Promise<{ imported: number; skipped: number; errors: string[]; newInvestments: string[] }>
       listImportHistory: () => Promise<ImportHistory[]>
       deleteImportHistory: (id: number) => Promise<ImportHistory>
 
