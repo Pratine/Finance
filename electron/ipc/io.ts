@@ -336,6 +336,12 @@ export function registerIoHandlers(ipcMain: IpcMain) {
     return result
   })
 
+  ipcMain.handle('import:trading212', async (_e, filePath: string) => {
+    const result = await importTrading212CSV(filePath)
+    logImport(filePath, 'trading212', 0, { ...result, errors: result.errors })
+    return result
+  })
+
   ipcMain.handle('import:listHistory', () => {
     const rows = stmtImportList.all() as any[]
     return rows.map(r => ({
