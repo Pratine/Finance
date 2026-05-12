@@ -51,7 +51,7 @@ export function calcAlerts({
         id: `bill-due-${bill.id}`,
         severity: 'warning',
         title: `${bill.name} due ${days === 0 ? 'today' : `in ${days} day${days !== 1 ? 's' : ''}`}`,
-        body: `${parseFloat(bill.amount).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })} · ${bill.frequency.charAt(0) + bill.frequency.slice(1).toLowerCase()}`,
+        body: `${Number(bill.amount).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })} · ${bill.frequency.charAt(0) + bill.frequency.slice(1).toLowerCase()}`,
         route: '/bills',
       })
     }
