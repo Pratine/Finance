@@ -54,11 +54,15 @@ export function registerSettingsHandlers(ipcMain: IpcMain) {
   ipcMain.handle('investments:refreshPrice', async (_e, id: number) => {
     const inv = stmtInvRaw.get(id) as any
     if (!inv) throw new Error(`Investment ${id} not found`)
-    if (!inv.ticker) throw new Error('No ticker symbol set for this investment')
+    if (!inv.ticker && !inv.isin) throw new Error('No ticker or ISIN set for this investment')
     if (inv.shares === null) {
-      throw new Error(`${inv.ticker}: shares not set — add a buy lot before refreshing the price`)
+      throw new Error(`${inv.ticker ?? inv.isin}: shares not set — add a buy lot before refreshing the price`)
     }
-    const result = await fetchPrice(inv.ticker)
+    const result = await fetchPriceWithISINFallback(inv.ticker, inv.isin)
+    // Persist resolved ticker if ISIN fallback found a better one
+    if (result.resolvedTicker !== inv.ticker) {
+      db.prepare(`UPDATE "Investment" SET ticker = ?, updatedAt = ? WHERE id = ?`).run(result.resolvedTicker, nowIso(), id)
+    }
 
     let rate: number
     if (result.currency === 'EUR') {
