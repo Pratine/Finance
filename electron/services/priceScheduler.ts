@@ -72,16 +72,23 @@ const PRICE_FETCH_CONCURRENCY = 4
 interface InvestmentRow {
   id: number
   ticker: string | null
+  isin: string | null
   shares: number | null
 }
 
 export async function refreshAllPrices(): Promise<RefreshResult> {
   const investments = db
-    .prepare(`SELECT id, ticker, shares FROM "Investment" WHERE ticker IS NOT NULL`)
+    .prepare(`SELECT id, ticker, isin, shares FROM "Investment" WHERE ticker IS NOT NULL OR isin IS NOT NULL`)
     .all() as InvestmentRow[]
 
+  const stmtUpdateTicker = db.prepare(`UPDATE "Investment" SET ticker = ?, updatedAt = ? WHERE id = ?`)
+
   const results = await withConcurrencyLimit(investments, PRICE_FETCH_CONCURRENCY, async (inv) => {
-    const result = await fetchPrice(inv.ticker!)
+    const result = await fetchPriceWithISINFallback(inv.ticker, inv.isin)
+    // If ISIN fallback resolved a better ticker, persist it so future refreshes are fast
+    if (result.resolvedTicker !== inv.ticker) {
+      stmtUpdateTicker.run(result.resolvedTicker, new Date().toISOString(), inv.id)
+    }
     // fetchExchangeRate throws on failure — use a cached rate if we have one,
     // otherwise re-throw so this investment is recorded as a failed update.
     let rate: number
