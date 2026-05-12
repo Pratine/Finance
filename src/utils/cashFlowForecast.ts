@@ -97,7 +97,7 @@ export function buildForecast(
   const monthlyIncome = activeIncome.length > 0
     ? activeIncome.reduce((s, i) => {
         const freq = i.frequency as Frequency
-        return s + monthlyEquivalent(parseFloat(i.amount), freq)
+        return s + monthlyEquivalent(Number(i.amount), freq)
       }, 0)
     : avgMonthlyIncome(transactions, 3)
 
