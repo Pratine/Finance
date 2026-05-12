@@ -48,6 +48,26 @@ export default function InvestmentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [expandedSparklineId, setExpandedSparklineId] = useState<number | null>(null)
   const [expandedLotsId, setExpandedLotsId] = useState<number | null>(null)
+  const [t212Status, setT212Status] = useState<'idle' | 'importing'>('idle')
+  const [t212Result, setT212Result] = useState<{ imported: number; skipped: number; errors: string[]; newInvestments: string[] } | null>(null)
+  const [t212Error, setT212Error] = useState<string | null>(null)
+
+  async function handleImportTrading212() {
+    setT212Error(null)
+    setT212Result(null)
+    try {
+      const filePath = await window.api.openCSVDialog()
+      if (!filePath) return
+      setT212Status('importing')
+      const result = await window.api.importTrading212(filePath)
+      setT212Result(result)
+      await load()
+    } catch (e: any) {
+      setT212Error(e?.message ?? 'Failed to import Trading 212 CSV')
+    } finally {
+      setT212Status('idle')
+    }
+  }
 
   // Full load — used on mount and after refreshAllPrices (which changes history).
   async function load() {
