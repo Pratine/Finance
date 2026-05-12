@@ -22,7 +22,7 @@ function buildAccountBalanceMap(transactions: Transaction[]): Map<string, Map<nu
 
   for (const t of sorted) {
     const date = t.date.slice(0, 10)
-    latest.set(t.accountId, parseFloat(t.runningBalance!))
+    latest.set(t.accountId, Number(t.runningBalance!))
     byDate.set(date, new Map(latest))
   }
 
