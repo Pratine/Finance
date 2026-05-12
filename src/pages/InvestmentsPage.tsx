@@ -130,8 +130,9 @@ export default function InvestmentsPage() {
     setRefreshMsg(null)
     try {
       const { updated, errors } = await window.api.refreshAllPrices()
-      const failMsg = errors.length ? ` · ${errors.length} failed: ${errors.join('; ')}` : ''
-      setRefreshMsg(`${updated} price${updated !== 1 ? 's' : ''} updated${failMsg}`)
+      setRefreshMsg(`${updated} price${updated !== 1 ? 's' : ''} updated${errors.length ? ` · ${errors.length} failed` : ''}`)
+      if (errors.length) setRefreshErrors(errors)
+      else setRefreshErrors([])
       await load()
     } catch (e: any) {
       setRefreshMsg(e?.message ?? 'Refresh failed')
