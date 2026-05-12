@@ -234,16 +234,15 @@ function checkNotifications() {
 
     // ── Bills ──────────────────────────────────────────────────────────────────
     const bills = _stmtNotifBills.all() as Array<{ name: string; nextDueDate: string }>
-    const overdue: string[] = []
-    const dueSoon: string[] = []
     for (const bill of bills) {
       const due = new Date(bill.nextDueDate); due.setUTCHours(0, 0, 0, 0)
       const days = Math.round((due.getTime() - today.getTime()) / 86_400_000)
-      if (days < 0) overdue.push(bill.name)
-      else if (days <= 3) dueSoon.push(`${bill.name} (${days === 0 ? 'today' : `in ${days}d`})`)
+      if (days < 0) {
+        notifyOnce(`bill-overdue-${bill.name}`, `${bill.name} is overdue`, `Was due ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} ago.`)
+      } else if (days <= 3) {
+        notifyOnce(`bill-due-${bill.name}`, `${bill.name} due soon`, days === 0 ? 'Due today' : `Due in ${days} day${days !== 1 ? 's' : ''}`)
+      }
     }
-    if (overdue.length > 0) notify(`${overdue.length} overdue bill${overdue.length > 1 ? 's' : ''}`, overdue.join(', '))
-    if (dueSoon.length > 0) notify(`Bill${dueSoon.length > 1 ? 's' : ''} due soon`, dueSoon.join(', '))
 
     // ── Budgets ────────────────────────────────────────────────────────────────
     const budgets = _stmtNotifBudgets.all() as Array<{ id: number; categoryId: number; amount: number; categoryName: string }>
