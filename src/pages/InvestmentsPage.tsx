@@ -37,6 +37,7 @@ export default function InvestmentsPage() {
   const [exchangeRates, setExchangeRates] = useState<Array<{ fromCurrency: string; rate: string }>>([])
   const [refreshing, setRefreshing] = useState(false)
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null)
+  const [refreshErrors, setRefreshErrors] = useState<string[]>([])
   const [isinResults, setIsinResults] = useState<ISINResult[] | null>(null)
   const [isinLooking, setIsinLooking] = useState(false)
   const [isinError, setIsinError] = useState<string | null>(null)
