@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useShortcutAction } from '../context/ShortcutContext'
-import { Plus, TrendingUp, X, Pencil, Trash2, FlaskConical, ChevronDown, ChevronUp, RefreshCw, BarChart2, ArrowUpDown } from 'lucide-react'
+import { Plus, TrendingUp, X, Pencil, Trash2, FlaskConical, ChevronDown, ChevronUp, RefreshCw, BarChart2, ArrowUpDown, Upload } from 'lucide-react'
 import { fmtDate } from '../utils/formatDate'
 import AccountIcon from '../components/AccountIcon'
 import { calcPnL, calcCAGR, daysHeld, fmt, fmtPct, fmtCAGR, calcAvgCostBasis, calcLotGain } from '../utils/investmentCalcs'
