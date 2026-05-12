@@ -195,8 +195,25 @@ let _stmtNotifMonthSpentByCat: import('better-sqlite3').Statement | null = null
 let _stmtNotifIncome: import('better-sqlite3').Statement | null = null
 let _stmtNotifGoals: import('better-sqlite3').Statement | null = null
 
+// De-dup notifications within a single calendar day. Without this, every app
+// startup re-fires "bill overdue" notifications the user has already seen.
+let _notifiedToday = new Set<string>()
+let _notifiedDay: string | null = null
+
+function notifyOnce(id: string, title: string, body: string) {
+  if (_notifiedToday.has(id)) return
+  _notifiedToday.add(id)
+  notify(title, body)
+}
+
 function checkNotifications() {
   try {
+    const todayKey = new Date().toISOString().slice(0, 10)
+    if (_notifiedDay !== todayKey) {
+      _notifiedDay = todayKey
+      _notifiedToday = new Set()
+    }
+
     _stmtNotifBills ??= db.prepare(`SELECT name, nextDueDate FROM "RecurringBill" WHERE isActive = 1`)
     _stmtNotifBudgets ??= db.prepare(`
       SELECT b.id, b.categoryId, b.amount, c.name AS categoryName
