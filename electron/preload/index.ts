@@ -32,6 +32,7 @@ const api: Window['api'] = {
     ipcRenderer.invoke('import:millenniumCSV', filePath, accountId),
   importRevolut: (filePath: string, accountId: number) =>
     ipcRenderer.invoke('import:revolut', filePath, accountId),
+  importTrading212: (filePath: string) => ipcRenderer.invoke('import:trading212', filePath),
   listImportHistory: () => ipcRenderer.invoke('import:listHistory'),
   deleteImportHistory: (id: number) => ipcRenderer.invoke('import:deleteHistory', id),
 
