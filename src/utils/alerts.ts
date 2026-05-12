@@ -64,11 +64,11 @@ export function calcAlerts({
   })
 
   for (const budget of budgets) {
-    const limit = parseFloat(budget.amount)
+    const limit = Number(budget.amount)
     if (!limit) continue
     const spent = monthTxns
       .filter(t => t.categoryId === budget.categoryId)
-      .reduce((s, t) => s + Math.abs(parseFloat(t.amount)), 0)
+      .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
     const pct = (spent / limit) * 100
 
     if (pct >= 100) {
