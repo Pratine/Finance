@@ -1,22 +1,10 @@
 import type { IpcMain } from 'electron'
 import { db } from '../db'
 import {
-  buildUpdate, hydrateBill, hydrateIncome, intFromBool, nowIso, requireIso,
+  advanceByFrequency, buildUpdate, hydrateBill, hydrateIncome, intFromBool, nowIso, requireIso,
   billSelectJoin, incomeSelectJoin,
 } from './shared'
 import type { Frequency } from '../domainTypes'
-
-function advance(date: string, freq: Frequency): Date {
-  const d = new Date(date)
-  switch (freq) {
-    case 'WEEKLY':    d.setUTCDate(d.getUTCDate() + 7); break
-    case 'MONTHLY':   d.setUTCMonth(d.getUTCMonth() + 1); break
-    case 'QUARTERLY': d.setUTCMonth(d.getUTCMonth() + 3); break
-    case 'YEARLY':    d.setUTCFullYear(d.getUTCFullYear() + 1); break
-    default: throw new Error(`Unknown frequency: ${freq}`)
-  }
-  return d
-}
 
 export function registerRecurringHandlers(ipcMain: IpcMain) {
   // Income
