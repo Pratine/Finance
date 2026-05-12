@@ -39,23 +39,6 @@ export function runMigrations(): void {
     db.prepare('SELECT name FROM _migrations').all().map((r: any) => r.name),
   )
 
-  // If the DB already has user tables but _migrations is empty, this is an existing
-  // install that predates the migration tracker (Prisma→better-sqlite3 upgrade path).
-  // Only bootstrap when ALL known migrations are absent — a partial _migrations table
-  // means the runner has already started tracking and we should apply normally.
-  if (appliedSet.size === 0 && all.length > 0) {
-    const userTables = db
-      .prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '_migrations'`)
-      .get() as { n: number }
-    if (userTables.n > 0) {
-      const insert = db.prepare('INSERT OR IGNORE INTO _migrations (name) VALUES (?)')
-      const tx = db.transaction((names: string[]) => names.forEach(n => insert.run(n)))
-      tx(all)
-      all.forEach(n => appliedSet.add(n))
-      return
-    }
-  }
-
   for (const name of all) {
     if (appliedSet.has(name)) continue
     const sqlFile = path.join(dir, name, 'migration.sql')
@@ -70,9 +53,15 @@ export function runMigrations(): void {
     })
     try {
       apply()
-    } catch (e) {
-      console.error(`Migration ${name} failed:`, e)
-      throw e
+    } catch (e: any) {
+      // "already exists" means Prisma already created this table — mark applied and move on.
+      // Any other error (e.g. bad SQL, missing column reference) is a real failure.
+      if (e?.message?.includes('already exists')) {
+        db.prepare('INSERT OR IGNORE INTO _migrations (name) VALUES (?)').run(name)
+      } else {
+        console.error(`Migration ${name} failed:`, e)
+        throw e
+      }
     }
   }
 }
