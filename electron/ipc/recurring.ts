@@ -92,7 +92,7 @@ export function registerRecurringHandlers(ipcMain: IpcMain) {
   ipcMain.handle('income:markReceived', (_e, id: number, actualAmount?: number) => {
     const income = stmtIncomeByIdRaw.get(id) as any
     if (!income) throw new Error(`RecurringIncome ${id} not found`)
-    const next = advance(income.nextExpectedDate, income.frequency as Frequency)
+    const next = advanceByFrequency(new Date(income.nextExpectedDate), income.frequency as Frequency)
     const creditAmount = Math.abs(actualAmount ?? Number(income.amount))
 
     db.transaction(() => {
