@@ -42,8 +42,8 @@ export async function fetchPrice(ticker: string): Promise<PriceResult> {
   } catch (e: any) {
     if (e?.message?.startsWith('HTTP_')) {
       const code = e.message.slice(5)
-      const hint = code === '404' ? ' — ticker not found, check the exchange suffix (e.g. SXR8.DE)' : ''
-      throw new Error(`${symbol}: HTTP ${code}${hint}`)
+      if (code === '404') throw new Error(`${symbol}: ticker not found — check the exchange suffix (e.g. SXR8.DE)`)
+      throw new Error(`${symbol}: HTTP ${code}`)
     }
     throw new Error(`${symbol}: ${e?.message ?? 'network error'}`)
   }
