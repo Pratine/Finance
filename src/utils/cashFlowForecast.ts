@@ -122,7 +122,7 @@ export function buildForecast(
       const freq = bill.frequency as Frequency
       const dates = billDatesInMonth(bill.nextDueDate, freq, year, month)
       for (const _ of dates) {
-        items.push({ name: bill.name, amount: parseFloat(bill.amount), type: 'expense' })
+        items.push({ name: bill.name, amount: Number(bill.amount), type: 'expense' })
       }
     }
 
