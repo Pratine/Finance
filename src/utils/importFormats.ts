@@ -3,4 +3,5 @@
 export const FORMAT_LABELS: Record<string, string> = {
   millennium: 'Millennium BCP',
   revolut:    'Revolut',
+  trading212: 'Trading 212',
 }
