@@ -92,8 +92,8 @@ export function calcAlerts({
 
   // ── Savings goals ─────────────────────────────────────────────────────────────
   for (const goal of savings) {
-    const current = parseFloat(goal.currentAmount)
-    const target = parseFloat(goal.targetAmount)
+    const current = Number(goal.currentAmount)
+    const target = Number(goal.targetAmount)
     if (!target) continue
     const pct = (current / target) * 100
 
