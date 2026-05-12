@@ -275,14 +275,14 @@ function checkNotifications() {
 
     // ── Savings goals ──────────────────────────────────────────────────────────
     const goals = _stmtNotifGoals.all() as Array<{ name: string; targetAmount: number; currentAmount: number }>
-    const reachedGoals: string[] = []
     for (const goal of goals) {
       const pct = Number(goal.targetAmount) > 0
         ? (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100
         : 0
-      if (pct >= 100) reachedGoals.push(goal.name)
+      if (pct >= 100) {
+        notifyOnce(`goal-reached-${goal.name}`, `${goal.name} goal reached!`, 'Target achieved')
+      }
     }
-    if (reachedGoals.length > 0) notify(`${reachedGoals.length} savings goal${reachedGoals.length > 1 ? 's' : ''} reached!`, reachedGoals.join(', '))
   } catch {
     // DB not ready — ignore
   }
