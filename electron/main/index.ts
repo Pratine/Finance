@@ -265,13 +265,13 @@ function checkNotifications() {
 
     // ── Recurring income (late) ────────────────────────────────────────────────
     const incomeItems = _stmtNotifIncome.all() as Array<{ name: string; nextExpectedDate: string }>
-    const lateIncome: string[] = []
     for (const inc of incomeItems) {
       const due = new Date(inc.nextExpectedDate); due.setUTCHours(0, 0, 0, 0)
       const days = Math.round((due.getTime() - today.getTime()) / 86_400_000)
-      if (days < 0) lateIncome.push(`${inc.name} (${Math.abs(days)}d late)`)
+      if (days < 0) {
+        notifyOnce(`income-late-${inc.name}`, `${inc.name} not yet received`, `Expected ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} ago`)
+      }
     }
-    if (lateIncome.length > 0) notify('Expected income not yet received', lateIncome.join(', '))
 
     // ── Savings goals ──────────────────────────────────────────────────────────
     const goals = _stmtNotifGoals.all() as Array<{ name: string; targetAmount: number; currentAmount: number }>
