@@ -251,18 +251,17 @@ function checkNotifications() {
     const spentRows = _stmtNotifMonthSpentByCat.all(monthStart, monthEnd) as Array<{ categoryId: number | null; spent: number }>
     const spentByCat = new Map<number | null, number>()
     for (const r of spentRows) spentByCat.set(r.categoryId, Number(r.spent))
-    const exceededBudgets: string[] = []
-    const warningBudgets: string[] = []
     for (const budget of budgets) {
       const limit = Number(budget.amount)
       if (!limit) continue
       const spent = spentByCat.get(budget.categoryId) ?? 0
       const pct = (spent / limit) * 100
-      if (pct >= 100) exceededBudgets.push(`${budget.categoryName} (${Math.round(pct)}%)`)
-      else if (pct >= 80) warningBudgets.push(`${budget.categoryName} (${Math.round(pct)}%)`)
+      if (pct >= 100) {
+        notifyOnce(`budget-exceeded-${budget.categoryName}`, `${budget.categoryName} budget exceeded`, `${Math.round(pct)}% of limit spent`)
+      } else if (pct >= 80) {
+        notifyOnce(`budget-warning-${budget.categoryName}`, `${budget.categoryName} budget near limit`, `${Math.round(pct)}% of limit spent`)
+      }
     }
-    if (exceededBudgets.length > 0) notify(`${exceededBudgets.length} budget${exceededBudgets.length > 1 ? 's' : ''} exceeded`, exceededBudgets.join(', '))
-    if (warningBudgets.length > 0) notify(`${warningBudgets.length} budget${warningBudgets.length > 1 ? 's' : ''} near limit`, warningBudgets.join(', '))
 
     // ── Recurring income (late) ────────────────────────────────────────────────
     const incomeItems = _stmtNotifIncome.all() as Array<{ name: string; nextExpectedDate: string }>
