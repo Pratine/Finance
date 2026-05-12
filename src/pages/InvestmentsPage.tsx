@@ -750,7 +750,7 @@ export default function InvestmentsPage() {
                   placeholder="Optional notes…"
                   value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100 resize-none"
                 />
               </div>
 
