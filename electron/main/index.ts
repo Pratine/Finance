@@ -296,6 +296,7 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   runMigrations()
+  seedDefaultData()
   try {
     setupIpcHandlers(ipcMain)
   } catch (e: any) {
