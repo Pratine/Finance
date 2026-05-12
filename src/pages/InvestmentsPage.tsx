@@ -298,6 +298,53 @@ export default function InvestmentsPage() {
         </div>
       )}
 
+      {/* Trading 212 import */}
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap">
+        <Upload size={16} className="text-slate-400 dark:text-slate-500 shrink-0" />
+        <div className="flex-1 min-w-[180px]">
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Import from Trading 212</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Upload your Trading 212 CSV export to create buy/sell lots automatically.
+          </p>
+        </div>
+        <button
+          onClick={handleImportTrading212}
+          disabled={t212Status === 'importing'}
+          className="text-sm px-3 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 disabled:opacity-50"
+        >
+          {t212Status === 'importing' ? 'Importing…' : 'Select CSV'}
+        </button>
+      </div>
+      {t212Result && (
+        <div className="mb-4 text-sm bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl px-4 py-2.5">
+          <div className="flex justify-between items-start gap-2">
+            <div>
+              <p>{t212Result.imported} lot{t212Result.imported !== 1 ? 's' : ''} imported, {t212Result.skipped} skipped</p>
+              {t212Result.newInvestments.length > 0 && (
+                <p className="text-xs mt-1 text-emerald-700 dark:text-emerald-400">
+                  New investments created: {t212Result.newInvestments.join(', ')}
+                </p>
+              )}
+              {t212Result.errors.length > 0 && (
+                <details className="mt-1 text-xs">
+                  <summary className="cursor-pointer text-red-600 dark:text-red-400">{t212Result.errors.length} error{t212Result.errors.length !== 1 ? 's' : ''}</summary>
+                  <ul className="mt-1 list-disc ml-4 text-red-600 dark:text-red-400">
+                    {t212Result.errors.slice(0, 20).map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                </details>
+              )}
+            </div>
+            <button onClick={() => setT212Result(null)} className="text-emerald-600/60 dark:text-emerald-400/60 hover:text-emerald-700 dark:hover:text-emerald-300">✕</button>
+          </div>
+        </div>
+      )}
+      {t212Error && (
+        <div className="mb-4 text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-2.5 flex justify-between">
+          {t212Error}
+          <button onClick={() => setT212Error(null)} className="ml-4">✕</button>
+        </div>
+      )}
+
       {/* Portfolio summary card */}
       {investments.length > 0 && (
         <div className="bg-slate-900 text-white rounded-2xl p-5 mb-6 grid grid-cols-3 gap-4">
