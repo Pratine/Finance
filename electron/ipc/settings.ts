@@ -6,7 +6,7 @@ import {
   startScheduler, refreshAllPrices, getLastRefresh,
   type RefreshInterval,
 } from '../services/priceScheduler'
-import { fetchPrice, fetchExchangeRate } from '../services/priceFetcher'
+import { fetchPriceWithISINFallback, fetchExchangeRate } from '../services/priceFetcher'
 import { lookupISIN } from '../services/isinLookup'
 
 export function registerSettingsHandlers(ipcMain: IpcMain) {
