@@ -44,7 +44,7 @@ export function registerInvestmentsHandlers(ipcMain: IpcMain) {
 
   // ── Investments ──────────────────────────────────────────────────────────────
   const stmtInvList = db.prepare(
-    `SELECT ${investmentSelect} FROM "Investment" i ${investmentJoins} ORDER BY i.createdAt ASC`,
+    `SELECT ${investmentSelect} FROM "Investment" i ${investmentJoins} WHERE COALESCE(i.shares, 0) > 0 ORDER BY i.createdAt ASC`,
   )
   const stmtInvInsert = db.prepare(`
     INSERT INTO "Investment" (name, typeId, brokerId, amountIn, currentValue, currency, isin, ticker, shares, lastPriceFetched, priceUpdatedAt, notes, createdAt, updatedAt)
