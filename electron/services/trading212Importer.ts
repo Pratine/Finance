@@ -230,7 +230,8 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
     for (const id of touchedInvestments) {
       const lots = lotsRaw.all(id) as Array<{ type: string; shares: unknown; totalCost: unknown }>
       const { shares, amountIn } = calcInvestmentTotals(lots as any)
-      updateInvTotals.run(shares, amountIn, now, id)
+      // seed currentValue with amountIn if it's still 0 (no price fetched yet)
+      updateInvTotals.run(shares, amountIn, amountIn, now, id)
     }
   })
 
