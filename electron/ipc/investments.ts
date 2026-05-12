@@ -5,6 +5,7 @@ import {
   getInvestmentFull, nowIso, toIso, requireIso,
 } from './shared'
 import { calcInvestmentTotals } from '../services/lotCalcs'
+import { importTrading212CSV } from '../services/trading212Importer'
 // refreshPrice/lookupISIN handlers live in settings.ts (per refactor spec).
 
 export function registerInvestmentsHandlers(ipcMain: IpcMain) {
