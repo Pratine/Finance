@@ -210,16 +210,16 @@ export function registerIoHandlers(ipcMain: IpcMain) {
       }
       db.exec(`DELETE FROM sqlite_sequence`)
 
-      insertAll('AccountType',     (backup.accountTypes     ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), ['id','name','color','icon'])
-      insertAll('Bank',            (backup.banks            ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), ['id','name','color','icon'])
-      insertAll('Broker',          (backup.brokers          ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), ['id','name','color','icon'])
-      insertAll('InvestmentType',  (backup.investmentTypes  ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })), ['id','name','color','icon'])
-      insertAll('Category',        (backup.categories       ?? []).map(r => ({ id: r.id, name: r.name, type: r.type, color: r.color, icon: r.icon, createdAt: dIso(r.createdAt) ?? nowIso() })), ['id','name','type','color','icon','createdAt'])
-      insertAll('CategoryRule',    (backup.categoryRules    ?? []).map(r => ({ id: r.id, pattern: r.pattern, categoryId: r.categoryId, createdAt: dIso(r.createdAt) ?? nowIso() })), ['id','pattern','categoryId','createdAt'])
-      insertAll('Account',         (backup.accounts         ?? []).map(r => ({ id: r.id, name: r.name, bankId: r.bankId, typeId: r.typeId, accountNumber: r.accountNumber, balance: r.balance, currency: r.currency ?? 'EUR', createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso() })), ['id','name','bankId','typeId','accountNumber','balance','currency','createdAt','updatedAt'])
-      insertAll('Tag',             (backup.tags             ?? []).map(r => ({ id: r.id, name: r.name, color: r.color })), ['id','name','color'])
-      insertAll('Budget',          (backup.budgets          ?? []).map(r => ({ id: r.id, categoryId: r.categoryId, amount: r.amount, createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso() })), ['id','categoryId','amount','createdAt','updatedAt'])
-      insertAll('ExchangeRate',    (backup.exchangeRates    ?? []).map(r => ({ id: r.id, fromCurrency: r.fromCurrency, rate: r.rate, updatedAt: dIso(r.updatedAt) ?? nowIso() })), ['id','fromCurrency','rate','updatedAt'])
+      insertAll('AccountType',     (backup.accountTypes     ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })))
+      insertAll('Bank',            (backup.banks            ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })))
+      insertAll('Broker',          (backup.brokers          ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })))
+      insertAll('InvestmentType',  (backup.investmentTypes  ?? []).map(r => ({ id: r.id, name: r.name, color: r.color, icon: r.icon })))
+      insertAll('Category',        (backup.categories       ?? []).map(r => ({ id: r.id, name: r.name, type: r.type, color: r.color, icon: r.icon, createdAt: dIso(r.createdAt) ?? nowIso() })))
+      insertAll('CategoryRule',    (backup.categoryRules    ?? []).map(r => ({ id: r.id, pattern: r.pattern, categoryId: r.categoryId, createdAt: dIso(r.createdAt) ?? nowIso() })))
+      insertAll('Account',         (backup.accounts         ?? []).map(r => ({ id: r.id, name: r.name, bankId: r.bankId, typeId: r.typeId, accountNumber: r.accountNumber, balance: r.balance, currency: r.currency ?? 'EUR', createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso() })))
+      insertAll('Tag',             (backup.tags             ?? []).map(r => ({ id: r.id, name: r.name, color: r.color })))
+      insertAll('Budget',          (backup.budgets          ?? []).map(r => ({ id: r.id, categoryId: r.categoryId, amount: r.amount, createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso() })))
+      insertAll('ExchangeRate',    (backup.exchangeRates    ?? []).map(r => ({ id: r.id, fromCurrency: r.fromCurrency, rate: r.rate, updatedAt: dIso(r.updatedAt) ?? nowIso() })))
       insertAll('SavingsGoal',     (backup.savingsGoals     ?? []).map(r => ({
         id: r.id, accountId: r.accountId, name: r.name, targetAmount: r.targetAmount, currentAmount: r.currentAmount,
         deadline: dIso(r.deadline), interestType: r.interestType, interestValue: r.interestValue,
@@ -227,48 +227,48 @@ export function registerIoHandlers(ipcMain: IpcMain) {
         totalInterestEarned: r.totalInterestEarned ?? 0, contributionAmount: r.contributionAmount,
         contributionFrequencyDays: r.contributionFrequencyDays, notes: r.notes,
         createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso(),
-      })), ['id','accountId','name','targetAmount','currentAmount','deadline','interestType','interestValue','interestFrequencyDays','lastInterestApplied','totalInterestEarned','contributionAmount','contributionFrequencyDays','notes','createdAt','updatedAt'])
-      insertAll('SavingsSnapshot', (backup.savingsSnapshots ?? []).map(r => ({ id: r.id, goalId: r.goalId, amount: r.amount, note: r.note, date: dIso(r.date) ?? nowIso() })), ['id','goalId','amount','note','date'])
+      })))
+      insertAll('SavingsSnapshot', (backup.savingsSnapshots ?? []).map(r => ({ id: r.id, goalId: r.goalId, amount: r.amount, note: r.note, date: dIso(r.date) ?? nowIso() })))
       insertAll('Investment',      (backup.investments      ?? []).map(r => ({
         id: r.id, name: r.name, typeId: r.typeId, brokerId: r.brokerId, amountIn: r.amountIn,
         currentValue: r.currentValue, currency: r.currency ?? 'EUR', ticker: r.ticker, isin: r.isin,
         shares: r.shares, lastPriceFetched: r.lastPriceFetched, priceUpdatedAt: dIso(r.priceUpdatedAt),
         notes: r.notes, createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso(),
-      })), ['id','name','typeId','brokerId','amountIn','currentValue','currency','ticker','isin','shares','lastPriceFetched','priceUpdatedAt','notes','createdAt','updatedAt'])
+      })))
       insertAll('InvestmentLot',   (backup.investmentLots   ?? []).map(r => ({
         id: r.id, investmentId: r.investmentId, type: r.type ?? 'BUY', date: dIso(r.date) ?? nowIso(),
         shares: r.shares, pricePerShare: r.pricePerShare, totalCost: r.totalCost, realizedGain: r.realizedGain,
         notes: r.notes, createdAt: dIso(r.createdAt) ?? nowIso(),
-      })), ['id','investmentId','type','date','shares','pricePerShare','totalCost','realizedGain','notes','createdAt'])
-      insertAll('PriceHistory',    (backup.priceHistory     ?? []).map(r => ({ id: r.id, investmentId: r.investmentId, price: r.price, value: r.value, recordedAt: dIso(r.recordedAt) ?? nowIso() })), ['id','investmentId','price','value','recordedAt'])
+      })))
+      insertAll('PriceHistory',    (backup.priceHistory     ?? []).map(r => ({ id: r.id, investmentId: r.investmentId, price: r.price, value: r.value, recordedAt: dIso(r.recordedAt) ?? nowIso() })))
       insertAll('RecurringBill',   (backup.recurringBills   ?? []).map(r => ({
         id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextDueDate: dIso(r.nextDueDate) ?? nowIso(),
         categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: intFromBool(r.isActive ?? true) ?? 1,
         createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso(),
-      })), ['id','name','amount','frequency','nextDueDate','categoryId','accountId','notes','isActive','createdAt','updatedAt'])
+      })))
       insertAll('RecurringIncome', (backup.recurringIncome  ?? []).map(r => ({
         id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, nextExpectedDate: dIso(r.nextExpectedDate) ?? nowIso(),
         categoryId: r.categoryId, accountId: r.accountId, notes: r.notes, isActive: intFromBool(r.isActive ?? true) ?? 1,
         createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso(),
-      })), ['id','name','amount','frequency','nextExpectedDate','categoryId','accountId','notes','isActive','createdAt','updatedAt'])
+      })))
       insertAll('Transaction',     (backup.transactions     ?? []).map(r => ({
         id: r.id, accountId: r.accountId, categoryId: r.categoryId, recurringBillId: r.recurringBillId,
         date: dIso(r.date) ?? nowIso(), valueDate: dIso(r.valueDate), description: r.description,
         amount: r.amount, type: r.type, runningBalance: r.runningBalance, importHash: r.importHash,
         notes: r.notes, createdAt: dIso(r.createdAt) ?? nowIso(),
-      })), ['id','accountId','categoryId','recurringBillId','date','valueDate','description','amount','type','runningBalance','importHash','notes','createdAt'])
-      insertAll('TransactionTag',  (backup.transactionTags  ?? []).map(r => ({ transactionId: r.transactionId, tagId: r.tagId })), ['transactionId','tagId'])
-      insertAll('TransactionSplit',(backup.transactionSplits?? []).map(r => ({ id: r.id, transactionId: r.transactionId, categoryId: r.categoryId, amount: r.amount, notes: r.notes })), ['id','transactionId','categoryId','amount','notes'])
-      insertAll('BalanceCorrection',(backup.balanceCorrections ?? []).map(r => ({ id: r.id, accountId: r.accountId, oldBalance: r.oldBalance, newBalance: r.newBalance, note: r.note, createdAt: dIso(r.createdAt) ?? nowIso() })), ['id','accountId','oldBalance','newBalance','note','createdAt'])
+      })))
+      insertAll('TransactionTag',  (backup.transactionTags  ?? []).map(r => ({ transactionId: r.transactionId, tagId: r.tagId })))
+      insertAll('TransactionSplit',(backup.transactionSplits?? []).map(r => ({ id: r.id, transactionId: r.transactionId, categoryId: r.categoryId, amount: r.amount, notes: r.notes })))
+      insertAll('BalanceCorrection',(backup.balanceCorrections ?? []).map(r => ({ id: r.id, accountId: r.accountId, oldBalance: r.oldBalance, newBalance: r.newBalance, note: r.note, createdAt: dIso(r.createdAt) ?? nowIso() })))
       insertAll('Debt',            (backup.debts            ?? []).map(r => ({
         id: r.id, name: r.name, type: r.type, counterparty: r.counterparty, principal: r.principal,
         outstanding: r.outstanding, interestRate: r.interestRate, frequency: r.frequency,
         nextPaymentDate: dIso(r.nextPaymentDate), startDate: dIso(r.startDate) ?? nowIso(), endDate: dIso(r.endDate),
         status: r.status ?? 'ACTIVE', accountId: r.accountId, notes: r.notes,
         createdAt: dIso(r.createdAt) ?? nowIso(), updatedAt: dIso(r.updatedAt) ?? nowIso(),
-      })), ['id','name','type','counterparty','principal','outstanding','interestRate','frequency','nextPaymentDate','startDate','endDate','status','accountId','notes','createdAt','updatedAt'])
-      insertAll('DebtPayment',     (backup.debtPayments     ?? []).map(r => ({ id: r.id, debtId: r.debtId, date: dIso(r.date) ?? nowIso(), amount: r.amount, principal: r.principal, interest: r.interest, notes: r.notes, linkedTransactionId: r.linkedTransactionId ?? null, createdAt: dIso(r.createdAt) ?? nowIso() })), ['id','debtId','date','amount','principal','interest','notes','linkedTransactionId','createdAt'])
-      insertAll('ImportHistory',   (backup.importHistory    ?? []).map(r => ({ id: r.id, filename: r.filename, format: r.format, accountId: r.accountId, imported: r.imported, skipped: r.skipped, errors: r.errors ?? 0, importedAt: dIso(r.importedAt) ?? nowIso() })), ['id','filename','format','accountId','imported','skipped','errors','importedAt'])
+      })))
+      insertAll('DebtPayment',     (backup.debtPayments     ?? []).map(r => ({ id: r.id, debtId: r.debtId, date: dIso(r.date) ?? nowIso(), amount: r.amount, principal: r.principal, interest: r.interest, notes: r.notes, linkedTransactionId: r.linkedTransactionId ?? null, createdAt: dIso(r.createdAt) ?? nowIso() })))
+      insertAll('ImportHistory',   (backup.importHistory    ?? []).map(r => ({ id: r.id, filename: r.filename, format: r.format, accountId: r.accountId, imported: r.imported, skipped: r.skipped, errors: r.errors ?? 0, importedAt: dIso(r.importedAt) ?? nowIso() })))
     })
     restore()
 
