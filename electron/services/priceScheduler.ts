@@ -2,7 +2,7 @@
 // Extracted so the main process can call it directly without going through IPC.
 
 import { db } from '../db'
-import { fetchPrice, fetchExchangeRate } from './priceFetcher'
+import { fetchPriceWithISINFallback, fetchExchangeRate } from './priceFetcher'
 
 export interface RefreshResult {
   updated: number
