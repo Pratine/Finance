@@ -153,7 +153,7 @@ export function registerRecurringHandlers(ipcMain: IpcMain) {
   ipcMain.handle('bills:markPaid', (_e, id: number) => {
     const bill = stmtBillByIdRaw.get(id) as any
     if (!bill) throw new Error(`RecurringBill ${id} not found`)
-    const next = advance(bill.nextDueDate, bill.frequency as Frequency)
+    const next = advanceByFrequency(new Date(bill.nextDueDate), bill.frequency as Frequency)
     const billAmount = Math.abs(Number(bill.amount))
 
     db.transaction(() => {
