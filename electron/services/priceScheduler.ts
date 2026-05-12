@@ -90,9 +90,9 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
     } else {
       try {
         rate = await fetchExchangeRate(result.currency)
-        upsertRate.run({ fromCurrency: result.currency, rate, updatedAt: new Date().toISOString() })
+        stmtUpsertRate().run({ fromCurrency: result.currency, rate, updatedAt: new Date().toISOString() })
       } catch (rateErr) {
-        const cached = getCachedRate.get(result.currency) as { rate: number } | undefined
+        const cached = stmtGetCachedRate().get(result.currency) as { rate: number } | undefined
         if (cached) {
           rate = Number(cached.rate)
           console.warn(`Exchange rate fetch failed for ${result.currency}, using cached rate ${rate}`)
