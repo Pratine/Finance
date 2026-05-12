@@ -9,6 +9,7 @@ import {
 } from './shared'
 import { importMillenniumCSV } from '../services/csvImporter'
 import { importRevolutCSV } from '../services/revolutImporter'
+import { importTrading212CSV } from '../services/trading212Importer'
 
 export function registerIoHandlers(ipcMain: IpcMain) {
   const stmtCategoryRules = db.prepare(`SELECT id, pattern, categoryId FROM "CategoryRule"`)
