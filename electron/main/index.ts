@@ -7,6 +7,7 @@ import { db } from '../db'
 import { runMigrations as applyMigrations } from '../migrations'
 import { startScheduler, stopScheduler } from '../services/priceScheduler'
 import { loadAppSettings } from '../services/appSettings'
+import { seedDefaultData } from '../services/defaultData'
 
 // Enforce a single running instance — quit immediately if another is already open.
 // Must be called before app.whenReady().
