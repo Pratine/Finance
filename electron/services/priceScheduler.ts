@@ -111,7 +111,7 @@ export async function refreshAllPrices(): Promise<RefreshResult> {
     // snapshot — otherwise a crash between the two leaves the snapshot
     // disagreeing with currentValue.
     const persist = db.transaction(() => {
-      updateInvestment.run({
+      stmtUpdateInvestment().run({
         id: inv.id,
         currentValue: priceInEUR * shares,
         lastPriceFetched: priceInEUR,
