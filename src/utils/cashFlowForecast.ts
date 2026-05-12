@@ -135,7 +135,7 @@ export function buildForecast(
       // Use the same occurrencesInMonth logic — don't round, so yearly (365 days)
       // contributes 1/12 per month rather than 0.
       const occurrences = 30 / goal.contributionFrequencyDays
-      const monthly = parseFloat(goal.contributionAmount) * occurrences
+      const monthly = Number(goal.contributionAmount) * occurrences
       items.push({ name: `${goal.name} contribution`, amount: monthly, type: 'savings' })
     }
 
