@@ -36,7 +36,17 @@ function get(url: string): Promise<string> {
 export async function fetchPrice(ticker: string): Promise<PriceResult> {
   const symbol = ticker.trim().toUpperCase()
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`
-  const raw = await get(url)
+  let raw: string
+  try {
+    raw = await get(url)
+  } catch (e: any) {
+    if (e?.message?.startsWith('HTTP_')) {
+      const code = e.message.slice(5)
+      const hint = code === '404' ? ' — ticker not found, check the exchange suffix (e.g. SXR8.DE)' : ''
+      throw new Error(`${symbol}: HTTP ${code}${hint}`)
+    }
+    throw new Error(`${symbol}: ${e?.message ?? 'network error'}`)
+  }
   const json = JSON.parse(raw)
 
   const result = json?.chart?.result?.[0]
