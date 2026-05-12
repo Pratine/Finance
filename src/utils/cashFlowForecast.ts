@@ -128,8 +128,8 @@ export function buildForecast(
 
     for (const goal of savingsGoals) {
       if (!goal.contributionAmount || !goal.contributionFrequencyDays) continue
-      const target  = parseFloat(goal.targetAmount)
-      const current = parseFloat(goal.currentAmount)
+      const target  = Number(goal.targetAmount)
+      const current = Number(goal.currentAmount)
       if (target > 0 && current >= target) continue
       // Convert contribution frequency to a monthly amount.
       // Use the same occurrencesInMonth logic — don't round, so yearly (365 days)
