@@ -76,7 +76,45 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. Build macOS DMG ────────────────────────────────────────────────────
+  # ── 3. Build Linux AppImage ───────────────────────────────────────────────
+  build-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.create-release.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild better-sqlite3 for Electron
+        run: npx electron-rebuild -f -w better-sqlite3
+
+      - name: Build renderer
+        run: npx vite build
+
+      - name: Build main process
+        run: npx tsc -p tsconfig.electron.json
+
+      - name: Build Linux AppImage
+        run: npx electron-builder --linux AppImage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to release
+        run: |
+          gh release upload "v${VERSION}" release/*.AppImage --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── 4. Build macOS DMG ────────────────────────────────────────────────────
   build-macos:
     needs: create-release
     runs-on: macos-latest
