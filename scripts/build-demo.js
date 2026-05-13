@@ -32,7 +32,7 @@ async function main() {
     // Rebuild better-sqlite3 BEFORE seeding so the seed uses the same binary
     // that will be packaged. If the ABI changes between runs, an old binary
     // would be used for seeding and a new one for the app — mismatched output.
-    run('npx electron-rebuild -f -w better-sqlite3')
+    run('npx @electron/rebuild -f -w better-sqlite3')
 
     // Seed via Electron's Node runtime — better-sqlite3 is built for Electron's ABI,
     // not the system Node, so we must use the Electron binary as the runner.
