@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    open-pull-requests-limit: 5
+    groups:
+      electron:
+        patterns: ['electron', 'electron-*', '@electron/*']
+      dev-tooling:
+        patterns: ['vite', 'vitest', '@vitejs/*', '@vitest/*', 'typescript', 'tailwindcss', 'autoprefixer', 'postcss']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
