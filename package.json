@@ -10,7 +10,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "vitest run && vite build && tsc -p tsconfig.electron.json && electron-builder",
-    "dist": "vitest run && vite build && tsc -p tsconfig.electron.json && electron-rebuild -f -w better-sqlite3 && electron-builder",
+    "dist": "vitest run && vite build && tsc -p tsconfig.electron.json && @electron/rebuild -f -w better-sqlite3 && electron-builder",
     "dist:demo": "node scripts/build-demo.js"
   },
   "dependencies": {
