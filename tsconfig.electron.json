@@ -4,7 +4,7 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "ignoreDeprecations": "6.0",
-    "rootDir": ".",
+    "rootDir": "./electron",
     "outDir": "dist-electron",
     "strict": true,
     "skipLibCheck": true,
