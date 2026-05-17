@@ -746,7 +746,7 @@ export default function InvestmentsPage() {
                 </div>
               </div>
               <p className="text-xs text-slate-400 dark:text-slate-500 -mt-2">
-                Enter ISIN to look up the ticker automatically, or type it manually.
+                Use ISIN lookup to auto-fill, or enter the Yahoo Finance ticker manually (include exchange suffix, e.g. .DE, .L, .AS).
               </p>
 
               <div>
