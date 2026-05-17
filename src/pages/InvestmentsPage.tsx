@@ -50,7 +50,7 @@ export default function InvestmentsPage() {
   const [expandedSparklineId, setExpandedSparklineId] = useState<number | null>(null)
   const [expandedLotsId, setExpandedLotsId] = useState<number | null>(null)
   const [t212Status, setT212Status] = useState<'idle' | 'importing'>('idle')
-  const [t212Result, setT212Result] = useState<{ imported: number; skipped: number; errors: string[]; newInvestments: string[] } | null>(null)
+  const [t212Result, setT212Result] = useState<{ imported: number; skipped: number; errors: string[]; newInvestments: string[]; tickersResolved: string[]; tickerErrors: string[] } | null>(null)
   const [t212Error, setT212Error] = useState<string | null>(null)
 
   async function handleImportTrading212() {
