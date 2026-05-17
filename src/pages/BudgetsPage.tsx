@@ -161,6 +161,7 @@ export default function BudgetsPage() {
   useShortcutAction('prevMonth', prevMonth)
   useShortcutAction('nextMonth', nextMonth)
   useShortcutAction('createNew', () => setShowAdd(true))
+  useShortcutAction('closeModal', () => { setShowAdd(false); setEditingId(null) })
 
   function prevMonth() {
     if (month === 1) { setMonth(12); setYear(y => y - 1) }
