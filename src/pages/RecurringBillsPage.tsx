@@ -91,6 +91,7 @@ export default function RecurringBillsPage() {
     setShowForm(true)
   }
   useShortcutAction('createNew', openCreate)
+  useShortcutAction('closeModal', closeForm)
 
   function openEdit(bill: RecurringBill) {
     setEditingId(bill.id)
