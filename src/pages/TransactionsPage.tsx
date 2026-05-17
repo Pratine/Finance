@@ -684,6 +684,7 @@ export default function TransactionsPage() {
   const [tags, setTags] = useState<Tag[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [showTransfer, setShowTransfer] = useState(false)
+  useShortcutAction('createNew', () => setShowAdd(true))
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [splittingTx, setSplittingTx] = useState<Transaction | null>(null)
