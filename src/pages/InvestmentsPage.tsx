@@ -335,6 +335,26 @@ export default function InvestmentsPage() {
                   New investments created: {t212Result.newInvestments.join(', ')}
                 </p>
               )}
+              {t212Result.tickersResolved.length > 0 && (
+                <details className="mt-1 text-xs">
+                  <summary className="cursor-pointer text-emerald-700 dark:text-emerald-400">
+                    {t212Result.tickersResolved.length} ticker{t212Result.tickersResolved.length !== 1 ? 's' : ''} resolved to Yahoo Finance format
+                  </summary>
+                  <ul className="mt-1 list-disc ml-4 text-emerald-700 dark:text-emerald-400">
+                    {t212Result.tickersResolved.map((r, i) => <li key={i}>{r}</li>)}
+                  </ul>
+                </details>
+              )}
+              {t212Result.tickerErrors.length > 0 && (
+                <details className="mt-1 text-xs">
+                  <summary className="cursor-pointer text-amber-600 dark:text-amber-400">
+                    {t212Result.tickerErrors.length} ticker{t212Result.tickerErrors.length !== 1 ? 's' : ''} could not be resolved — set manually in edit
+                  </summary>
+                  <ul className="mt-1 list-disc ml-4 text-amber-600 dark:text-amber-400">
+                    {t212Result.tickerErrors.map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                </details>
+              )}
               {t212Result.errors.length > 0 && (
                 <details className="mt-1 text-xs">
                   <summary className="cursor-pointer text-red-600 dark:text-red-400">{t212Result.errors.length} error{t212Result.errors.length !== 1 ? 's' : ''}</summary>
