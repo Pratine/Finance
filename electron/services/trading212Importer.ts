@@ -54,6 +54,24 @@ export interface Trading212Result {
   skipped: number
   errors: string[]
   newInvestments: string[]
+  tickersResolved: string[]   // e.g. ["VFEA → VFEA.DE"]
+  tickerErrors: string[]      // investments where ticker resolution failed
+}
+
+// EUR-first exchange priority — mirrors priceFetcher.ts
+const EUR_EXCHANGE_PRIORITY = ['AMS', 'XETRA', 'EPA', 'MIL', 'BME', 'SIX']
+
+// Resolves the best Yahoo Finance ticker for a newly-created investment using
+// OpenFIGI. Only called when the T212 ticker has no exchange suffix (no '.'),
+// meaning it cannot be used directly with Yahoo Finance.
+async function resolveYahooTicker(isin: string): Promise<string | null> {
+  const listings = await lookupISIN(isin)
+  const sorted = [...listings].sort((a, b) => {
+    const ai = EUR_EXCHANGE_PRIORITY.indexOf(a.exchCode)
+    const bi = EUR_EXCHANGE_PRIORITY.indexOf(b.exchCode)
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+  })
+  return sorted[0]?.yahooTicker ?? null
 }
 
 // RFC 4180-compliant CSV line parser — handles quoted fields containing the separator.
