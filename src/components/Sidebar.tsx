@@ -18,18 +18,18 @@ import {
 import SearchModal from './SearchModal'
 
 const nav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/reports', label: 'Reports', icon: BarChart3 },
-  { to: '/budgets', label: 'Budgets', icon: Receipt },
-  { to: '/bills', label: 'Recurring Bills', icon: CalendarClock },
-  { to: '/income', label: 'Recurring Income', icon: BadgeDollarSign },
-  { to: '/debts', label: 'Debts', icon: Landmark },
-  { to: '/investments', label: 'Investments', icon: TrendingUp },
-  { to: '/savings', label: 'Savings', icon: PiggyBank },
-  { to: '/accounts', label: 'Accounts', icon: Wallet },
-  { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { to: '/import', label: 'Import', icon: Upload },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, kbd: '1' },
+  { to: '/reports', label: 'Reports', icon: BarChart3, kbd: '2' },
+  { to: '/budgets', label: 'Budgets', icon: Receipt, kbd: '3' },
+  { to: '/bills', label: 'Recurring Bills', icon: CalendarClock, kbd: '4' },
+  { to: '/income', label: 'Recurring Income', icon: BadgeDollarSign, kbd: '5' },
+  { to: '/debts', label: 'Debts', icon: Landmark, kbd: '6' },
+  { to: '/investments', label: 'Investments', icon: TrendingUp, kbd: '7' },
+  { to: '/savings', label: 'Savings', icon: PiggyBank, kbd: '8' },
+  { to: '/accounts', label: 'Accounts', icon: Wallet, kbd: '9' },
+  { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight, kbd: '0' },
+  { to: '/import', label: 'Import', icon: Upload, kbd: 'I' },
+  { to: '/settings', label: 'Settings', icon: Settings, kbd: null },
 ]
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
