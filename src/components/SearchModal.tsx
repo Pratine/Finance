@@ -32,6 +32,8 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
   const [activeIdx, setActiveIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(containerRef)
 
   // Load data once on open
   useEffect(() => {
