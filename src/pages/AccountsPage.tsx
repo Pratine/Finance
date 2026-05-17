@@ -59,6 +59,7 @@ export default function AccountsPage() {
     setShowForm(true)
   }
   useShortcutAction('createNew', openCreate)
+  useShortcutAction('closeModal', closeForm)
 
   function openEdit(acc: Account) {
     setEditingId(acc.id)
