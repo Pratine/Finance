@@ -50,7 +50,6 @@ A personal finance desktop app built with Electron. Tracks accounts, transaction
 
 ```bash
 npm install
-npx prisma migrate dev
 ```
 
 ### Run in development
