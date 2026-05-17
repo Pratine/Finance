@@ -142,6 +142,7 @@ export default function RecurringIncomePage() {
   useEffect(() => { load() }, [])
 
   function openCreate() { setEditingId(null); setForm(emptyForm()); setError(null); setShowForm(true) }
+  useShortcutAction('createNew', openCreate)
   function openEdit(item: RecurringIncome) {
     setEditingId(item.id)
     setForm({
