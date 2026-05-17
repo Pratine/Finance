@@ -723,10 +723,10 @@ export default function InvestmentsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ticker symbol</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yahoo Finance ticker</label>
                   <input
                     type="text"
-                    placeholder="e.g. IWDA.AS"
+                    placeholder="e.g. IWDA.AS, VFEA.DE"
                     value={form.ticker}
                     onChange={e => setForm({ ...form, ticker: e.target.value })}
                     className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-100 uppercase"
