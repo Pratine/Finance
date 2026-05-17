@@ -125,6 +125,7 @@ export default function InvestmentsPage() {
     setShowForm(true)
   }
   useShortcutAction('createNew', openCreate)
+  useShortcutAction('closeModal', () => { setShowForm(false); setEditingId(null) })
 
   async function handleRefreshAll() {
     setRefreshing(true)
