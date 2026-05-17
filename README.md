@@ -31,7 +31,7 @@ A personal finance desktop app built with Electron. Tracks accounts, transaction
 | Shell | Electron 31 |
 | UI | React 18 + TypeScript + Vite |
 | Styling | Tailwind CSS |
-| Database | SQLite via Prisma ORM |
+| Database | SQLite via better-sqlite3 |
 | Charts | Recharts |
 | Icons | Lucide React |
 | Tests | Vitest |
