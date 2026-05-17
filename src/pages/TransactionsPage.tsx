@@ -685,6 +685,13 @@ export default function TransactionsPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [showTransfer, setShowTransfer] = useState(false)
   useShortcutAction('createNew', () => setShowAdd(true))
+  useShortcutAction('closeModal', () => {
+    if (splittingTx) setSplittingTx(null)
+    else if (editingTx) setEditingTx(null)
+    else if (showTransfer) setShowTransfer(false)
+    else if (showAdd) setShowAdd(false)
+    else if (deletingId !== null) setDeletingId(null)
+  })
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [editingTx, setEditingTx] = useState<Transaction | null>(null)
   const [splittingTx, setSplittingTx] = useState<Transaction | null>(null)
