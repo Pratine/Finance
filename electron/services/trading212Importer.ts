@@ -234,8 +234,12 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
           now,
         })
         const newId = Number(info.lastInsertRowid)
-        inv = { id: newId, name: row.name }
+        inv = { id: newId, name: row.name, isin: row.isin, ticker: row.ticker }
         newInvestments.push(row.name)
+        // Queue for ticker resolution if ISIN is present and ticker has no exchange suffix
+        if (row.isin && row.ticker && !row.ticker.includes('.')) {
+          toResolve.push({ id: newId, name: row.name, isin: row.isin, ticker: row.ticker })
+        }
       }
 
       const noteTag = `[T212]${row.id}`
