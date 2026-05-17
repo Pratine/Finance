@@ -11,7 +11,7 @@ A personal finance desktop app built with Electron. Tracks accounts, transaction
 - **Dashboard** — Net worth snapshot, spending summary, upcoming bills, recent transactions, and portfolio value at a glance
 - **Accounts** — Track multiple bank accounts with running balance and correction history
 - **Transactions** — Full ledger with categories, tags, splits, and virtual list for large datasets
-- **Import** — Import bank statements from Millennium BCP or Revolut CSV exports; duplicates are automatically skipped
+- **Import** — Import bank statements from Millennium BCP or Revolut CSV exports; import investment lots from Trading 212 CSV exports; duplicates are automatically skipped
 - **Budgets** — Monthly spending limits per category with progress tracking and bill reserves
 - **Recurring Bills & Income** — Scheduled payments and income with overdue alerts
 - **Savings Goals** — Track savings targets with interest accrual and contribution history
