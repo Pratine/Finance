@@ -40,7 +40,6 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
     Promise.all([window.api.listTransactions(), window.api.listAccounts()])
       .then(([txns, accs]) => { setTransactions(txns); setAccounts(accs); setLoaded(true) })
       .catch(() => setLoaded(true)) // show empty state rather than hanging on "Loading…"
-    inputRef.current?.focus()
   }, [])
 
   // Close on Escape
