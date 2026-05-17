@@ -207,6 +207,7 @@ export default function SavingsPage() {
     setShowForm(true)
   }
   useShortcutAction('createNew', openCreate)
+  useShortcutAction('closeModal', () => { setShowForm(false); setEditingId(null); setError(null) })
 
   function openEdit(goal: SavingsGoal) {
     // Temporarily add the goal's own account back to the dropdown so it remains selectable
