@@ -190,6 +190,8 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
   }
 
   const newInvestments: string[] = []
+  // Track newly-created investments whose ticker may need exchange-suffix resolution.
+  const toResolve: Array<{ id: number; name: string; isin: string; ticker: string }> = []
   let imported = 0
 
   const defaultType = firstType().get() as { id: number } | undefined
