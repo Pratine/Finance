@@ -14,6 +14,7 @@ import fs from 'fs'
 import type Database from 'better-sqlite3'
 import { db } from '../db'
 import { calcInvestmentTotals } from './lotCalcs'
+import { lookupISIN } from './isinLookup'
 
 // Lazy module-level prepared-statement getters — compiled once on first use.
 // Cannot prepare at module load because db is opened after migrations run.
