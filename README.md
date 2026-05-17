@@ -78,7 +78,7 @@ Output is placed in `release/`.
 
 All data is stored locally in a SQLite database in the app's user data directory. No data is sent to any server.
 
-Exchange rates and investment prices are fetched from public APIs on a configurable schedule.
+Exchange rates and investment prices are fetched from Yahoo Finance on a configurable schedule. When a Trading 212 ticker lacks an exchange suffix, the app resolves the correct Yahoo Finance ticker automatically using the security's ISIN via the OpenFIGI API.
 
 ---
 
