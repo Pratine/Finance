@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useShortcutAction } from '../context/ShortcutContext'
 import { useSearchParams } from 'react-router-dom'
 import { Search, ChevronDown, X, Tag, Plus, ArrowLeftRight, Trash2, Hash, Pencil, Scissors } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
