@@ -2,6 +2,7 @@
 // Uses the unofficial chart API — no API key required.
 // Throws if the ticker is not found, the network request fails, or times out.
 import https from 'https'
+import { lookupISIN } from './isinLookup'
 
 const TIMEOUT_MS = 10_000
 
@@ -74,6 +75,25 @@ export interface PriceResultWithResolved extends PriceResult {
 // Preferred exchanges for EUR-denominated portfolios — tried first during ISIN fallback.
 const EUR_EXCHANGE_PRIORITY = ['AMS', 'XETRA', 'EPA', 'MIL', 'BME', 'SIX']
 
+// OpenFIGI rate-limits unauthenticated callers to ~25 req/minute (one every
+// ~2.4s). The price scheduler may invoke fetchPriceWithISINFallback for many
+// investments in parallel; serialise the OpenFIGI calls with a minimal delay
+// chain so we don't burst past the limit and start getting 429s. Until we
+// implement batch lookups this is the lowest-risk guard.
+let _isinLookupChain: Promise<unknown> = Promise.resolve()
+const ISIN_LOOKUP_MIN_GAP_MS = 200
+function rateLimitedISINLookup(isin: string): Promise<Awaited<ReturnType<typeof lookupISIN>>> {
+  const next = _isinLookupChain
+    .catch(() => undefined)
+    .then(async () => {
+      const result = await lookupISIN(isin)
+      await new Promise(r => setTimeout(r, ISIN_LOOKUP_MIN_GAP_MS))
+      return result
+    })
+  _isinLookupChain = next
+  return next
+}
+
 // Try to fetch a price using the known ticker. If that 404s and we have an ISIN,
 // query OpenFIGI for all exchange listings and try each Yahoo ticker until one works.
 // Returns the resolved ticker so the caller can persist it back to the DB.
@@ -97,10 +117,9 @@ export async function fetchPriceWithISINFallback(
   }
 
   // 2. Use OpenFIGI to discover Yahoo-compatible tickers for this ISIN
-  const { lookupISIN } = await import('./isinLookup')
   let listings: Awaited<ReturnType<typeof lookupISIN>>
   try {
-    listings = await lookupISIN(isin)
+    listings = await rateLimitedISINLookup(isin)
   } catch {
     throw new Error(`${ticker ?? isin}: ticker not found on Yahoo Finance and ISIN lookup failed`)
   }

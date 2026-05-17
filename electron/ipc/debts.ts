@@ -1,4 +1,5 @@
 import type { IpcMain } from 'electron'
+import type Database from 'better-sqlite3'
 import { db } from '../db'
 import {
   buildUpdate, hydrateDebt, nowIso, toIso, requireIso, advanceByFrequency,
@@ -13,9 +14,18 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
   // app.whenReady() — referencing migration-added columns at module scope crashes.
   const stmtDebtsList     = db.prepare(`SELECT * FROM "Debt" ORDER BY createdAt ASC`)
   // Batch account fetch for the list — avoids one stmtAccountById call per debt.
-  const buildAccountsByIdStmt = (n: number) => db.prepare(
-    `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id IN (${Array(n).fill('?').join(',')})`,
-  )
+  // Cache by IN-list size so we don't recompile when the same `n` recurs.
+  const accountByIdStmtCache = new Map<number, Database.Statement>()
+  const buildAccountsByIdStmt = (n: number): Database.Statement => {
+    let stmt = accountByIdStmtCache.get(n)
+    if (!stmt) {
+      stmt = db.prepare(
+        `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id IN (${Array(n).fill('?').join(',')})`,
+      )
+      accountByIdStmtCache.set(n, stmt)
+    }
+    return stmt
+  }
   const stmtDebtById      = db.prepare(`SELECT * FROM "Debt" WHERE id = ?`)
   const stmtDebtInsert    = db.prepare(`
     INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)

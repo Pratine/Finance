@@ -1,4 +1,5 @@
 import type { IpcMain } from 'electron'
+import type Database from 'better-sqlite3'
 import { db } from '../db'
 import { accountJoins, accountSelect, buildUpdate, hydrateAccount, hydrateSavingsGoal, nowIso, toIso } from './shared'
 import { elapsedPeriods, applyPeriods } from '../services/interest'
@@ -6,11 +7,25 @@ import type { InterestType } from '../domainTypes'
 
 export function registerSavingsHandlers(ipcMain: IpcMain) {
   const stmtSavingsList = db.prepare(`SELECT * FROM "SavingsGoal" ORDER BY createdAt ASC`)
-  const buildAccountsByIdStmt = (n: number) => db.prepare(
-    `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id IN (${Array(n).fill('?').join(',')})`,
-  )
+  // Cache prepared statements by IN-list size — without this we recompile the
+  // SQL on every list call (and a new shape every time `n` changes).
+  const accountByIdStmtCache = new Map<number, Database.Statement>()
+  const buildAccountsByIdStmt = (n: number): Database.Statement => {
+    let stmt = accountByIdStmtCache.get(n)
+    if (!stmt) {
+      stmt = db.prepare(
+        `SELECT ${accountSelect} FROM "Account" a ${accountJoins} WHERE a.id IN (${Array(n).fill('?').join(',')})`,
+      )
+      accountByIdStmtCache.set(n, stmt)
+    }
+    return stmt
+  }
   const stmtSavingsById = db.prepare(`SELECT * FROM "SavingsGoal" WHERE id = ?`)
   const stmtSavingsDelete = db.prepare(`DELETE FROM "SavingsGoal" WHERE id = ?`)
+  // ASSUMPTION: the seeded AccountType named 'Savings' is the canonical savings
+  // bucket. If the user renames this type, savings:sync will stop auto-creating
+  // SavingsGoal rows for those accounts. A proper fix requires a schema change
+  // (e.g. an isDefault/role flag on AccountType) — out of scope for now.
   const stmtAccountsSavings = db.prepare(`
     SELECT a.* FROM "Account" a
     JOIN "AccountType" t ON t.id = a.typeId

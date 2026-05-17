@@ -67,40 +67,39 @@ const DEFAULT_BROKERS = [
 ]
 
 export function seedDefaultData(): void {
-  const counts = {
-    categories:      (db.prepare(`SELECT COUNT(*) AS n FROM "Category"`).get() as { n: number }).n,
-    banks:           (db.prepare(`SELECT COUNT(*) AS n FROM "Bank"`).get() as { n: number }).n,
-    accountTypes:    (db.prepare(`SELECT COUNT(*) AS n FROM "AccountType"`).get() as { n: number }).n,
-    investmentTypes: (db.prepare(`SELECT COUNT(*) AS n FROM "InvestmentType"`).get() as { n: number }).n,
-    brokers:         (db.prepare(`SELECT COUNT(*) AS n FROM "Broker"`).get() as { n: number }).n,
+  // Fast early-exit on the common path: if ANY seeded table already has rows
+  // we assume the user has data and skip seeding entirely. Avoids 5 COUNT(*)
+  // queries on every launch — just one bounded LIMIT 1 probe per table, stopping
+  // at the first hit.
+  const hasAny = (table: string): boolean =>
+    db.prepare(`SELECT 1 FROM "${table}" LIMIT 1`).get() != null
+
+  if (
+    hasAny('Category') ||
+    hasAny('Bank') ||
+    hasAny('AccountType') ||
+    hasAny('InvestmentType') ||
+    hasAny('Broker')
+  ) {
+    return
   }
 
   const now = new Date().toISOString()
 
   db.transaction(() => {
-    if (counts.categories === 0) {
-      const stmt = db.prepare(`INSERT INTO "Category" (name, type, color, icon, createdAt) VALUES (@name, @type, @color, @icon, @createdAt)`)
-      for (const c of DEFAULT_CATEGORIES) stmt.run({ ...c, createdAt: now })
-    }
+    const catStmt = db.prepare(`INSERT INTO "Category" (name, type, color, icon, createdAt) VALUES (@name, @type, @color, @icon, @createdAt)`)
+    for (const c of DEFAULT_CATEGORIES) catStmt.run({ ...c, createdAt: now })
 
-    if (counts.banks === 0) {
-      const stmt = db.prepare(`INSERT INTO "Bank" (name, color, icon) VALUES (@name, @color, @icon)`)
-      for (const b of DEFAULT_BANKS) stmt.run(b)
-    }
+    const bankStmt = db.prepare(`INSERT INTO "Bank" (name, color, icon) VALUES (@name, @color, @icon)`)
+    for (const b of DEFAULT_BANKS) bankStmt.run(b)
 
-    if (counts.accountTypes === 0) {
-      const stmt = db.prepare(`INSERT INTO "AccountType" (name, color, icon) VALUES (@name, @color, @icon)`)
-      for (const t of DEFAULT_ACCOUNT_TYPES) stmt.run(t)
-    }
+    const atStmt = db.prepare(`INSERT INTO "AccountType" (name, color, icon) VALUES (@name, @color, @icon)`)
+    for (const t of DEFAULT_ACCOUNT_TYPES) atStmt.run(t)
 
-    if (counts.investmentTypes === 0) {
-      const stmt = db.prepare(`INSERT INTO "InvestmentType" (name, color, icon) VALUES (@name, @color, @icon)`)
-      for (const t of DEFAULT_INVESTMENT_TYPES) stmt.run(t)
-    }
+    const itStmt = db.prepare(`INSERT INTO "InvestmentType" (name, color, icon) VALUES (@name, @color, @icon)`)
+    for (const t of DEFAULT_INVESTMENT_TYPES) itStmt.run(t)
 
-    if (counts.brokers === 0) {
-      const stmt = db.prepare(`INSERT INTO "Broker" (name, color, icon) VALUES (@name, @color, @icon)`)
-      for (const b of DEFAULT_BROKERS) stmt.run(b)
-    }
+    const brkStmt = db.prepare(`INSERT INTO "Broker" (name, color, icon) VALUES (@name, @color, @icon)`)
+    for (const b of DEFAULT_BROKERS) brkStmt.run(b)
   })()
 }

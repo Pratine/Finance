@@ -2,10 +2,11 @@
  * Build script for the portable demo release.
  *
  * Steps:
- *   1. Run tests
- *   2. Seed a fresh demo database using better-sqlite3 + seed.js
- *   3. Copy the seeded db to resources/demo.db (bundled into the portable exe)
- *   4. Rebuild better-sqlite3 for Electron's ABI
+ *   1. Run tests (vitest)
+ *   2. Rebuild better-sqlite3 against Electron's ABI (must happen BEFORE seed
+ *      so seed and runtime use the same native binary)
+ *   3. Seed a fresh demo database via seed.js, run with the Electron binary
+ *   4. Copy the seeded db to resources/demo.db (bundled into the portable exe)
  *   5. Build the app (Vite + TypeScript)
  *   6. Run electron-builder with the portable target
  *   7. Clean up resources/demo.db

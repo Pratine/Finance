@@ -11,8 +11,42 @@
 // an existing lot with the same notes string.
 
 import fs from 'fs'
+import type Database from 'better-sqlite3'
 import { db } from '../db'
 import { calcInvestmentTotals } from './lotCalcs'
+
+// Lazy module-level prepared-statement getters — compiled once on first use.
+// Cannot prepare at module load because db is opened after migrations run.
+let _findByIsin: Database.Statement | null = null
+let _findByTicker: Database.Statement | null = null
+let _firstType: Database.Statement | null = null
+let _insertInv: Database.Statement | null = null
+let _dedupCheck: Database.Statement | null = null
+let _lotsRaw: Database.Statement | null = null
+let _insertBuy: Database.Statement | null = null
+let _insertSell: Database.Statement | null = null
+let _updateInvTotals: Database.Statement | null = null
+
+const findByIsin     = () => _findByIsin     ??= db.prepare(`SELECT * FROM "Investment" WHERE isin = ? LIMIT 1`)
+const findByTicker   = () => _findByTicker   ??= db.prepare(`SELECT * FROM "Investment" WHERE ticker = ? LIMIT 1`)
+const firstType      = () => _firstType      ??= db.prepare(`SELECT id FROM "InvestmentType" ORDER BY id ASC LIMIT 1`)
+const insertInv      = () => _insertInv      ??= db.prepare(`
+    INSERT INTO "Investment" (name, typeId, brokerId, amountIn, currentValue, currency, isin, ticker, shares, lastPriceFetched, priceUpdatedAt, notes, createdAt, updatedAt)
+    VALUES (@name, @typeId, NULL, 0, 0, @currency, @isin, @ticker, NULL, NULL, NULL, NULL, @now, @now)
+  `)
+const dedupCheck     = () => _dedupCheck     ??= db.prepare(`SELECT id FROM "InvestmentLot" WHERE notes = ? LIMIT 1`)
+const lotsRaw        = () => _lotsRaw        ??= db.prepare(`SELECT type, shares, totalCost FROM "InvestmentLot" WHERE investmentId = ?`)
+const insertBuy      = () => _insertBuy      ??= db.prepare(`
+    INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, notes, createdAt)
+    VALUES (?, 'BUY', ?, ?, ?, ?, ?, ?)
+  `)
+const insertSell     = () => _insertSell     ??= db.prepare(`
+    INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, realizedGain, notes, createdAt)
+    VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?, ?)
+  `)
+const updateInvTotals = () => _updateInvTotals ??= db.prepare(
+    `UPDATE "Investment" SET shares = ?, amountIn = ?, currentValue = CASE WHEN currentValue = 0 THEN ? ELSE currentValue END, updatedAt = ? WHERE id = ?`,
+  )
 
 export interface Trading212Result {
   imported: number
@@ -136,42 +170,32 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
     }
   }
 
-  // Prepared statements
-  const findByIsin   = db.prepare(`SELECT * FROM "Investment" WHERE isin = ? LIMIT 1`)
-  const findByTicker = db.prepare(`SELECT * FROM "Investment" WHERE ticker = ? LIMIT 1`)
-  const firstType    = db.prepare(`SELECT id FROM "InvestmentType" ORDER BY id ASC LIMIT 1`)
-  const insertInv    = db.prepare(`
-    INSERT INTO "Investment" (name, typeId, brokerId, amountIn, currentValue, currency, isin, ticker, shares, lastPriceFetched, priceUpdatedAt, notes, createdAt, updatedAt)
-    VALUES (@name, @typeId, NULL, 0, 0, @currency, @isin, @ticker, NULL, NULL, NULL, NULL, @now, @now)
-  `)
-  const dedupCheck   = db.prepare(`SELECT id FROM "InvestmentLot" WHERE notes = ? LIMIT 1`)
-  const lotsRaw      = db.prepare(`SELECT type, shares, totalCost FROM "InvestmentLot" WHERE investmentId = ?`)
-  const insertBuy    = db.prepare(`
-    INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, notes)
-    VALUES (?, 'BUY', ?, ?, ?, ?, ?)
-  `)
-  const insertSell   = db.prepare(`
-    INSERT INTO "InvestmentLot" (investmentId, type, date, shares, pricePerShare, totalCost, realizedGain, notes)
-    VALUES (?, 'SELL', ?, ?, ?, ?, ?, ?)
-  `)
-  const updateInvTotals = db.prepare(
-    `UPDATE "Investment" SET shares = ?, amountIn = ?, currentValue = CASE WHEN currentValue = 0 THEN ? ELSE currentValue END, updatedAt = ? WHERE id = ?`,
-  )
-
   const newInvestments: string[] = []
   let imported = 0
 
-  const defaultType = firstType.get() as { id: number } | undefined
+  const defaultType = firstType().get() as { id: number } | undefined
   const defaultTypeId = defaultType?.id ?? null
 
   const touchedInvestments = new Set<number>()
+  // Cache lots per investment to avoid re-querying after each insert. We refresh
+  // the cache entry after every insert so subsequent SELLs in the same batch
+  // still see up-to-date balances.
+  const lotsCache = new Map<number, Array<{ type: string; shares: unknown; totalCost: unknown }>>()
+  const loadLots = (id: number) => {
+    let l = lotsCache.get(id)
+    if (!l) {
+      l = lotsRaw().all(id) as Array<{ type: string; shares: unknown; totalCost: unknown }>
+      lotsCache.set(id, l)
+    }
+    return l
+  }
 
   const run = db.transaction(() => {
     for (const row of parsed) {
       // Resolve investment
       let inv: any = null
-      if (row.isin) inv = findByIsin.get(row.isin)
-      if (!inv && row.ticker) inv = findByTicker.get(row.ticker)
+      if (row.isin) inv = findByIsin().get(row.isin)
+      if (!inv && row.ticker) inv = findByTicker().get(row.ticker)
 
       if (!inv) {
         if (defaultTypeId === null) {
@@ -180,7 +204,7 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
           continue
         }
         const now = new Date().toISOString()
-        const info = insertInv.run({
+        const info = insertInv().run({
           name: row.name,
           typeId: defaultTypeId,
           currency: 'EUR',
@@ -194,18 +218,23 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
       }
 
       const noteTag = `[T212]${row.id}`
-      const existing = dedupCheck.get(noteTag)
+      const existing = dedupCheck().get(noteTag)
       if (existing) { skipped++; continue }
 
       const pricePerShare = Math.round((row.total / row.shares) * 10000) / 10000
       const totalCost = Math.round(row.total * 100) / 100
       const isoDate = row.time
+      const now = new Date().toISOString()
 
       if (row.type === 'BUY') {
-        insertBuy.run(inv.id, isoDate, row.shares, pricePerShare, totalCost, noteTag)
+        insertBuy().run(inv.id, isoDate, row.shares, pricePerShare, totalCost, noteTag, now)
+        const lots = loadLots(inv.id)
+        lots.push({ type: 'BUY', shares: row.shares, totalCost })
       } else {
-        // SELL: validate available shares using current DB state
-        const lots = lotsRaw.all(inv.id) as Array<{ type: string; shares: unknown; totalCost: unknown }>
+        // SELL: validate available shares using current DB state. Reuse the
+        // cached lot list for both the validation totals and the avg-cost calc
+        // so we only hit SQLite once per investment.
+        const lots = loadLots(inv.id)
         const totals = calcInvestmentTotals(lots as any)
         if (row.shares > totals.shares + 1e-9) {
           errors.push(`${row.name} (${row.id}): cannot sell ${row.shares} shares — only ${totals.shares} available`)
@@ -218,20 +247,22 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
         const avgCost = totalBuyShares > 0 ? totalBuyCost / totalBuyShares : 0
         const costBasis = Math.round(row.shares * avgCost * 100) / 100
         const realizedGain = Math.round((totalCost - costBasis) * 100) / 100
-        insertSell.run(inv.id, isoDate, row.shares, pricePerShare, totalCost, realizedGain, noteTag)
+        insertSell().run(inv.id, isoDate, row.shares, pricePerShare, totalCost, realizedGain, noteTag, now)
+        lots.push({ type: 'SELL', shares: row.shares, totalCost })
       }
 
       touchedInvestments.add(inv.id)
       imported++
     }
 
-    // Sync totals once per touched investment
+    // Sync totals once per touched investment — use the in-memory cache which
+    // already reflects every insert we just performed.
     const now = new Date().toISOString()
     for (const id of touchedInvestments) {
-      const lots = lotsRaw.all(id) as Array<{ type: string; shares: unknown; totalCost: unknown }>
+      const lots = loadLots(id)
       const { shares, amountIn } = calcInvestmentTotals(lots as any)
       // seed currentValue with amountIn if it's still 0 (no price fetched yet)
-      updateInvTotals.run(shares, amountIn, amountIn, now, id)
+      updateInvTotals().run(shares, amountIn, amountIn, now, id)
     }
   })
 
