@@ -143,6 +143,7 @@ export default function RecurringIncomePage() {
 
   function openCreate() { setEditingId(null); setForm(emptyForm()); setError(null); setShowForm(true) }
   useShortcutAction('createNew', openCreate)
+  useShortcutAction('closeModal', closeForm)
   function openEdit(item: RecurringIncome) {
     setEditingId(item.id)
     setForm({
