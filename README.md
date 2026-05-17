@@ -2,7 +2,7 @@
 
 A personal finance desktop app built with Electron. Tracks accounts, transactions, budgets, bills, savings, investments, and debts — all stored locally in a SQLite database with no cloud dependency.
 
-![Platform](https://img.shields.io/badge/platform-Windows-blue) ![Version](https://img.shields.io/badge/version-0.2.0-green)
+![Platform](https://img.shields.io/badge/platform-Windows-blue) ![Version](https://img.shields.io/badge/version-0.5.0-green)
 
 ---
 
