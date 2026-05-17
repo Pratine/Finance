@@ -93,7 +93,7 @@ export default function SearchModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] bg-black/50"
       onClick={onClose}>
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden"
+      <div ref={containerRef} className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden"
         onClick={e => e.stopPropagation()}>
 
         {/* Input */}
