@@ -15,7 +15,7 @@ A personal finance desktop app built with Electron. Tracks accounts, transaction
 - **Budgets** — Monthly spending limits per category with progress tracking and bill reserves
 - **Recurring Bills & Income** — Scheduled payments and income with overdue alerts
 - **Savings Goals** — Track savings targets with interest accrual and contribution history
-- **Investments** — Portfolio tracking with lot-level cost basis, CAGR, unrealised P&L, and price history charts
+- **Investments** — Portfolio tracking with lot-level cost basis, CAGR, unrealised P&L, and price history charts; prices fetched automatically from Yahoo Finance with ISIN-based exchange resolution via OpenFIGI
 - **Debts** — Loans and receivables with amortisation, payment history, and interest split per payment
 - **Reports** — Spending by category, cash flow, net worth history, and budget history over configurable date ranges
 - **Auto-updater** — Checks for new releases on startup and installs on quit
