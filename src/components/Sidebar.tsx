@@ -71,7 +71,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex flex-col gap-0.5 p-3 flex-1">
-          {nav.map(({ to, label, icon: Icon }) => (
+          {nav.map(({ to, label, icon: Icon, kbd }) => (
             <NavLink
               key={to}
               to={to}
@@ -85,7 +85,12 @@ export default function Sidebar() {
               }
             >
               <Icon size={16} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {kbd && (
+                <kbd className="text-[10px] bg-slate-800 text-slate-500 px-1 py-0.5 rounded font-mono leading-none">
+                  {kbd}
+                </kbd>
+              )}
             </NavLink>
           ))}
         </nav>
