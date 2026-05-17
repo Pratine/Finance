@@ -466,6 +466,7 @@ export default function DebtsPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [filter, setFilter] = useState<'ALL' | 'LOAN' | 'RECEIVABLE'>('ALL')
+  useShortcutAction('createNew', () => setShowAdd(true))
   const [loadError, setLoadError] = useState(false)
 
   async function load() {
