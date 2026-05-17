@@ -293,5 +293,25 @@ export async function importTrading212CSV(filePath: string): Promise<Trading212R
 
   run()
 
-  return { imported, skipped, errors, newInvestments }
+  // After the transaction, resolve Yahoo Finance tickers for newly-created
+  // investments whose T212 ticker has no exchange suffix (e.g. "VFEA" → "VFEA.DE").
+  // Uses OpenFIGI with a 200ms gap between calls to respect the rate limit.
+  const tickersResolved: string[] = []
+  const tickerErrors: string[] = []
+  const stmtUpdateTicker = db.prepare(`UPDATE "Investment" SET ticker = ?, updatedAt = ? WHERE id = ?`)
+
+  for (const inv of toResolve) {
+    await new Promise(r => setTimeout(r, 200))
+    try {
+      const yahooTicker = await resolveYahooTicker(inv.isin)
+      if (yahooTicker && yahooTicker !== inv.ticker) {
+        stmtUpdateTicker.run(yahooTicker, new Date().toISOString(), inv.id)
+        tickersResolved.push(`${inv.name}: ${inv.ticker} → ${yahooTicker}`)
+      }
+    } catch (e: any) {
+      tickerErrors.push(`${inv.name}: could not resolve ticker — ${e.message ?? String(e)}`)
+    }
+  }
+
+  return { imported, skipped, errors, newInvestments, tickersResolved, tickerErrors }
 }
