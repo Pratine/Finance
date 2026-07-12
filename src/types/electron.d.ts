@@ -7,7 +7,7 @@ declare global {
     api: {
       // Export
       exportSavePath: (defaultName: string, filters: Array<{ name: string; extensions: string[] }>) => Promise<string | null>
-      exportWriteFile: (filePath: string, content: string) => Promise<{ ok: true }>
+      exportSaveCsv: (defaultName: string, content: string) => Promise<{ saved: boolean }>
       exportTransactions: (opts: { format: 'csv' | 'json'; filePath: string; from?: string; to?: string; accountId?: number }) => Promise<{ exported: number }>
       exportBackup: (filePath: string) => Promise<{ exported: number }>
       importBackup: (filePath: string) => Promise<{ transactions: number }>
