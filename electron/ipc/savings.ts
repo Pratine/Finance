@@ -111,6 +111,7 @@ export function registerSavingsHandlers(ipcMain: IpcMain) {
           goal.interestType as InterestType,
           Number(goal.interestValue),
           periods,
+          goal.interestFrequencyDays,
         )
         const newLastApplied = new Date(base.getTime() + periods * goal.interestFrequencyDays * 86_400_000)
         const earned = newAmount - Number(goal.currentAmount)
