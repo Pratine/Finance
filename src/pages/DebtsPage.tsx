@@ -383,8 +383,8 @@ function DebtCard({
   const outstanding = Number(debt.outstanding)
   const principal = Number(debt.principal)
   const tan = debt.interestRate ? Number(debt.interestRate) : null
-  const taeg = (debt as any).taeg ? Number((debt as any).taeg) : null
-  const totalPeriods = (debt as any).totalPeriods ? Number((debt as any).totalPeriods) : null
+  const taeg = debt.taeg
+  const totalPeriods = debt.totalPeriods
 
   const paid = calcPctPaid(outstanding, principal)
   const isLoan = debt.type === 'LOAN'
