@@ -59,7 +59,7 @@ export default function TaxTab({ transactions, investments }: {
       for (const lot of inv.lots) {
         if (lot.type !== 'SELL') continue
         if (new Date(lot.date).getFullYear() !== year) continue
-        const proceeds = Math.abs(Number(lot.totalCost))
+        const proceeds = Math.abs(Number(lot.totalCost ?? 0))
         const gain = Number(lot.realizedGain ?? 0)
         const cost = proceeds - gain
         rows.push({ asset: inv.name, date: lot.date.slice(0, 10), cost, proceeds, gain })
