@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Plus, Trash2, X, ChevronDown, ChevronUp, CreditCard, HandCoins } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { Plus, Trash2, X, ChevronDown, ChevronUp, CreditCard, HandCoins, Table2, History } from 'lucide-react'
 import { useShortcutAction } from '../context/ShortcutContext'
 import { fmtDate } from '../utils/formatDate'
-import { calcPctPaid, calcPaymentSplit, calcNetDebt } from '../utils/debtCalcs'
+import {
+  calcPctPaid, calcPaymentSplit, calcNetDebt,
+  calcInstallment, buildAmortisationSchedule,
+} from '../utils/debtCalcs'
 
 const FREQUENCIES = ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'] as const
 
@@ -17,7 +20,9 @@ type DebtForm = {
   type: 'LOAN' | 'RECEIVABLE'
   counterparty: string
   principal: string
-  interestRate: string
+  interestRate: string   // TAN (%)
+  taeg: string           // TAEG (%)
+  totalPeriods: string   // number of installments
   frequency: string
   nextPaymentDate: string
   startDate: string
@@ -28,7 +33,8 @@ type DebtForm = {
 
 const EMPTY_FORM: DebtForm = {
   name: '', type: 'LOAN', counterparty: '', principal: '', interestRate: '',
-  frequency: '', nextPaymentDate: '', startDate: new Date().toISOString().slice(0, 10),
+  taeg: '', totalPeriods: '', frequency: 'MONTHLY', nextPaymentDate: '',
+  startDate: new Date().toISOString().slice(0, 10),
   endDate: '', accountId: '', notes: '',
 }
 
@@ -48,7 +54,9 @@ function DebtModal({
     counterparty: initial.counterparty,
     principal: initial.principal,
     interestRate: initial.interestRate ?? '',
-    frequency: initial.frequency ?? '',
+    taeg: (initial as any).taeg ?? '',
+    totalPeriods: (initial as any).totalPeriods ?? '',
+    frequency: initial.frequency ?? 'MONTHLY',
     nextPaymentDate: initial.nextPaymentDate?.slice(0, 10) ?? '',
     startDate: initial.startDate.slice(0, 10),
     endDate: initial.endDate?.slice(0, 10) ?? '',
@@ -61,6 +69,17 @@ function DebtModal({
   const f = (k: keyof DebtForm, v: unknown) => setForm(p => ({ ...p, [k]: v }))
 
   const inputCls = 'w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400'
+
+  // Live installment preview
+  const installmentPreview = useMemo(() => {
+    const p = parseFloat(form.principal)
+    const tan = parseFloat(form.interestRate)
+    const n = parseInt(form.totalPeriods)
+    if (!isNaN(p) && p > 0 && !isNaN(tan) && !isNaN(n) && n > 0) {
+      return calcInstallment(p, tan, form.frequency || 'MONTHLY', n)
+    }
+    return null
+  }, [form.principal, form.interestRate, form.totalPeriods, form.frequency])
 
   async function submit() {
     if (!form.name.trim() || !form.counterparty.trim() || !form.principal || !form.startDate) {
@@ -75,6 +94,8 @@ function DebtModal({
         counterparty: form.counterparty.trim(),
         principal: parseFloat(form.principal),
         interestRate: form.interestRate ? parseFloat(form.interestRate) : null,
+        taeg: form.taeg ? parseFloat(form.taeg) : null,
+        totalPeriods: form.totalPeriods ? parseInt(form.totalPeriods) : null,
         frequency: form.frequency || null,
         nextPaymentDate: form.nextPaymentDate || null,
         startDate: form.startDate,
@@ -139,16 +160,42 @@ function DebtModal({
               <input type="number" min="0" step="0.01" placeholder="0.00" value={form.principal} onChange={e => f('principal', e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Interest rate (% / year)</label>
-              <input type="number" min="0" step="0.01" placeholder="e.g. 3.5" value={form.interestRate} onChange={e => f('interestRate', e.target.value)} className={inputCls} />
-            </div>
-            <div>
               <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Payment frequency</label>
               <select value={form.frequency} onChange={e => f('frequency', e.target.value)} className={inputCls}>
                 <option value="">None</option>
                 {FREQUENCIES.map(fr => <option key={fr} value={fr}>{fr.charAt(0) + fr.slice(1).toLowerCase()}</option>)}
               </select>
             </div>
+
+            {/* TAN / TAEG row */}
+            <div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                TAN (%) <span className="text-slate-400">— nominal annual rate</span>
+              </label>
+              <input type="number" min="0" step="0.001" placeholder="e.g. 3.5" value={form.interestRate} onChange={e => f('interestRate', e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                TAEG (%) <span className="text-slate-400">— effective APR</span>
+              </label>
+              <input type="number" min="0" step="0.001" placeholder="e.g. 4.2" value={form.taeg} onChange={e => f('taeg', e.target.value)} className={inputCls} />
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Total installments</label>
+              <input type="number" min="1" step="1" placeholder="e.g. 60" value={form.totalPeriods} onChange={e => f('totalPeriods', e.target.value)} className={inputCls} />
+            </div>
+            <div className="flex items-end pb-0.5">
+              {installmentPreview !== null ? (
+                <div className="w-full rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">Installment</p>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{fmt(installmentPreview)}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 dark:text-slate-500">Fill TAN + installments to preview</p>
+              )}
+            </div>
+
             <div>
               <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Next payment date</label>
               <input type="date" value={form.nextPaymentDate} onChange={e => f('nextPaymentDate', e.target.value)} className={inputCls} />
@@ -157,7 +204,7 @@ function DebtModal({
               <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Start date</label>
               <input type="date" value={form.startDate} onChange={e => f('startDate', e.target.value)} className={inputCls} />
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Expected end date</label>
               <input type="date" value={form.endDate} onChange={e => f('endDate', e.target.value)} className={inputCls} />
             </div>
@@ -199,22 +246,44 @@ function PaymentModal({
   onSave: (updated: Debt) => void
 }) {
   const outstanding = Number(debt.outstanding)
+  const tan = debt.interestRate ? Number(debt.interestRate) : null
+  const totalPeriods = (debt as any).totalPeriods ? Number((debt as any).totalPeriods) : null
+
+  // Compute suggested installment
+  const suggestedInstallment = useMemo(() => {
+    if (tan && totalPeriods && outstanding > 0) {
+      // Remaining periods = totalPeriods - payments made so far
+      const paid = debt.payments.length
+      const remaining = Math.max(1, totalPeriods - paid)
+      return calcInstallment(outstanding, tan, debt.frequency, remaining)
+    }
+    return null
+  }, [outstanding, tan, totalPeriods, debt.frequency, debt.payments.length])
+
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState(suggestedInstallment ? suggestedInstallment.toFixed(2) : '')
   const [principal, setPrincipal] = useState('')
   const [interest, setInterest] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Auto-split: when amount changes and there's an interest rate, suggest split.
+  // Auto-split when amount is pre-filled
+  useEffect(() => {
+    if (suggestedInstallment && tan) {
+      const { principal: p, interest: i } = calcPaymentSplit(suggestedInstallment, outstanding, tan, debt.frequency)
+      setPrincipal(p.toFixed(2))
+      setInterest(i.toFixed(2))
+    }
+  }, [])
+
   function handleAmountChange(val: string) {
     setAmount(val)
     const amt = parseFloat(val)
-    if (!isNaN(amt) && debt.interestRate) {
-      const { principal, interest } = calcPaymentSplit(amt, outstanding, Number(debt.interestRate), debt.frequency)
-      setInterest(interest.toFixed(2))
-      setPrincipal(principal.toFixed(2))
+    if (!isNaN(amt) && tan) {
+      const { principal: p, interest: i } = calcPaymentSplit(amt, outstanding, tan, debt.frequency)
+      setInterest(i.toFixed(2))
+      setPrincipal(p.toFixed(2))
     } else if (!isNaN(amt)) {
       setPrincipal(val)
       setInterest('0')
@@ -250,9 +319,12 @@ function PaymentModal({
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Record payment</h2>
           <button onClick={onClose}><X size={16} className="text-slate-400" /></button>
         </div>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
-          Outstanding: <span className="font-semibold text-slate-700 dark:text-slate-300">{fmt(debt.outstanding)}</span>
-        </p>
+        <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mb-4">
+          <span>Outstanding: <span className="font-semibold text-slate-700 dark:text-slate-300">{fmt(debt.outstanding)}</span></span>
+          {suggestedInstallment && (
+            <span>Installment: <span className="font-semibold text-slate-700 dark:text-slate-300">{fmt(suggestedInstallment)}</span></span>
+          )}
+        </div>
 
         <div className="flex flex-col gap-3">
           <div>
@@ -306,8 +378,15 @@ function DebtCard({
   const [expanded, setExpanded] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
+  const [expandedTab, setExpandedTab] = useState<'history' | 'schedule'>('history')
 
-  const paid = calcPctPaid(Number(debt.outstanding), Number(debt.principal))
+  const outstanding = Number(debt.outstanding)
+  const principal = Number(debt.principal)
+  const tan = debt.interestRate ? Number(debt.interestRate) : null
+  const taeg = (debt as any).taeg ? Number((debt as any).taeg) : null
+  const totalPeriods = (debt as any).totalPeriods ? Number((debt as any).totalPeriods) : null
+
+  const paid = calcPctPaid(outstanding, principal)
   const isLoan = debt.type === 'LOAN'
   const statusColor = debt.status === 'PAID'
     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
@@ -320,6 +399,23 @@ function DebtCard({
   const nextDue = debt.nextPaymentDate ? new Date(debt.nextPaymentDate) : null
   if (nextDue) nextDue.setUTCHours(0, 0, 0, 0)
   const daysUntil = nextDue ? Math.round((nextDue.getTime() - today.getTime()) / 86_400_000) : null
+
+  // Computed installment from remaining outstanding
+  const remainingPeriods = totalPeriods
+    ? Math.max(1, totalPeriods - debt.payments.length)
+    : null
+  const installment = tan && remainingPeriods && outstanding > 0
+    ? calcInstallment(outstanding, tan, debt.frequency, remainingPeriods)
+    : null
+
+  // Total interest from amortisation schedule
+  const amortSchedule = useMemo(() => {
+    if (!tan || !remainingPeriods || outstanding <= 0 || !debt.nextPaymentDate) return []
+    return buildAmortisationSchedule(outstanding, tan, debt.frequency, remainingPeriods, new Date(debt.nextPaymentDate))
+  }, [outstanding, tan, debt.frequency, remainingPeriods, debt.nextPaymentDate])
+
+  const totalInterestRemaining = amortSchedule.reduce((s, r) => s + r.interest, 0)
+  const totalCostRemaining = amortSchedule.reduce((s, r) => s + r.payment, 0)
 
   async function handleDeletePayment(paymentId: number) {
     try {
@@ -359,6 +455,20 @@ function DebtCard({
             <p className="text-xs text-slate-400 dark:text-slate-500">{debt.counterparty}</p>
           </div>
 
+          {/* Rate badges */}
+          <div className="hidden sm:flex flex-col items-end gap-0.5 shrink-0">
+            {tan !== null && (
+              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                TAN {tan.toFixed(2)}%
+              </span>
+            )}
+            {taeg !== null && (
+              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+                TAEG {taeg.toFixed(2)}%
+              </span>
+            )}
+          </div>
+
           <div className="text-right shrink-0">
             <p className={`text-base font-bold ${isLoan ? 'text-red-500' : 'text-blue-500'}`}>{fmt(debt.outstanding)}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500">of {fmt(debt.principal)}</p>
@@ -369,16 +479,20 @@ function DebtCard({
           </button>
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar + meta */}
         <div className="mx-5 mb-3">
           <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mb-1">
             <span>{paid}% paid</span>
-            {debt.interestRate && <span>{Number(debt.interestRate).toFixed(2)}% p.a.</span>}
-            {daysUntil !== null && (
-              <span className={daysUntil < 0 ? 'text-red-500' : daysUntil <= 7 ? 'text-amber-500' : ''}>
-                {daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Due today' : `Due in ${daysUntil}d`}
-              </span>
-            )}
+            <div className="flex gap-3">
+              {installment && (
+                <span className="text-slate-600 dark:text-slate-300 font-medium">{fmt(installment)}/mo</span>
+              )}
+              {daysUntil !== null && (
+                <span className={daysUntil < 0 ? 'text-red-500' : daysUntil <= 7 ? 'text-amber-500' : ''}>
+                  {daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Due today' : `Due in ${daysUntil}d`}
+                </span>
+              )}
+            </div>
           </div>
           <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
@@ -388,11 +502,52 @@ function DebtCard({
           </div>
         </div>
 
-        {/* Expanded: payment history + actions */}
+        {/* Expanded */}
         {expanded && (
           <div className="border-t border-slate-100 dark:border-slate-700 px-5 py-4">
+            {/* Cost summary strip (only when schedule exists) */}
+            {amortSchedule.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-center">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Remaining</p>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{remainingPeriods} pmts</p>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-center">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Interest left</p>
+                  <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{fmt(totalInterestRemaining)}</p>
+                </div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 px-3 py-2 text-center">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Total cost</p>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{fmt(totalCostRemaining)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Tab bar + actions */}
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Payment history</p>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setExpandedTab('history')}
+                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors ${
+                    expandedTab === 'history'
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}>
+                  <History size={11} /> History
+                </button>
+                {amortSchedule.length > 0 && (
+                  <button
+                    onClick={() => setExpandedTab('schedule')}
+                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors ${
+                      expandedTab === 'schedule'
+                        ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}>
+                    <Table2 size={11} /> Schedule
+                  </button>
+                )}
+              </div>
+
               <div className="flex gap-2">
                 {debt.status === 'ACTIVE' && (
                   <>
@@ -417,36 +572,71 @@ function DebtCard({
               </div>
             </div>
 
-            {debt.payments.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500">No payments recorded yet.</p>
-            ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700">
-                    <th className="text-left pb-1.5">Date</th>
-                    <th className="text-right pb-1.5">Total</th>
-                    <th className="text-right pb-1.5">Principal</th>
-                    <th className="text-right pb-1.5">Interest</th>
-                    <th className="pb-1.5" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {debt.payments.map(p => (
-                    <tr key={p.id} className="border-b border-slate-50 dark:border-slate-800 group">
-                      <td className="py-1.5 text-slate-600 dark:text-slate-400">{fmtDate(p.date)}</td>
-                      <td className="py-1.5 text-right font-medium text-slate-800 dark:text-slate-200">{fmt(p.amount)}</td>
-                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{fmt(p.principal)}</td>
-                      <td className="py-1.5 text-right text-slate-400">{fmt(p.interest)}</td>
-                      <td className="py-1.5 text-right">
-                        <button onClick={() => handleDeletePayment(p.id)}
-                          className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-opacity">
-                          <Trash2 size={11} />
-                        </button>
-                      </td>
+            {/* Payment history tab */}
+            {expandedTab === 'history' && (
+              debt.payments.length === 0 ? (
+                <p className="text-xs text-slate-400 dark:text-slate-500">No payments recorded yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700">
+                        <th className="text-left pb-1.5">Date</th>
+                        <th className="text-right pb-1.5">Total</th>
+                        <th className="text-right pb-1.5">Principal</th>
+                        <th className="text-right pb-1.5">Interest</th>
+                        <th className="pb-1.5" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {debt.payments.map(p => (
+                        <tr key={p.id} className="border-b border-slate-50 dark:border-slate-800 group">
+                          <td className="py-1.5 text-slate-600 dark:text-slate-400">{fmtDate(p.date)}</td>
+                          <td className="py-1.5 text-right font-medium text-slate-800 dark:text-slate-200">{fmt(p.amount)}</td>
+                          <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{fmt(p.principal)}</td>
+                          <td className="py-1.5 text-right text-slate-400">{fmt(p.interest)}</td>
+                          <td className="py-1.5 text-right">
+                            <button onClick={() => handleDeletePayment(p.id)}
+                              className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition-opacity">
+                              <Trash2 size={11} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
+
+            {/* Amortisation schedule tab */}
+            {expandedTab === 'schedule' && amortSchedule.length > 0 && (
+              <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-white dark:bg-slate-800">
+                    <tr className="text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-700">
+                      <th className="text-left pb-1.5">#</th>
+                      <th className="text-left pb-1.5">Date</th>
+                      <th className="text-right pb-1.5">Installment</th>
+                      <th className="text-right pb-1.5">Principal</th>
+                      <th className="text-right pb-1.5">Interest</th>
+                      <th className="text-right pb-1.5">Balance</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {amortSchedule.map(row => (
+                      <tr key={row.period} className="border-b border-slate-50 dark:border-slate-800">
+                        <td className="py-1.5 text-slate-400">{row.period}</td>
+                        <td className="py-1.5 text-slate-600 dark:text-slate-400">{row.date}</td>
+                        <td className="py-1.5 text-right font-medium text-slate-800 dark:text-slate-200">{fmt(row.payment)}</td>
+                        <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{fmt(row.principal)}</td>
+                        <td className="py-1.5 text-right text-amber-600 dark:text-amber-400">{fmt(row.interest)}</td>
+                        <td className="py-1.5 text-right text-slate-500 dark:text-slate-400">{fmt(row.balance)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {debt.notes && (
