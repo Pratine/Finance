@@ -433,7 +433,9 @@ function TaxTab({ transactions, investments }: {
 }
 
 export default function ReportsPage() {
+  const [tab, setTab] = useState<'overview' | 'tax'>('overview')
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [investments, setInvestments] = useState<Investment[]>([])
   const [priceHistory, setPriceHistory] = useState<Array<{ date: string; value: number }>>([])
   const [rangeMode, setRangeMode] = useState<'preset' | 'custom'>('preset')
   const [preset, setPreset] = useState(6)
@@ -444,12 +446,13 @@ export default function ReportsPage() {
     Promise.all([
       window.api.listTransactions(),
       window.api.getInvestmentPriceHistory(),
-    ]).then(([txns, hist]) => {
+      window.api.listInvestments(),
+    ]).then(([txns, hist, invs]) => {
       setTransactions(txns)
       setPriceHistory(hist)
+      setInvestments(invs)
     }).catch(() => {
-      // transactions and priceHistory stay empty — charts render with no data
-      // rather than hanging or crashing
+      // data stays empty — charts render with no data rather than hanging
     })
   }, [])
 
