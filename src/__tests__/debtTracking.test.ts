@@ -120,9 +120,9 @@ describe('calcInstallment', () => {
 
   it('quarterly frequency divides annual rate by 4', () => {
     // €10,000 at 4% TAN quarterly, 20 periods (5 years)
-    // r = 0.04/4 = 0.01; PMT = 10000 * 0.01 / (1 - 1.01^-20) = 554.60
+    // r = 0.04/4 = 0.01; PMT = 10000 * 0.01 / (1 - 1.01^-20) = 554.15
     const pmt = calcInstallment(10_000, 4, 'QUARTERLY', 20)
-    expect(pmt).toBeCloseTo(554.60, 2)
+    expect(pmt).toBeCloseTo(554.15, 2)
   })
 })
 
