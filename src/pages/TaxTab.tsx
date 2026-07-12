@@ -97,12 +97,14 @@ export default function TaxTab({ transactions, investments }: {
 
   // Income and expense totals. Includes internal transfers (no transfer marker
   // on Transaction) — treat this as an approximation for review purposes.
-  const totalIncome = yearTxns
-    .filter(t => t.type === 'CREDIT')
-    .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
-  const totalExpenses = yearTxns
-    .filter(t => t.type === 'DEBIT')
-    .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
+  const totalIncome = useMemo(
+    () => yearTxns.filter(t => t.type === 'CREDIT').reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
+    [yearTxns],
+  )
+  const totalExpenses = useMemo(
+    () => yearTxns.filter(t => t.type === 'DEBIT').reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
+    [yearTxns],
+  )
 
   async function exportCSV() {
     setExporting(true)
