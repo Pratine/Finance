@@ -29,6 +29,7 @@ export function calcInstallment(
   frequency: string | null,
   totalPeriods: number,
 ): number {
+  if (totalPeriods <= 0) return 0
   const n = frequency ? (PERIODS_PER_YEAR[frequency] ?? 12) : 12
   const r = tanPct / 100 / n
   if (r === 0) return outstanding / totalPeriods
