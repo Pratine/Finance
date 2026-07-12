@@ -65,6 +65,16 @@ export type AmortisationRow = {
 
 // Generate a forward-looking amortisation schedule from the current outstanding
 // balance for the remaining number of periods.
+// Safely advance a UTC date by N months, clamping to the last day of the target
+// month so e.g. Jan 31 + 1 month → Feb 28, not Mar 2.
+function addUTCMonths(date: Date, months: number): void {
+  const day = date.getUTCDate()
+  date.setUTCDate(1)
+  date.setUTCMonth(date.getUTCMonth() + months)
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate()
+  date.setUTCDate(Math.min(day, lastDay))
+}
+
 export function buildAmortisationSchedule(
   outstanding: number,
   tanPct: number,
@@ -74,9 +84,12 @@ export function buildAmortisationSchedule(
 ): AmortisationRow[] {
   const n = frequency ? (PERIODS_PER_YEAR[frequency] ?? 12) : 12
   const r = tanPct / 100 / n
-  const pmt = r === 0
+  const pmtRaw = r === 0
     ? outstanding / remainingPeriods
     : (outstanding * r) / (1 - Math.pow(1 + r, -remainingPeriods))
+  // If PMT rounds to zero (degenerate: tiny balance over many periods), floor to
+  // 1 cent so every non-last period emits a real payment row.
+  const pmt = Math.max(pmtRaw, 0.005)
 
   const rows: AmortisationRow[] = []
   let balance = outstanding
@@ -88,7 +101,7 @@ export function buildAmortisationSchedule(
     const rawPayment = isLastPeriod ? balance + balance * r : Math.min(pmt, balance + balance * r)
     const payment    = Math.round(rawPayment * 100) / 100
     const interest   = Math.round(balance * r * 100) / 100
-    const principal  = payment - interest
+    const principal  = Math.round((payment - interest) * 100) / 100
     balance = Math.max(0, balance - principal)
 
     rows.push({
@@ -103,9 +116,9 @@ export function buildAmortisationSchedule(
     // Advance date by one period
     switch ((frequency ?? 'MONTHLY').toUpperCase()) {
       case 'WEEKLY':    date.setUTCDate(date.getUTCDate() + 7); break
-      case 'QUARTERLY': date.setUTCMonth(date.getUTCMonth() + 3); break
+      case 'QUARTERLY': addUTCMonths(date, 3); break
       case 'YEARLY':    date.setUTCFullYear(date.getUTCFullYear() + 1); break
-      default:          date.setUTCMonth(date.getUTCMonth() + 1); break
+      default:          addUTCMonths(date, 1); break
     }
   }
 
