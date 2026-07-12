@@ -137,7 +137,7 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
     accountId?: number | null
     notes?: string | null
   }) => {
-    const allowed: Array<keyof typeof data> = ['name','counterparty','interestRate','frequency','nextPaymentDate','endDate','status','accountId','notes']
+    const allowed: Array<keyof typeof data> = ['name','counterparty','interestRate','taeg','totalPeriods','frequency','nextPaymentDate','endDate','status','accountId','notes']
     const fields: Record<string, unknown> = {}
     for (const k of allowed) {
       if (data[k] !== undefined) {
