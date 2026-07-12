@@ -79,18 +79,21 @@ export function buildAmortisationSchedule(
   const date = new Date(nextDate)
 
   for (let i = 1; i <= remainingPeriods && balance > 0.005; i++) {
-    const interest = parseFloat((balance * r).toFixed(2))
-    const paymentThisPeriod = Math.min(pmt, balance + interest)
-    const principal = parseFloat(Math.max(0, paymentThisPeriod - interest).toFixed(2))
-    balance = parseFloat(Math.max(0, balance - principal).toFixed(2))
+    // Keep arithmetic in full precision; round only for the output row.
+    const interest = balance * r
+    const isLastPeriod = i === remainingPeriods
+    // On the last period, sweep the remainder to avoid leaving dust.
+    const paymentThisPeriod = isLastPeriod ? balance + interest : Math.min(pmt, balance + interest)
+    const principal = Math.max(0, paymentThisPeriod - interest)
+    balance = Math.max(0, balance - principal)
 
     rows.push({
       period: i,
       date: date.toISOString().slice(0, 10),
-      payment: parseFloat(paymentThisPeriod.toFixed(2)),
-      principal,
-      interest,
-      balance,
+      payment:   Math.round(paymentThisPeriod * 100) / 100,
+      principal: Math.round(principal * 100) / 100,
+      interest:  Math.round(interest * 100) / 100,
+      balance:   Math.round(balance * 100) / 100,
     })
 
     // Advance date by one period
