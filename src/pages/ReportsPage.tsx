@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid, Legend, AreaChart, Area,
 } from 'recharts'
+import { Download } from 'lucide-react'
 import { calcMonthlyBreakdown, calcCumulativeBalance, calcCategoryBreakdown, calcCategoryTrends, type CategoryTrendPoint } from '../utils/reportingStats'
 import { buildNetWorthHistory } from '../utils/netWorthHistory'
 import { resolveRange } from '../utils/reportRange'
