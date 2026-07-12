@@ -96,9 +96,10 @@ describe('periodsPerYearFromDays', () => {
 
 describe('calcInstallment', () => {
   it('computes PMT for a standard monthly mortgage', () => {
-    // €100,000 at 3.5% TAN, 360 monthly installments ≈ €449.04
+    // €100,000 at 3.5% TAN, 360 monthly installments = €449.04
+    // r = 0.035/12 = 0.002916̄; PMT = 100000 * r / (1 - (1+r)^-360)
     const pmt = calcInstallment(100_000, 3.5, 'MONTHLY', 360)
-    expect(pmt).toBeCloseTo(449.04, 0)
+    expect(pmt).toBeCloseTo(449.04, 2)
   })
 
   it('returns outstanding/n when rate is zero', () => {
@@ -107,8 +108,8 @@ describe('calcInstallment', () => {
 
   it('handles single installment', () => {
     const pmt = calcInstallment(1000, 5, 'MONTHLY', 1)
-    // Interest for one period = 1000 * 0.05/12 ≈ 4.17; total ≈ 1004.17
-    expect(pmt).toBeCloseTo(1004.17, 0)
+    // Interest = 1000 * 0.05/12 = 4.1667; PMT = 1000 + 4.1667 = 1004.17
+    expect(pmt).toBeCloseTo(1004.17, 2)
   })
 
   it('null frequency falls back to monthly', () => {
@@ -117,12 +118,11 @@ describe('calcInstallment', () => {
     expect(withNull).toBeCloseTo(withMonthly, 5)
   })
 
-  it('quarterly frequency uses 4 periods per year', () => {
-    // 4% TAN, quarterly, 20 periods (5 years)
+  it('quarterly frequency divides annual rate by 4', () => {
+    // €10,000 at 4% TAN quarterly, 20 periods (5 years)
+    // r = 0.04/4 = 0.01; PMT = 10000 * 0.01 / (1 - 1.01^-20) = 554.60
     const pmt = calcInstallment(10_000, 4, 'QUARTERLY', 20)
-    expect(pmt).toBeGreaterThan(0)
-    // Sanity check: total paid > principal
-    expect(pmt * 20).toBeGreaterThan(10_000)
+    expect(pmt).toBeCloseTo(554.60, 2)
   })
 })
 
