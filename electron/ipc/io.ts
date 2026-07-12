@@ -50,6 +50,11 @@ export function registerIoHandlers(ipcMain: IpcMain) {
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────
+  ipcMain.handle('export:writeFile', async (_e, filePath: string, content: string) => {
+    await writeFile(filePath, content, 'utf8')
+    return { ok: true }
+  })
+
   ipcMain.handle('export:savePath', async (_e, defaultName: string, filters: Electron.FileFilter[]) => {
     const { canceled, filePath } = await dialog.showSaveDialog({
       defaultPath: defaultName,
