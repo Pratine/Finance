@@ -1,9 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Download } from 'lucide-react'
-
-function fmt(n: number) {
-  return n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
-}
+import { fmt } from '../utils/formatCurrency'
 
 // Categories whose names suggest IRS deductibility in Portugal.
 const DEDUCTIBLE_HINTS: Record<string, string> = {
