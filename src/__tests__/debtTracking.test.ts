@@ -86,3 +86,87 @@ describe('PERIODS_PER_YEAR', () => {
     expect(PERIODS_PER_YEAR['YEARLY']).toBe(1)
   })
 })
+
+describe('periodsPerYearFromDays', () => {
+  it('maps 7 days to 52', () => expect(periodsPerYearFromDays(7)).toBe(52))
+  it('maps 30 days to 12', () => expect(periodsPerYearFromDays(30)).toBe(12))
+  it('maps 90 days to 4', () => expect(periodsPerYearFromDays(90)).toBe(4))
+  it('maps 365 days to 1', () => expect(periodsPerYearFromDays(365)).toBe(1))
+})
+
+describe('calcInstallment', () => {
+  it('computes PMT for a standard monthly mortgage', () => {
+    // €100,000 at 3.5% TAN, 360 monthly installments ≈ €449.04
+    const pmt = calcInstallment(100_000, 3.5, 'MONTHLY', 360)
+    expect(pmt).toBeCloseTo(449.04, 0)
+  })
+
+  it('returns outstanding/n when rate is zero', () => {
+    expect(calcInstallment(12_000, 0, 'MONTHLY', 12)).toBeCloseTo(1000, 5)
+  })
+
+  it('handles single installment', () => {
+    const pmt = calcInstallment(1000, 5, 'MONTHLY', 1)
+    // Interest for one period = 1000 * 0.05/12 ≈ 4.17; total ≈ 1004.17
+    expect(pmt).toBeCloseTo(1004.17, 0)
+  })
+
+  it('null frequency falls back to monthly', () => {
+    const withNull    = calcInstallment(100_000, 3.5, null, 360)
+    const withMonthly = calcInstallment(100_000, 3.5, 'MONTHLY', 360)
+    expect(withNull).toBeCloseTo(withMonthly, 5)
+  })
+
+  it('quarterly frequency uses 4 periods per year', () => {
+    // 4% TAN, quarterly, 20 periods (5 years)
+    const pmt = calcInstallment(10_000, 4, 'QUARTERLY', 20)
+    expect(pmt).toBeGreaterThan(0)
+    // Sanity check: total paid > principal
+    expect(pmt * 20).toBeGreaterThan(10_000)
+  })
+})
+
+describe('buildAmortisationSchedule', () => {
+  const nextDate = new Date('2026-01-01')
+
+  it('generates the correct number of rows', () => {
+    const rows = buildAmortisationSchedule(100_000, 3.5, 'MONTHLY', 12, nextDate)
+    expect(rows).toHaveLength(12)
+  })
+
+  it('final balance is zero (no dust)', () => {
+    const rows = buildAmortisationSchedule(10_000, 5, 'MONTHLY', 24, nextDate)
+    expect(rows[rows.length - 1].balance).toBe(0)
+  })
+
+  it('period numbers are sequential starting from 1', () => {
+    const rows = buildAmortisationSchedule(5_000, 4, 'MONTHLY', 6, nextDate)
+    rows.forEach((r, i) => expect(r.period).toBe(i + 1))
+  })
+
+  it('interest component decreases over time (French amortisation)', () => {
+    const rows = buildAmortisationSchedule(50_000, 6, 'MONTHLY', 60, nextDate)
+    expect(rows[0].interest).toBeGreaterThan(rows[rows.length - 1].interest)
+  })
+
+  it('payment = principal + interest for each row', () => {
+    const rows = buildAmortisationSchedule(20_000, 4, 'MONTHLY', 24, nextDate)
+    for (const r of rows) {
+      expect(r.payment).toBeCloseTo(r.principal + r.interest, 1)
+    }
+  })
+
+  it('handles zero rate — equal principal splits', () => {
+    const rows = buildAmortisationSchedule(1_200, 0, 'MONTHLY', 12, nextDate)
+    expect(rows).toHaveLength(12)
+    expect(rows[0].interest).toBe(0)
+    expect(rows[0].principal).toBeCloseTo(100, 1)
+  })
+
+  it('advances monthly dates correctly', () => {
+    const rows = buildAmortisationSchedule(10_000, 5, 'MONTHLY', 3, new Date('2026-03-15'))
+    expect(rows[0].date).toBe('2026-03-15')
+    expect(rows[1].date).toBe('2026-04-15')
+    expect(rows[2].date).toBe('2026-05-15')
+  })
+})
