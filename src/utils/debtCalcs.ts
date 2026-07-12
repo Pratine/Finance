@@ -78,33 +78,31 @@ export function buildAmortisationSchedule(
   let balance = outstanding
   const date = new Date(nextDate)
 
-  for (let i = 1; i <= remainingPeriods && balance > 0.005; i++) {
-    // Keep arithmetic in full precision; round only for the output row.
-    const interest = balance * r
+  for (let i = 1; i <= remainingPeriods; i++) {
+    // Round interest first; derive principal from payment so rows always sum exactly.
     const isLastPeriod = i === remainingPeriods
-    // On the last period, sweep the remainder to avoid leaving dust.
-    const paymentThisPeriod = isLastPeriod ? balance + interest : Math.min(pmt, balance + interest)
-    const principal = Math.max(0, paymentThisPeriod - interest)
+    const rawPayment = isLastPeriod ? balance + balance * r : Math.min(pmt, balance + balance * r)
+    const payment    = Math.round(rawPayment * 100) / 100
+    const interest   = Math.round(balance * r * 100) / 100
+    const principal  = payment - interest
     balance = Math.max(0, balance - principal)
 
     rows.push({
       period: i,
-      date: date.toISOString().slice(0, 10),
-      payment:   Math.round(paymentThisPeriod * 100) / 100,
-      principal: Math.round(principal * 100) / 100,
-      interest:  Math.round(interest * 100) / 100,
+      date:      date.toISOString().slice(0, 10),
+      payment,
+      principal,
+      interest,
       balance:   Math.round(balance * 100) / 100,
     })
 
     // Advance date by one period
-    const d = new Date(date)
     switch ((frequency ?? 'MONTHLY').toUpperCase()) {
-      case 'WEEKLY':    d.setUTCDate(d.getUTCDate() + 7); break
-      case 'QUARTERLY': d.setUTCMonth(d.getUTCMonth() + 3); break
-      case 'YEARLY':    d.setUTCFullYear(d.getUTCFullYear() + 1); break
-      default:          d.setUTCMonth(d.getUTCMonth() + 1); break
+      case 'WEEKLY':    date.setUTCDate(date.getUTCDate() + 7); break
+      case 'QUARTERLY': date.setUTCMonth(date.getUTCMonth() + 3); break
+      case 'YEARLY':    date.setUTCFullYear(date.getUTCFullYear() + 1); break
+      default:          date.setUTCMonth(date.getUTCMonth() + 1); break
     }
-    date.setTime(d.getTime())
   }
 
   return rows
