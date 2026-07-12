@@ -94,6 +94,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
     counterparty: string
     principal: number
     interestRate?: number | null
+    taeg?: number | null
+    totalPeriods?: number | null
     frequency?: Frequency | null
     nextPaymentDate?: string | null
     startDate: string
@@ -109,6 +111,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
       principal: data.principal,
       outstanding: data.principal,
       interestRate: data.interestRate ?? null,
+      taeg: data.taeg ?? null,
+      totalPeriods: data.totalPeriods ?? null,
       frequency: data.frequency ?? null,
       nextPaymentDate: toIso(data.nextPaymentDate),
       startDate: requireIso(data.startDate),
