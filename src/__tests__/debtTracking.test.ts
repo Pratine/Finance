@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcPctPaid, calcPaymentSplit, calcNetDebt, PERIODS_PER_YEAR } from '../utils/debtCalcs'
+import { calcPctPaid, calcPaymentSplit, calcNetDebt, PERIODS_PER_YEAR, calcInstallment, buildAmortisationSchedule, periodsPerYearFromDays } from '../utils/debtCalcs'
 
 describe('calcPctPaid', () => {
   it('returns 0 when nothing paid', () => {
