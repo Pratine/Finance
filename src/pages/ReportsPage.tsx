@@ -481,7 +481,21 @@ export default function ReportsPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Reports</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Reports</h1>
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+            {(['overview', 'tax'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors capitalize ${
+                  tab === t
+                    ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100 font-medium'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}>
+                {t === 'tax' ? 'Tax' : 'Overview'}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
             {RANGE_OPTIONS.map(o => (
