@@ -34,8 +34,8 @@ export default function TaxTab({ transactions, investments }: {
   transactions: Transaction[]
   investments: Investment[]
 }) {
-  const currentYear = new Date().getFullYear()
   const years = useMemo(() => {
+    const currentYear = new Date().getFullYear()
     const ys = new Set<number>()
     for (const t of transactions) ys.add(new Date(t.date).getFullYear())
     for (const inv of investments) for (const l of inv.lots) ys.add(new Date(l.date).getFullYear())
@@ -44,7 +44,7 @@ export default function TaxTab({ transactions, investments }: {
     return arr
   }, [transactions, investments])
 
-  const [year, setYear] = useState(currentYear)
+  const [year, setYear] = useState(() => new Date().getFullYear())
   const [exporting, setExporting] = useState(false)
 
   const yearTxns = useMemo(
