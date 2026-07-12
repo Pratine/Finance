@@ -496,49 +496,48 @@ export default function ReportsPage() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {tab === 'tax' && <span />}
-          {tab === 'overview' && <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
-            {RANGE_OPTIONS.map(o => (
+        {tab === 'overview' && (
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+              {RANGE_OPTIONS.map(o => (
+                <button
+                  key={o.value}
+                  onClick={() => { setRangeMode('preset'); setPreset(o.value) }}
+                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                    rangeMode === 'preset' && preset === o.value
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100 font-medium'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
               <button
-                key={o.value}
-                onClick={() => { setRangeMode('preset'); setPreset(o.value) }}
+                onClick={() => {
+                  setRangeMode('custom')
+                  if (!customFrom) setCustomFrom(new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().slice(0, 10))
+                  if (!customTo)   setCustomTo(new Date().toISOString().slice(0, 10))
+                }}
                 className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                  rangeMode === 'preset' && preset === o.value
+                  rangeMode === 'custom'
                     ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100 font-medium'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
-                {o.label}
+                Custom
               </button>
-            ))}
-            <button
-              onClick={() => {
-                setRangeMode('custom')
-                if (!customFrom) setCustomFrom(new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().slice(0, 10))
-                if (!customTo)   setCustomTo(new Date().toISOString().slice(0, 10))
-              }}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                rangeMode === 'custom'
-                  ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100 font-medium'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              Custom
-            </button>
-          </div>
-
-          {tab === 'overview' && rangeMode === 'custom' && (
-            <div className="flex items-center gap-1.5">
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
-              <span className="text-slate-400 text-xs">→</span>
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>
-          )}
-          {tab === 'overview' && </>}
-        </div>
+            {rangeMode === 'custom' && (
+              <div className="flex items-center gap-1.5">
+                <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                  className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                <span className="text-slate-400 text-xs">→</span>
+                <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                  className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {tab === 'tax' && <TaxTab transactions={transactions} investments={investments} />}
