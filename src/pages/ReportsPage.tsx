@@ -527,7 +527,7 @@ export default function ReportsPage() {
             </button>
           </div>
 
-          {rangeMode === 'custom' && (
+          {tab === 'overview' && rangeMode === 'custom' && (
             <div className="flex items-center gap-1.5">
               <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
                 className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
