@@ -247,35 +247,35 @@ function PaymentModal({
 }) {
   const outstanding = Number(debt.outstanding)
   const tan = debt.interestRate ? Number(debt.interestRate) : null
-  const totalPeriods = (debt as any).totalPeriods ? Number((debt as any).totalPeriods) : null
+  const totalPeriods = debt.totalPeriods ?? null
 
-  // Compute suggested installment
+  // Compute suggested installment using remaining periods (approximated from payment count).
   const suggestedInstallment = useMemo(() => {
     if (tan && totalPeriods && outstanding > 0) {
-      // Remaining periods = totalPeriods - payments made so far
-      const paid = debt.payments.length
-      const remaining = Math.max(1, totalPeriods - paid)
+      const remaining = Math.max(1, totalPeriods - debt.payments.length)
       return calcInstallment(outstanding, tan, debt.frequency, remaining)
     }
     return null
   }, [outstanding, tan, totalPeriods, debt.frequency, debt.payments.length])
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
-  const [amount, setAmount] = useState(suggestedInstallment ? suggestedInstallment.toFixed(2) : '')
-  const [principal, setPrincipal] = useState('')
-  const [interest, setInterest] = useState('')
+  // Pre-fill amount and split from the suggested installment at mount time.
+  const [amount, setAmount] = useState(() => suggestedInstallment ? suggestedInstallment.toFixed(2) : '')
+  const [principal, setPrincipal] = useState(() => {
+    if (suggestedInstallment && tan) {
+      return calcPaymentSplit(suggestedInstallment, outstanding, tan, debt.frequency).principal.toFixed(2)
+    }
+    return ''
+  })
+  const [interest, setInterest] = useState(() => {
+    if (suggestedInstallment && tan) {
+      return calcPaymentSplit(suggestedInstallment, outstanding, tan, debt.frequency).interest.toFixed(2)
+    }
+    return ''
+  })
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-
-  // Auto-split when amount is pre-filled
-  useEffect(() => {
-    if (suggestedInstallment && tan) {
-      const { principal: p, interest: i } = calcPaymentSplit(suggestedInstallment, outstanding, tan, debt.frequency)
-      setPrincipal(p.toFixed(2))
-      setInterest(i.toFixed(2))
-    }
-  }, [])
 
   function handleAmountChange(val: string) {
     setAmount(val)
