@@ -423,6 +423,8 @@ declare global {
     principal: string
     outstanding: string
     interestRate: string | null
+    taeg: number | null
+    totalPeriods: number | null
     frequency: Frequency | null
     nextPaymentDate: string | null
     startDate: string
