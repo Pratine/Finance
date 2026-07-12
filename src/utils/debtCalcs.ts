@@ -118,9 +118,9 @@ export function buildAmortisationSchedule(
     // Advance date by one period
     switch ((frequency ?? 'MONTHLY').toUpperCase()) {
       case 'WEEKLY':    date.setUTCDate(date.getUTCDate() + 7); break
-      case 'QUARTERLY': addUTCMonths(date, 3); break
+      case 'QUARTERLY': addUTCMonths(date, 3, targetDay); break
       case 'YEARLY':    date.setUTCFullYear(date.getUTCFullYear() + 1); break
-      default:          addUTCMonths(date, 1); break
+      default:          addUTCMonths(date, 1, targetDay); break
     }
   }
 
