@@ -608,20 +608,21 @@ export default function SavingsPage() {
                       className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 bg-white dark:bg-slate-800 dark:text-slate-100"
                     >
                       <option value="">None</option>
-                      <option value="PERCENTAGE">Percentage (%)</option>
+                      <option value="TAN">TAN (% annual nominal)</option>
+                      <option value="PERCENTAGE">Rate per period (%)</option>
                       <option value="FIXED">Fixed amount (€)</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-                      {form.interestType === 'PERCENTAGE' ? 'Rate (%)' : form.interestType === 'FIXED' ? 'Amount (€)' : 'Value'}
+                      {form.interestType === 'TAN' ? 'TAN (% annual)' : form.interestType === 'PERCENTAGE' ? 'Rate per period (%)' : form.interestType === 'FIXED' ? 'Amount (€)' : 'Value'}
                     </label>
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
-                      placeholder={form.interestType === 'PERCENTAGE' ? '2.5' : '10.00'}
+                      step="0.001"
+                      placeholder={form.interestType === 'FIXED' ? '10.00' : '3.5'}
                       value={form.interestValue}
                       onChange={(e) => setForm({ ...form, interestValue: e.target.value })}
                       disabled={!form.interestType}
@@ -629,6 +630,11 @@ export default function SavingsPage() {
                     />
                   </div>
                 </div>
+                {form.interestType === 'TAN' && form.interestValue && form.interestFrequencyDays && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    Period rate: {(parseFloat(form.interestValue) / (365 / parseInt(form.interestFrequencyDays))).toFixed(4)}% per period
+                  </p>
+                )}
 
                 <div>
                   <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Paid every</label>
