@@ -50,9 +50,17 @@ export function registerIoHandlers(ipcMain: IpcMain) {
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────
-  ipcMain.handle('export:writeFile', async (_e, filePath: string, content: string) => {
+
+  // Combined dialog + write so the file path never leaves the main process.
+  ipcMain.handle('export:saveCsv', async (_e, defaultName: string, content: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: defaultName,
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+      properties: ['createDirectory'],
+    })
+    if (canceled || !filePath) return { saved: false }
     await writeFile(filePath, content, 'utf8')
-    return { ok: true }
+    return { saved: true }
   })
 
   ipcMain.handle('export:savePath', async (_e, defaultName: string, filters: Electron.FileFilter[]) => {
