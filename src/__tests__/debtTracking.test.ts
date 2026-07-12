@@ -126,6 +126,10 @@ describe('calcInstallment', () => {
     const pmt = calcInstallment(10_000, 4, 'QUARTERLY', 20)
     expect(pmt).toBeCloseTo(554.15, 2)
   })
+
+  it('returns 0 for totalPeriods=0 (no Infinity)', () => {
+    expect(calcInstallment(10_000, 5, 'MONTHLY', 0)).toBe(0)
+  })
 })
 
 describe('buildAmortisationSchedule', () => {
