@@ -539,6 +539,9 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {tab === 'tax' && <TaxTab transactions={transactions} investments={investments} />}
+
+      {tab === 'overview' && <>
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
