@@ -28,8 +28,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
   }
   const stmtDebtById      = db.prepare(`SELECT * FROM "Debt" WHERE id = ?`)
   const stmtDebtInsert    = db.prepare(`
-    INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)
-    VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @frequency, @nextPaymentDate, @startDate, @endDate, 'ACTIVE', @accountId, @notes, @createdAt, @updatedAt)
+    INSERT INTO "Debt" (name, type, counterparty, principal, outstanding, interestRate, taeg, totalPeriods, frequency, nextPaymentDate, startDate, endDate, status, accountId, notes, createdAt, updatedAt)
+    VALUES (@name, @type, @counterparty, @principal, @outstanding, @interestRate, @taeg, @totalPeriods, @frequency, @nextPaymentDate, @startDate, @endDate, 'ACTIVE', @accountId, @notes, @createdAt, @updatedAt)
   `)
   const stmtDebtDelete    = db.prepare(`DELETE FROM "Debt" WHERE id = ?`)
   const stmtDebtUpdateAfterPayment = db.prepare(`
