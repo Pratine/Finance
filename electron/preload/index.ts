@@ -12,8 +12,8 @@ const api: Window['api'] = {
   // Export
   exportSavePath: (defaultName: string, filters: Array<{ name: string; extensions: string[] }>) =>
     ipcRenderer.invoke('export:savePath', defaultName, filters),
-  exportWriteFile: (filePath: string, content: string) =>
-    ipcRenderer.invoke('export:writeFile', filePath, content),
+  exportSaveCsv: (defaultName: string, content: string) =>
+    ipcRenderer.invoke('export:saveCsv', defaultName, content),
   exportTransactions: (opts: unknown) => ipcRenderer.invoke('export:transactions', opts),
   exportBackup: (filePath: string) => ipcRenderer.invoke('export:backup', filePath),
   importBackup: (filePath: string) => ipcRenderer.invoke('import:backup', filePath),
