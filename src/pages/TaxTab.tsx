@@ -19,7 +19,7 @@ const DEDUCTIBLE_HINTS: Record<string, string> = {
 }
 
 function deductibleHint(name: string): string | null {
-  const key = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const key = name.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
   for (const [k, v] of Object.entries(DEDUCTIBLE_HINTS)) {
     if (key.includes(k)) return v
   }
