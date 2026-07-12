@@ -130,6 +130,8 @@ export function registerDebtsHandlers(ipcMain: IpcMain) {
     name?: string
     counterparty?: string
     interestRate?: number | null
+    taeg?: number | null
+    totalPeriods?: number | null
     frequency?: Frequency | null
     nextPaymentDate?: string | null
     endDate?: string | null
