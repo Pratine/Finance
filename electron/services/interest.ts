@@ -37,10 +37,9 @@ export function applyPeriods(
     return currentAmount + interestValue * periods
   }
   if (interestType === 'TAN') {
-    // Convert annual nominal rate to per-period rate using frequency.
-    // Default to monthly (30 days) if no frequency is set.
-    const freqDays = frequencyDays ?? 30
-    const periodsPerYear = 365 / freqDays
+    // Map frequency days to canonical periods-per-year (matches PERIODS_PER_YEAR in debtCalcs).
+    const d = frequencyDays ?? 30
+    const periodsPerYear = d <= 7 ? 52 : d <= 31 ? 12 : d <= 92 ? 4 : 1
     const periodRate = interestValue / 100 / periodsPerYear
     return currentAmount * Math.pow(1 + periodRate, periods)
   }
