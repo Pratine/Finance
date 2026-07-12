@@ -67,12 +67,13 @@ export type AmortisationRow = {
 // balance for the remaining number of periods.
 // Safely advance a UTC date by N months, clamping to the last day of the target
 // month so e.g. Jan 31 + 1 month → Feb 28, not Mar 2.
-function addUTCMonths(date: Date, months: number): void {
-  const day = date.getUTCDate()
+// targetDay is the original day-of-month (passed in so repeated clamping doesn't
+// permanently lower it — Feb 28 should still land on Mar 31, not Mar 28).
+function addUTCMonths(date: Date, months: number, targetDay: number): void {
   date.setUTCDate(1)
   date.setUTCMonth(date.getUTCMonth() + months)
   const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate()
-  date.setUTCDate(Math.min(day, lastDay))
+  date.setUTCDate(Math.min(targetDay, lastDay))
 }
 
 export function buildAmortisationSchedule(
