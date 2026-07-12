@@ -497,7 +497,8 @@ export default function ReportsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+          {tab === 'tax' && <span />}
+          {tab === 'overview' && <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
             {RANGE_OPTIONS.map(o => (
               <button
                 key={o.value}
