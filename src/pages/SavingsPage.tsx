@@ -388,7 +388,9 @@ export default function SavingsPage() {
                     {goal.interestType && goal.interestValue && (
                       <span className="flex items-center gap-1 text-emerald-600">
                         <Sparkles size={11} />
-                        {goal.interestType === 'PERCENTAGE'
+                        {goal.interestType === 'TAN'
+                          ? `TAN ${goal.interestValue}% p.a. ${freqLabel(goal.interestFrequencyDays)}`
+                          : goal.interestType === 'PERCENTAGE'
                           ? `${goal.interestValue}% ${freqLabel(goal.interestFrequencyDays)}`
                           : `${fmt(goal.interestValue)} ${freqLabel(goal.interestFrequencyDays)}`}
                         {daysToInterest !== null && daysToInterest > 0 && ` · next in ${daysToInterest}d`}
