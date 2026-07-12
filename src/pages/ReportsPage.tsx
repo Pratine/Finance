@@ -7,6 +7,7 @@ import { calcMonthlyBreakdown, calcCumulativeBalance, calcCategoryBreakdown, cal
 import { buildNetWorthHistory } from '../utils/netWorthHistory'
 import { resolveRange } from '../utils/reportRange'
 import TaxTab from './TaxTab'
+import { fmt } from '../utils/formatCurrency'
 
 const RANGE_OPTIONS = [
   { label: '3 months',  value: 3  },
@@ -14,11 +15,6 @@ const RANGE_OPTIONS = [
   { label: '12 months', value: 12 },
   { label: '2 years',   value: 24 },
 ]
-
-
-function fmt(n: number) {
-  return n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
-}
 
 function fmtShort(n: number) {
   if (Math.abs(n) >= 1000) return `€${(n / 1000).toFixed(1)}k`
