@@ -349,7 +349,7 @@ declare global {
     targetAmount: string
     currentAmount: string
     deadline: string | null
-    interestType: 'PERCENTAGE' | 'FIXED' | null
+    interestType: 'PERCENTAGE' | 'FIXED' | 'TAN' | null
     interestValue: string | null
     interestFrequencyDays: number | null
     lastInterestApplied: string | null
