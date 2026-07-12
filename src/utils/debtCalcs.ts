@@ -5,6 +5,15 @@ export const PERIODS_PER_YEAR: Record<string, number> = {
   WEEKLY: 52, MONTHLY: 12, QUARTERLY: 4, YEARLY: 1,
 }
 
+// Maps a frequency-in-days value to the canonical periods-per-year count.
+// Used by savings interest (which stores frequency as days, not an enum).
+export function periodsPerYearFromDays(frequencyDays: number): number {
+  if (frequencyDays <= 7)  return 52
+  if (frequencyDays <= 31) return 12
+  if (frequencyDays <= 92) return 4
+  return 1
+}
+
 // Percentage of the debt that has been paid off.
 export function calcPctPaid(outstanding: number, principal: number): number {
   if (principal === 0) return 100
