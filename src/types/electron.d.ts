@@ -169,12 +169,14 @@ declare global {
       listDebts: () => Promise<Debt[]>
       createDebt: (data: {
         name: string; type: 'LOAN' | 'RECEIVABLE'; counterparty: string
-        principal: number; interestRate?: number | null; frequency?: string | null
+        principal: number; interestRate?: number | null; taeg?: number | null
+        totalPeriods?: number | null; frequency?: string | null
         nextPaymentDate?: string | null; startDate: string; endDate?: string | null
         accountId?: number | null; notes?: string | null
       }) => Promise<Debt>
       updateDebt: (id: number, data: {
         name?: string; counterparty?: string; interestRate?: number | null
+        taeg?: number | null; totalPeriods?: number | null
         frequency?: string | null; nextPaymentDate?: string | null; endDate?: string | null
         status?: 'ACTIVE' | 'PAID' | 'WRITTEN_OFF'; accountId?: number | null; notes?: string | null
       }) => Promise<Debt>
