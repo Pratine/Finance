@@ -91,6 +91,8 @@ describe('periodsPerYearFromDays', () => {
   it('maps 7 days to 52', () => expect(periodsPerYearFromDays(7)).toBe(52))
   it('maps 30 days to 12', () => expect(periodsPerYearFromDays(30)).toBe(12))
   it('maps 90 days to 4', () => expect(periodsPerYearFromDays(90)).toBe(4))
+  it('maps 93 days to 4 (longest real-world quarter)', () => expect(periodsPerYearFromDays(93)).toBe(4))
+  it('maps 94 days to 1', () => expect(periodsPerYearFromDays(94)).toBe(1))
   it('maps 365 days to 1', () => expect(periodsPerYearFromDays(365)).toBe(1))
 })
 
