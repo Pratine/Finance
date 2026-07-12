@@ -95,6 +95,7 @@ export function buildAmortisationSchedule(
   const rows: AmortisationRow[] = []
   let balance = outstanding
   const date = new Date(nextDate)
+  const targetDay = date.getUTCDate() // original day-of-month, preserved for month-end clamping
 
   for (let i = 1; i <= remainingPeriods; i++) {
     // Round interest first; derive principal from payment so rows always sum exactly.
