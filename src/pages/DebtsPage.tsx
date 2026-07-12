@@ -485,7 +485,9 @@ function DebtCard({
             <span>{paid}% paid</span>
             <div className="flex gap-3">
               {installment && (
-                <span className="text-slate-600 dark:text-slate-300 font-medium">{fmt(installment)}/mo</span>
+                <span className="text-slate-600 dark:text-slate-300 font-medium">
+                  {fmt(installment)}/{debt.frequency === 'WEEKLY' ? 'wk' : debt.frequency === 'QUARTERLY' ? 'qtr' : debt.frequency === 'YEARLY' ? 'yr' : 'mo'}
+                </span>
               )}
               {daysUntil !== null && (
                 <span className={daysUntil < 0 ? 'text-red-500' : daysUntil <= 7 ? 'text-amber-500' : ''}>
