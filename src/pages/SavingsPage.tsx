@@ -40,7 +40,7 @@ type FormState = {
   targetAmount: string
   accountId: number | ''
   deadline: string
-  interestType: 'PERCENTAGE' | 'FIXED' | ''
+  interestType: 'TAN' | 'PERCENTAGE' | 'FIXED' | ''
   interestValue: string
   interestFrequencyDays: string
   contributionAmount: string
