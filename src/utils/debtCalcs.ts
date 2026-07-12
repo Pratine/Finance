@@ -7,10 +7,11 @@ export const PERIODS_PER_YEAR: Record<string, number> = {
 
 // Maps a frequency-in-days value to the canonical periods-per-year count.
 // Used by savings interest (which stores frequency as days, not an enum).
+// Threshold 93 covers real-world calendar quarters (91–93 days).
 export function periodsPerYearFromDays(frequencyDays: number): number {
   if (frequencyDays <= 7)  return 52
   if (frequencyDays <= 31) return 12
-  if (frequencyDays <= 92) return 4
+  if (frequencyDays <= 93) return 4
   return 1
 }
 
