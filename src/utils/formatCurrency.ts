@@ -1,3 +1,5 @@
+const _formatter = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
+
 export function fmt(n: number): string {
-  return n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
+  return _formatter.format(n)
 }
