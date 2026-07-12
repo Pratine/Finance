@@ -175,4 +175,24 @@ describe('buildAmortisationSchedule', () => {
     expect(rows[1].date).toBe('2026-04-15')
     expect(rows[2].date).toBe('2026-05-15')
   })
+
+  it('clamps month-end dates — Jan 31 + 1 month = Feb 28, not Mar 2', () => {
+    const rows = buildAmortisationSchedule(10_000, 5, 'MONTHLY', 3, new Date('2026-01-31'))
+    expect(rows[0].date).toBe('2026-01-31')
+    expect(rows[1].date).toBe('2026-02-28')
+    expect(rows[2].date).toBe('2026-03-31')
+  })
+
+  it('clamps quarterly month-end — Oct 31 + 3 months = Jan 31', () => {
+    const rows = buildAmortisationSchedule(10_000, 5, 'QUARTERLY', 2, new Date('2025-10-31'))
+    expect(rows[0].date).toBe('2025-10-31')
+    expect(rows[1].date).toBe('2026-01-31')
+  })
+
+  it('payment = principal + interest to the cent for every row', () => {
+    const rows = buildAmortisationSchedule(100_000, 3.5, 'MONTHLY', 360, new Date('2026-01-01'))
+    for (const r of rows) {
+      expect(Math.abs(r.payment - (r.principal + r.interest))).toBeLessThan(0.005)
+    }
+  })
 })
