@@ -537,6 +537,7 @@ export default function ReportsPage() {
                 className="border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400" />
             </div>
           )}
+          {tab === 'overview' && </>}
         </div>
       </div>
 
