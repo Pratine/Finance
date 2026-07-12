@@ -14,7 +14,7 @@ db.pragma('foreign_keys = ON')
 
 db.prepare(`CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY)`).run()
 const applied = new Set(db.prepare(`SELECT name FROM _migrations`).all().map(r => r.name))
-const dirs = fs.readdirSync(migrationsDir).sort()
+const dirs = fs.readdirSync(migrationsDir).filter(n => fs.statSync(path.join(migrationsDir, n)).isDirectory()).sort()
 
 const hasExistingTables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='Account'`).get()
 if (hasExistingTables && applied.size === 0) {
