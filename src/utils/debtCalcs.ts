@@ -45,8 +45,8 @@ export function calcPaymentSplit(
 ): { principal: number; interest: number } {
   const periods = frequency ? (PERIODS_PER_YEAR[frequency] ?? 12) : 12
   const periodRate = annualRatePct / 100 / periods
-  const interest = parseFloat(Math.min(outstanding * periodRate, amount).toFixed(2))
-  const principal = parseFloat(Math.max(0, amount - interest).toFixed(2))
+  const interest = Math.round(Math.min(outstanding * periodRate, amount) * 100) / 100
+  const principal = Math.round(Math.max(0, amount - interest) * 100) / 100
   return { principal, interest }
 }
 
