@@ -3,7 +3,7 @@
 // Values are enforced at the application layer; the DB stores plain strings.
 
 export type Frequency   = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
-export type InterestType = 'PERCENTAGE' | 'FIXED'
+export type InterestType = 'PERCENTAGE' | 'FIXED' | 'TAN'
 export type DebtType    = 'LOAN' | 'RECEIVABLE'
 export type DebtStatus  = 'ACTIVE' | 'PAID' | 'WRITTEN_OFF'
 export type LotType     = 'BUY' | 'SELL'
