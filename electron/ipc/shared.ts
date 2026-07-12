@@ -320,6 +320,7 @@ export function hydrateDebt(row: any, payments: any[], account?: any): any {
   return {
     id: row.id, name: row.name, type: row.type, counterparty: row.counterparty,
     principal: row.principal, outstanding: row.outstanding, interestRate: row.interestRate,
+    taeg: row.taeg ?? null, totalPeriods: row.totalPeriods ?? null,
     frequency: row.frequency, nextPaymentDate: row.nextPaymentDate, startDate: row.startDate,
     endDate: row.endDate, status: row.status, accountId: row.accountId, notes: row.notes,
     createdAt: row.createdAt, updatedAt: row.updatedAt,
